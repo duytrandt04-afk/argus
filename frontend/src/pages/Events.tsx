@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useOutletContext } from 'react-router-dom';
+import { agentForEvent } from '../agents';
 
 export function Events() {
   const [events, setEvents] = useState<any[]>([]);
@@ -17,11 +18,12 @@ export function Events() {
     return () => clearInterval(interval);
   }, []);
 
-  // Auto-fetch usage for Claude Code sessions as they appear
+  // Auto-fetch usage for agents that expose session transcript usage.
   useEffect(() => {
     const seen = new Map<string, string>();
     events.forEach(e => {
-      if (e.transcript_path?.includes('/.claude/') && e.session && !seen.has(e.session))
+      const agent = agentForEvent(e);
+      if (agent.supportsSessionUsage && e.transcript_path && e.session && !seen.has(e.session))
         seen.set(e.session, e.transcript_path);
     });
     seen.forEach((path, key) => fetchUsage(path, key));
@@ -58,10 +60,6 @@ export function Events() {
 
   const shortId = (v: string) => v ? v.substring(0, 8) : 'unknown';
   const groupKey = (e: any) => e.session || e.transcript_path || 'ungrouped';
-  const detectAgent = (transcriptPath: string): 'codex' | 'claude' => {
-    if (transcriptPath?.includes('/.claude/')) return 'claude';
-    return 'codex';
-  };
 
   const renderDiffLines = (oldStr: string, newStr: string, startLine: number, ctxBefore: any[], ctxAfter: any[]) => {
     const oldLines = oldStr.split('\n');
@@ -100,10 +98,6 @@ export function Events() {
       </div>
     );
   };
-
-  // Claude Code uses old_string/new_string; Codex uses old_str/new_str — kept separate
-  const renderClaudeCodeDiff = (oldStr: string, newStr: string, startLine: number, ctxBefore: any[], ctxAfter: any[]) => renderDiffLines(oldStr, newStr, startLine, ctxBefore, ctxAfter);
-  const renderCodexDiff = (oldStr: string, newStr: string, startLine: number, ctxBefore: any[], ctxAfter: any[]) => renderDiffLines(oldStr, newStr, startLine, ctxBefore, ctxAfter);
 
   const highlight = (text: string, query: string) => {
     if (!query) return text;
@@ -202,6 +196,7 @@ export function Events() {
               const e0 = events[0];
               const sessionModel = events.find(e => e.model)?.model;
               const isCollapsed = collapsedSessions.has(key);
+              const agent = agentForEvent(e0);
               
               return (
                 <div key={key} className={`session ${isCollapsed ? 'collapsed' : ''}`}>
@@ -211,21 +206,15 @@ export function Events() {
                       <span className="chev">{isCollapsed ? '▼' : '▲'}</span>
                     </div>
                     <div className="session-meta">
-                      <span className={`agent-badge agent-${detectAgent(e0.transcript_path)}`}>
-                        {detectAgent(e0.transcript_path) === 'claude' ? 'Claude Code' : 'Codex'}
+                      <span className={`agent-badge agent-${agent.badgeClass}`}>
+                        {agent.label}
                       </span>
                       {sessionModel && <span style={{ marginLeft: '8px', marginRight: '10px' }}>{sessionModel}</span>}
-                      {sessionUsage[key] && (() => {
+                      {sessionUsage[key] && agent.buildUsageItems && (() => {
                         const u = sessionUsage[key];
                         return (
                           <span className="usage-summary">
-                            {[
-                              { cls: 'usage-in',         label: `↓${fmtTokens(u.input_tokens)}`,         tip: `Input tokens: ${u.input_tokens.toLocaleString()}\nFresh (non-cached) tokens sent to Claude. Low because the full context is cached each turn.` },
-                              { cls: 'usage-out',        label: `↑${fmtTokens(u.output_tokens)}`,        tip: `Output tokens: ${u.output_tokens.toLocaleString()}\nTotal tokens Claude generated across all ${u.turns} turns.` },
-                              ...(u.cache_read_tokens > 0    ? [{ cls: 'usage-cache',       label: `⚡${fmtTokens(u.cache_read_tokens)}`,    tip: `Cache read: ${u.cache_read_tokens.toLocaleString()}\nTokens served from cache instead of re-processed. Large because the full history is cache-hit every turn.` }] : []),
-                              ...(u.cache_creation_tokens > 0 ? [{ cls: 'usage-cache-write', label: `✎${fmtTokens(u.cache_creation_tokens)}`, tip: `Cache write: ${u.cache_creation_tokens.toLocaleString()}\nTokens written into the prompt cache during this session.` }] : []),
-                              { cls: 'usage-turns',      label: `${u.turns}t`,                            tip: `${u.turns} assistant turns in this session` },
-                            ].map(({ cls, label, tip }) => (
+                            {agent.buildUsageItems(u, fmtTokens).map(({ cls, label, tip }) => (
                               <span
                                 key={cls}
                                 className={`usage-item ${cls}`}
@@ -261,14 +250,10 @@ export function Events() {
                           )}
 
                           {e.action === 'EDIT' && e.old_string && e.new_string && (() => {
-                            const agent = detectAgent(e.transcript_path);
                             return (
                               <div className="eblock eblock-diff">
                                 <strong>Changes</strong>
-                                {agent === 'claude'
-                                  ? renderClaudeCodeDiff(e.old_string, e.new_string, e.start_line, e.ctx_before, e.ctx_after)
-                                  : renderCodexDiff(e.old_string, e.new_string, e.start_line, e.ctx_before, e.ctx_after)
-                                }
+                                {renderDiffLines(e.old_string, e.new_string, e.start_line, e.ctx_before, e.ctx_after)}
                               </div>
                             );
                           })()}
