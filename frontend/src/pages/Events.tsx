@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
-import type { ReactNode } from 'react';
-import { useOutletContext } from 'react-router-dom';
-import { Input } from '@/components/ui/input';
+import { useEffect, useMemo, useRef, useState } from 'react'
+import type { ReactNode } from 'react'
+import { useOutletContext } from 'react-router-dom'
+import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
@@ -9,10 +9,18 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { agentForEvent } from '../agents';
-import { AgentSession } from '../components/events/AgentSession';
-import { useEvents } from '../hooks/useEvents';
+} from '@/components/ui/select'
+import { agentForEvent } from '../agents'
+import { AgentSession } from '../components/events/AgentSession'
+import { useEvents } from '../hooks/useEvents'
+import type {
+  CtxLine,
+  EventRecord,
+  LayoutOutletContext,
+  SessionGroup,
+  SessionUsage,
+  TooltipState,
+} from '@/types'
 
 export function Events() {
   const [actionFilter, setActionFilter] = useState('all');
@@ -21,40 +29,55 @@ export function Events() {
   const [timeRange, setTimeRange] = useState('15m');
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
-  const [tooltip, setTooltip] = useState<{ text: string; x: number; y: number } | null>(null);
+  const [tooltip, setTooltip] = useState<TooltipState | null>(null);
   const { collapsedSessions, setCollapsedSessions, sessionUsage, setSessionUsage } =
-    useOutletContext<any>();
+    useOutletContext<LayoutOutletContext>();
   const fetchedUsage = useRef<Set<string>>(new Set());
-
   const { events } = useEvents();
 
   useEffect(() => {
     const seen = new Map<string, string>();
-    events.forEach(e => {
-      const agent = agentForEvent(e);
-      if (agent.supportsSessionUsage && e.transcript_path && e.session && !seen.has(e.session)) {
-        seen.set(e.session, e.transcript_path);
+    events.forEach(event => {
+      const agent = agentForEvent(event);
+      if (
+        agent.supportsSessionUsage &&
+        event.transcript_path &&
+        event.session &&
+        !seen.has(event.session)
+      ) {
+        seen.set(event.session, event.transcript_path);
       }
     });
+
     seen.forEach(async (path, key) => {
-      if (!path || fetchedUsage.current.has(key)) return;
+      if (fetchedUsage.current.has(key)) return;
+
       fetchedUsage.current.add(key);
+
       try {
         const res = await fetch(`/api/session-usage?path=${encodeURIComponent(path)}`);
-        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(`Failed to fetch session usage: ${res.status}`);
+        }
+
+        const data = (await res.json()) as SessionUsage;
         const hasAnyUsage =
-          Number(data?.input_tokens || 0) > 0 ||
-          Number(data?.output_tokens || 0) > 0 ||
-          Number(data?.cache_read_tokens || 0) > 0 ||
-          Number(data?.cache_creation_tokens || 0) > 0 ||
-          Number(data?.turns || 0) > 0;
-        if (!hasAnyUsage) fetchedUsage.current.delete(key);
-        setSessionUsage((prev: any) => ({ ...prev, [key]: data }));
-      } catch (_) {
+          Number(data.input_tokens || 0) > 0 ||
+          Number(data.output_tokens || 0) > 0 ||
+          Number(data.cache_read_tokens || 0) > 0 ||
+          Number(data.cache_creation_tokens || 0) > 0 ||
+          Number(data.turns || 0) > 0;
+
+        if (!hasAnyUsage) {
+          fetchedUsage.current.delete(key);
+        }
+
+        setSessionUsage(prev => ({ ...prev, [key]: data }));
+      } catch {
         fetchedUsage.current.delete(key);
       }
     });
-  }, [events]);
+  }, [events, setSessionUsage]);
 
   const toggleSession = (sessionId: string) => {
     setCollapsedSessions((prev: Set<string>) => {
@@ -65,9 +88,12 @@ export function Events() {
     });
   };
 
-  const shortId = (v: string) => v ? v.substring(0, 8) : 'unknown';
-  const groupKey = (e: any) => e.session || e.transcript_path || 'ungrouped';
-  const fmtTokens = (n: number) => n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n);
+  const groupKey = (event: EventRecord) =>
+    event.session || event.transcript_path || 'ungrouped';
+
+  const shortId = (value: string) => (value ? value.substring(0, 8) : 'unknown');
+  const fmtTokens = (value: number) =>
+    value >= 1000 ? `${(value / 1000).toFixed(1)}k` : String(value);
 
   const extractPatchStartLine = (text: string) => {
     if (!text) return 0;
@@ -79,8 +105,8 @@ export function Events() {
     oldStr: string,
     newStr: string,
     startLine: number,
-    ctxBefore: any[],
-    ctxAfter: any[],
+    ctxBefore: CtxLine[] = [],
+    ctxAfter: CtxLine[] = [],
     patchText?: string,
   ): ReactNode => {
     const oldLines = oldStr ? oldStr.split('\n') : [];
@@ -91,7 +117,7 @@ export function Events() {
     let newLine = base;
     return (
       <div className="diff-block">
-        {ctxBefore?.map((l: any) => (
+        {ctxBefore.map(l => (
           <div key={`ctx-b-${l.num}`} className="diff-line diff-ctx">
             <span className="diff-ln">{l.num}</span>
             <span className="diff-marker"> </span>
@@ -118,7 +144,7 @@ export function Events() {
             </div>
           );
         })}
-        {ctxAfter?.map((l: any) => (
+        {ctxAfter.map(l => (
           <div key={`ctx-a-${l.num}`} className="diff-line diff-ctx">
             <span className="diff-ln">{l.num}</span>
             <span className="diff-marker"> </span>
@@ -129,7 +155,7 @@ export function Events() {
     );
   };
 
-  const parseApplyPatch = (text: string, initialLine: number = 1) => {
+  const parseApplyPatch = (text: string, initialLine = 1) => {
     const lines = text.split('\n');
     const out: Array<{ kind: 'ctx' | 'add' | 'del'; num: number; text: string }> = [];
     let oldLine = initialLine;
@@ -197,19 +223,43 @@ export function Events() {
     return new Date(s.replace(' ', 'T')).getTime();
   };
 
-  const getRangeStartMs = () => {
-    const now = Date.now();
+  const [nowMs, setNowMs] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (timeRange === 'custom') return;
+
+    const updateNow = () => {
+      setNowMs(Date.now());
+    };
+    const timeout = window.setTimeout(updateNow, 0);
+    const interval = window.setInterval(updateNow, 1000);
+
+    return () => {
+      window.clearTimeout(timeout);
+      window.clearInterval(interval);
+    };
+  }, [timeRange]);
+
+  const rangeStartMs = useMemo(() => {
     switch (timeRange) {
-      case '5m': return now - 5 * 60 * 1000;
-      case '15m': return now - 15 * 60 * 1000;
-      case '1h': return now - 60 * 60 * 1000;
-      case '6h': return now - 6 * 60 * 60 * 1000;
-      case '24h': return now - 24 * 60 * 60 * 1000;
-      case '7d': return now - 7 * 24 * 60 * 60 * 1000;
-      case '30d': return now - 30 * 24 * 60 * 60 * 1000;
-      default: return NaN;
+      case '5m':
+        return nowMs - 5 * 60 * 1000;
+      case '15m':
+        return nowMs - 15 * 60 * 1000;
+      case '1h':
+        return nowMs - 60 * 60 * 1000;
+      case '6h':
+        return nowMs - 6 * 60 * 60 * 1000;
+      case '24h':
+        return nowMs - 24 * 60 * 60 * 1000;
+      case '7d':
+        return nowMs - 7 * 24 * 60 * 60 * 1000;
+      case '30d':
+        return nowMs - 30 * 24 * 60 * 60 * 1000;
+      default:
+        return null;
     }
-  };
+  }, [nowMs, timeRange]);
 
   const filtered = events.filter(e => {
     const eventTime = new Date(e.time).getTime();
@@ -219,8 +269,7 @@ export function Events() {
       if (!Number.isNaN(startMs) && eventTime < startMs) return false;
       if (!Number.isNaN(endMs) && eventTime > endMs) return false;
     } else {
-      const startMs = getRangeStartMs();
-      if (!Number.isNaN(startMs) && eventTime < startMs) return false;
+      if (rangeStartMs !== null && eventTime < rangeStartMs) return false;
     }
     if (actionFilter !== 'all' && e.action !== actionFilter) return false;
     if (searchQuery) {
@@ -235,22 +284,42 @@ export function Events() {
     return true;
   });
 
-  const grouped = new Map<string, any[]>();
-  filtered.forEach(e => {
-    const key = groupKey(e);
-    if (!grouped.has(key)) grouped.set(key, []);
-    grouped.get(key)!.push(e);
+  const grouped = new Map<string, SessionGroup>();
+
+  filtered.forEach(event => {
+    const key = groupKey(event);
+    const existing = grouped.get(key);
+
+    if (existing) {
+      existing.events.push(event);
+      return;
+    }
+
+    grouped.set(key, {
+      sessionId: key,
+      transcriptPath: event.transcript_path ?? '',
+      events: [event],
+    });
   });
 
-  const sessionList = Array.from(grouped.keys()).map(key => {
-    const groupEvents = grouped.get(key)!;
-    const sortedEvents = [...groupEvents].sort((a, b) =>
+  const sessionList = Array.from(grouped.values()).map(session => {
+    const sortedEvents = [...session.events].sort((a, b) =>
       sortOrder === 'newest'
         ? new Date(b.time).getTime() - new Date(a.time).getTime()
         : new Date(a.time).getTime() - new Date(b.time).getTime()
     );
-    const lastTime = new Date(Math.max(...sortedEvents.map(e => new Date(e.time).getTime())));
-    return { key, events: sortedEvents, lastTime };
+
+    const lastTime = new Date(
+      Math.max(...sortedEvents.map(event => new Date(event.time).getTime()))
+    );
+
+    return {
+      session: {
+        ...session,
+        events: sortedEvents,
+      },
+      lastTime,
+    };
   });
 
   sessionList.sort((a, b) =>
@@ -362,15 +431,14 @@ export function Events() {
           {sessionList.length === 0 ? (
             <div className="text-[#666] italic p-[10px]">No matching events.</div>
           ) : (
-            sessionList.map(({ key, events: sessionEvents, lastTime }) => {
-              const agent = agentForEvent(sessionEvents[0]);
+            sessionList.map(({ session, lastTime }) => {
+              const agent = agentForEvent(session.events[0]);
               return (
                 <AgentSession
-                  key={key}
-                  keyId={key}
-                  events={sessionEvents}
+                  key={session.sessionId}
+                  session={session}
                   lastTime={lastTime}
-                  isCollapsed={collapsedSessions.has(key)}
+                  isCollapsed={collapsedSessions.has(session.sessionId)}
                   toggleSession={toggleSession}
                   searchQuery={searchQuery}
                   shortId={shortId}

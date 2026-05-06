@@ -1,29 +1,35 @@
-import type { ReactNode } from 'react';
+import type { Dispatch, ReactNode, SetStateAction } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 import type { AgentConfig } from '../../agents/types';
+import type { CtxLine, SessionUsage, SessionGroup, TooltipState } from '@/types';
 
 type AgentSessionProps = {
-  keyId: string;
-  events: any[];
+  session: SessionGroup;
   lastTime: Date;
   isCollapsed: boolean;
   toggleSession: (id: string) => void;
   searchQuery: string;
-  shortId: (v: string) => string;
+  shortId: (value: string) => string;
   highlight: (text: string, query: string) => ReactNode;
-  sessionUsage: Record<string, any>;
-  fmtTokens: (n: number) => string;
-  setTooltip: (v: { text: string; x: number; y: number } | null | ((prev: { text: string; x: number; y: number } | null) => { text: string; x: number; y: number } | null)) => void;
-  renderDiffLines: (oldStr: string, newStr: string, startLine: number, ctxBefore: any[], ctxAfter: any[], patchText?: string) => ReactNode;
+  sessionUsage: Record<string, SessionUsage>;
+  fmtTokens: (value: number) => string;
+  setTooltip: Dispatch<SetStateAction<TooltipState | null>>;
+  renderDiffLines: (
+    oldStr: string,
+    newStr: string,
+    startLine: number,
+    ctxBefore: CtxLine[],
+    ctxAfter: CtxLine[],
+    patchText?: string
+  ) => ReactNode;
   renderPatchDiff: (text: string, startLine: number) => ReactNode;
   agent: AgentConfig;
 };
 
 export function AgentSession({
-  keyId,
-  events,
+  session,
   lastTime,
   isCollapsed,
   toggleSession,
@@ -37,13 +43,14 @@ export function AgentSession({
   renderPatchDiff,
   agent,
 }: AgentSessionProps) {
-  const e0 = events[0];
+  const { sessionId, transcriptPath, events } = session;
+  const firstEvent = events[0];
   const { Logo } = agent;
 
   return (
     <Collapsible
       open={!isCollapsed}
-      onOpenChange={() => toggleSession(keyId)}
+      onOpenChange={() => toggleSession(sessionId)}
       className="border border-white/[0.06] rounded-lg mb-3 overflow-hidden bg-white/[0.015]"
     >
       <CollapsibleTrigger asChild>
@@ -58,14 +65,14 @@ export function AgentSession({
             <span className={cn('agent-badge', `agent-${agent.badgeClass}`)}>
               <Logo size={12} />
             </span>
-            {highlight(e0.session || shortId(e0.transcript_path), searchQuery)}
+            {highlight(firstEvent.session || shortId(transcriptPath), searchQuery)}
             <span className="text-[#666] text-[0.7rem] ml-[10px]">
               {isCollapsed ? '▼' : '▲'}
             </span>
           </div>
           <div className="text-[0.68rem] text-[#666] text-right whitespace-nowrap inline-flex items-center gap-2">
-            {sessionUsage[keyId] && agent.buildUsageItems && (() => {
-              const u = sessionUsage[keyId];
+            {sessionUsage[sessionId] && agent.buildUsageItems && (() => {
+              const u = sessionUsage[sessionId];
               return (
                 <span className="usage-summary">
                   {agent.buildUsageItems(u, fmtTokens).map(({ cls, label, tip }) => (
@@ -131,9 +138,9 @@ export function AgentSession({
                     {renderDiffLines(
                       e.old_string || '',
                       e.new_string || '',
-                      e.start_line,
-                      e.ctx_before,
-                      e.ctx_after,
+                      e.start_line ?? 0,
+                      e.ctx_before ?? [],
+                      e.ctx_after ?? [],
                       e.command || e.prompt || ''
                     )}
                   </div>
@@ -143,7 +150,7 @@ export function AgentSession({
                   (String(e.prompt).includes('*** Begin Patch') || String(e.command).includes('*** Begin Patch')) && (
                   <div className="eblock eblock-diff mt-2">
                     <strong>{e.path || 'Changes'}</strong>
-                    {renderPatchDiff(e.prompt || e.command, e.start_line || 1)}
+                    {renderPatchDiff(e.prompt || e.command || '', e.start_line || 1)}
                   </div>
                 )}
 
