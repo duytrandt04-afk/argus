@@ -1,16 +1,24 @@
-import { useState, useEffect } from 'react';
-import { Outlet } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { Sidebar } from './Sidebar';
+import { useEffect, useState } from 'react'
+import { Outlet } from 'react-router-dom'
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
+import type { LayoutOutletContext, SessionUsage } from '@/types'
+import { Sidebar } from './Sidebar'
 
 export function Layout() {
   const [collapsed, setCollapsed] = useState(() =>
     localStorage.getItem('sidebar_collapsed') === 'true'
   );
   const [collapsedSessions, setCollapsedSessions] = useState<Set<string>>(new Set());
-  const [sessionUsage, setSessionUsage] = useState<Record<string, any>>({});
-  const [time, setTime] = useState(new Date().toLocaleTimeString());
+  const [sessionUsage, setSessionUsage] = useState<Record<string, SessionUsage>>({});
+  const [time, setTime] = useState(() => new Date().toLocaleTimeString());
+
+  const outletContext: LayoutOutletContext = {
+    collapsedSessions,
+    setCollapsedSessions,
+    sessionUsage,
+    setSessionUsage,
+  };
 
   useEffect(() => {
     localStorage.setItem('sidebar_collapsed', collapsed.toString());
@@ -44,7 +52,7 @@ export function Layout() {
           </div>
           <span>{time}</span>
         </header>
-        <Outlet context={{ collapsedSessions, setCollapsedSessions, sessionUsage, setSessionUsage }} />
+        <Outlet context={outletContext} />
       </div>
     </div>
   );
