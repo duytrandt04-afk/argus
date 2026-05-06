@@ -20,8 +20,8 @@ backend/
     config/
       config.go            ← Config{Addr, DBPath}, LoadConfig() from env/flags
     domain/
-      event.go             ← FileEvent, CtxLine
-      hook.go              ← HookPayload
+      event.go             ← HookEvent, CtxLine, NormalizedEvent
+      hook.go              ← RawPayload (shared hook fields)
     repository/
       repository.go        ← EventRepository interface
       sqlite/
@@ -39,13 +39,15 @@ backend/
       router.go            ← wire handlers → http.Handler
       middleware.go        ← request logging, CORS
     agents/
-      claudecode/          ← unchanged
-      codex/               ← unchanged
+      claudecode/          ← adapter: normalize CC payload → NormalizedEvent
+      codex/               ← adapter: normalize Codex payload → NormalizedEvent
   go.mod
   go.sum
 ```
 
 **SQLite driver:** `modernc.org/sqlite` (pure Go, no CGO). Contributors don't need gcc to build — critical for open source DX.
+
+**Agent adapter pattern:** Each agent package implements a `Normalize(raw []byte) (domain.NormalizedEvent, error)` function. Adding a new agent (Gemini CLI, Qwen Coder, etc.) = one new package, zero schema changes.
 
 ---
 
@@ -55,12 +57,12 @@ backend/
 |-------|---------------|
 | `cmd/server` | Parse config, construct deps, start HTTP server. No business logic. |
 | `config` | Load `Config` from env vars and CLI flags. Single source of truth for runtime config. |
-| `domain` | Pure types only (`FileEvent`, `CtxLine`, `HookPayload`). No dependencies. |
+| `domain` | Pure types only (`HookEvent`, `CtxLine`, `NormalizedEvent`). No dependencies. |
 | `repository` | SQLite reads and writes. Interface + concrete impl. Methods: `Add`, `List`, `SessionModel`, `SetSessionModel`. |
-| `service` | Business logic: dedup, session model cache, 1000-event cap, SSE broadcast, future moderation. Calls repository. |
+| `service` | Business logic: dedup, session model cache, SSE broadcast, future moderation. Calls repository. |
 | `handler` | HTTP layer only. Decode request → call service → encode response. No business logic. |
 | `server` | Assemble mux, apply middleware. |
-| `agents` | Pure parsing functions. No state. Unchanged. |
+| `agents` | One package per agent. Each exports `Normalize(raw []byte) (NormalizedEvent, error)`. No state. |
 
 ---
 
@@ -70,10 +72,11 @@ backend/
 
 ```
 POST /api/hook
-    ↓ handler/hook.go    — decode HookPayload, call service
-    ↓ service            — dedup, resolve model, build FileEvent, persist + broadcast
-    ↓ repository/sqlite  — INSERT into events table
-    ↓ broadcaster        — send FileEvent to all active SSE subscribers
+    ↓ handler/hook.go    — decode raw payload bytes, detect agent (claudecode vs codex)
+    ↓ agents/*/          — Normalize(raw) → NormalizedEvent + raw_payload preserved
+    ↓ service            — dedup via hash, upsert session model, persist + broadcast
+    ↓ repository/sqlite  — INSERT INTO hook_events + UPSERT sessions
+    ↓ broadcaster        — send NormalizedEvent to all active SSE subscribers
 ```
 
 ### SSE stream
@@ -81,7 +84,7 @@ POST /api/hook
 ```
 GET /api/events/stream
     ↓ handler/events.go  — call service.Subscribe(), set SSE headers
-    ↓                    — flush all existing events (initial hydration)
+    ↓                    — flush all existing events (initial hydration, no separate REST call needed)
     ↓                    — stream new events from channel until client disconnects
     ↓                    — on r.Context().Done(): call service.Unsubscribe(), return
 ```
@@ -91,7 +94,7 @@ GET /api/events/stream
 ```
 GET /api/events
     ↓ handler/events.go  — call service.ListEvents()
-    ↓ repository/sqlite  — SELECT * FROM events ORDER BY id DESC LIMIT 1000
+    ↓ repository/sqlite  — SELECT * FROM hook_events ORDER BY id DESC LIMIT 1000
     ↓                    — return JSON array
 ```
 
@@ -99,10 +102,10 @@ GET /api/events
 
 ## SSE Design
 
-- `EventService` holds a `sync.Map` of subscriber channels (`chan domain.FileEvent`)
-- `Subscribe() <-chan domain.FileEvent` — registers channel, returns it
+- `EventService` holds a `sync.Map` of subscriber channels (`chan domain.NormalizedEvent`)
+- `Subscribe() <-chan domain.NormalizedEvent` — registers channel, returns it
 - `Unsubscribe(ch)` — removes and closes channel
-- On SSE connect: send all existing events as individual `data:` lines, then stream new ones
+- On SSE connect: fetch all existing events from repo, send as individual `data:` lines (initial hydration), then stream new ones
 - Frontend replaces `setInterval` polling with `EventSource('http://localhost:8765/api/events/stream')`
 - No extra dependencies — stdlib only
 
@@ -111,38 +114,67 @@ GET /api/events
 ## SQLite Schema
 
 ```sql
-CREATE TABLE IF NOT EXISTS events (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    time        TEXT NOT NULL,
-    action      TEXT NOT NULL,
-    path        TEXT NOT NULL,
-    command     TEXT,
-    session     TEXT,
-    transcript_path TEXT,
-    tool        TEXT,
-    hook_event_name TEXT,
-    turn_id     TEXT,
-    tool_use_id TEXT,
-    source      TEXT,
-    model       TEXT,
-    cwd         TEXT,
-    prompt      TEXT,
-    description TEXT,
-    old_string  TEXT,
-    new_string  TEXT,
-    start_line  INTEGER,
-    ctx_before  TEXT,  -- JSON
-    ctx_after   TEXT,  -- JSON
-    dedup_key   TEXT UNIQUE
+PRAGMA journal_mode = WAL;
+PRAGMA foreign_keys = ON;
+
+-- One row per hook event from any agent
+CREATE TABLE IF NOT EXISTS hook_events (
+    id               INTEGER PRIMARY KEY AUTOINCREMENT,
+    created_at       TEXT    NOT NULL,              -- RFC3339, set by server on receipt
+
+    -- Identity (shared across all agents)
+    agent            TEXT    NOT NULL,              -- 'claudecode' | 'codex' | 'gemini' | ...
+    session_id       TEXT    NOT NULL,
+    hook_event_name  TEXT    NOT NULL,              -- PreToolUse | PostToolUse | SessionStart | ...
+    turn_id          TEXT,
+    tool_use_id      TEXT,
+    tool_name        TEXT,
+    model            TEXT,
+    source           TEXT,
+    cwd              TEXT,
+    transcript_path  TEXT,
+
+    -- Normalized file/tool fields (NULL for non-file events like SessionStart)
+    action           TEXT,                          -- EDIT | BASH | null
+    path             TEXT,
+    command          TEXT,
+    old_string       TEXT,                          -- normalized: old_string (CC) or old_str (Codex)
+    new_string       TEXT,                          -- normalized: new_string (CC) or new_str (Codex)
+    start_line       INTEGER,
+    ctx_before       TEXT    NOT NULL DEFAULT '[]', -- JSON []CtxLine
+    ctx_after        TEXT    NOT NULL DEFAULT '[]', -- JSON []CtxLine
+
+    -- Full original payload — agent-specific fields live here, zero migration for new agents
+    raw_payload      TEXT    NOT NULL,
+
+    dedup_key        TEXT    NOT NULL UNIQUE        -- sha256(session_id+turn_id+tool_use_id+hook_event_name)
 );
 
-CREATE TABLE IF NOT EXISTS session_models (
-    session_id TEXT PRIMARY KEY,
-    model      TEXT NOT NULL
+CREATE INDEX IF NOT EXISTS idx_hook_events_session   ON hook_events(session_id);
+CREATE INDEX IF NOT EXISTS idx_hook_events_agent     ON hook_events(agent);
+CREATE INDEX IF NOT EXISTS idx_hook_events_action    ON hook_events(action);
+CREATE INDEX IF NOT EXISTS idx_hook_events_created   ON hook_events(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_hook_events_hook_name ON hook_events(hook_event_name);
+
+-- Session-level metadata (model cache + session tracking)
+CREATE TABLE IF NOT EXISTS sessions (
+    session_id      TEXT PRIMARY KEY,
+    agent           TEXT NOT NULL,
+    model           TEXT,
+    source          TEXT,
+    cwd             TEXT,
+    transcript_path TEXT,
+    started_at      TEXT NOT NULL,
+    last_seen_at    TEXT NOT NULL
 );
 ```
 
-WAL mode enabled at startup for concurrent read performance.
+**Design decisions:**
+- `ctx_before`/`ctx_after` stored as JSON blobs — never queried, only displayed. No normalization needed.
+- `raw_payload` stores original agent JSON verbatim — access agent-specific fields via `json_extract(raw_payload, '$.permission_mode')` without schema changes.
+- `dedup_key` is a hash — more robust than time-based string concatenation, works across agents with different time precision.
+- `sessions` table replaces in-memory `sessionModel` map — survives restarts.
+- WAL mode for concurrent read performance (many SSE subscribers reading while hook writes).
 
 ---
 
@@ -182,10 +214,20 @@ WAL mode enabled at startup for concurrent read performance.
 
 | Current | Destination |
 |---------|-------------|
-| `main.go` — `hookPayload` | `internal/domain/hook.go` |
+| `main.go` — `hookPayload` | `internal/domain/hook.go` → becomes `RawPayload` (shared fields) |
 | `main.go` — HTTP handlers | `internal/handler/*.go` |
 | `main.go` — `main()` | `cmd/server/main.go` |
-| `internal/events/events.go` — `FileEvent`, `CtxLine` | `internal/domain/event.go` |
+| `main.go` — `firstNonEmpty()` | `internal/agents/` (used during normalization) |
+| `internal/events/events.go` — `FileEvent`, `CtxLine` | `internal/domain/event.go` → becomes `NormalizedEvent`, `CtxLine` |
 | `internal/events/events.go` — `Store` | `internal/service/event_service.go` + `internal/repository/sqlite/` |
-| `internal/events/events.go` — utilities | `internal/service/` or `internal/handler/` as appropriate |
-| `internal/agents/**` | Unchanged, paths stay the same |
+| `internal/events/events.go` — `max()` | Deleted — use Go 1.21 builtin `max()` |
+| `internal/events/events.go` — path utilities | `internal/service/` or agent adapters as appropriate |
+| `internal/agents/claudecode/` | Add `Normalize()` function; existing parsing functions unchanged |
+| `internal/agents/codex/` | Add `Normalize()` function; existing parsing functions unchanged |
+
+## Adding Future Agents
+
+1. Create `internal/agents/<name>/<name>.go`
+2. Implement `Normalize(raw []byte) (domain.NormalizedEvent, error)`
+3. Register in `handler/hook.go` agent-detection switch
+4. No DB migration required
