@@ -17,7 +17,7 @@ Restructure backend from fat `main.go` to layered golang-standards/project-layou
 
 | # | Phase | File | Status |
 |---|-------|------|--------|
-| 1 | Domain Types | [phase-01-domain-types.md](phase-01-domain-types.md) | ⬜ Pending |
+| 1 | Domain Types | [phase-01-domain-types.md](phase-01-domain-types.md) | ✅ Complete |
 | 2 | Config Package | [phase-02-config.md](phase-02-config.md) | ⬜ Pending |
 | 3 | File Utilities | [phase-03-fileutil.md](phase-03-fileutil.md) | ⬜ Pending |
 | 4 | Repo Interface + Dep + Migrations | [phase-04-repository-interface.md](phase-04-repository-interface.md) | ⬜ Pending |
