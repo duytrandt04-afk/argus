@@ -20,8 +20,8 @@ Restructure backend from fat `main.go` to layered golang-standards/project-layou
 | 1 | Domain Types | [phase-01-domain-types.md](phase-01-domain-types.md) | ✅ Complete |
 | 2 | Config Package | [phase-02-config.md](phase-02-config.md) | ✅ Complete |
 | 3 | File Utilities | [phase-03-fileutil.md](phase-03-fileutil.md) | ✅ Complete |
-| 4 | Repo Interface + Dep + Migrations | [phase-04-repository-interface.md](phase-04-repository-interface.md) | ⬜ Pending |
-| 5 | SQLite Repository Implementation | [phase-05-sqlite-impl.md](phase-05-sqlite-impl.md) | ⬜ Pending |
+| 4 | Repo Interface + Dep + Migrations | [phase-04-repository-interface.md](phase-04-repository-interface.md) | ✅ Complete |
+| 5 | SQLite Repository Implementation | [phase-05-sqlite-impl.md](phase-05-sqlite-impl.md) | ✅ Complete |
 | 6 | Service Layer + SSE | [phase-06-service.md](phase-06-service.md) | ⬜ Pending |
 | 7 | Agent Adapters (Normalize) | [phase-07-agent-adapters.md](phase-07-agent-adapters.md) | ⬜ Pending |
 | 8 | HTTP Handlers | [phase-08-handlers.md](phase-08-handlers.md) | ⬜ Pending |
