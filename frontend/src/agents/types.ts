@@ -1,3 +1,5 @@
+import type { ComponentType } from 'react';
+
 export type AgentId = 'claudecode' | 'codex';
 
 export type EventRecord = {
@@ -23,6 +25,7 @@ export type AgentConfig = {
   id: AgentId;
   label: string;
   badgeClass: string;
+  Logo: ComponentType<{ size?: number }>;
   supportsSessionUsage: boolean;
   matchesEvent: (event: EventRecord) => boolean;
   buildUsageItems?: (
