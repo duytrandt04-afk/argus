@@ -20,7 +20,7 @@ interface NavItem {
   end: boolean
 }
 
-const NAV_ITEMS: readonly NavItem[] = [
+const NAV_ITEMS: NavItem[] = [
   {
     to: '/',
     label: 'Events',
@@ -42,38 +42,36 @@ const NAV_ITEMS: readonly NavItem[] = [
     icon: BarChart3,
     end: false,
   },
-] as const
+]
 
 export function Sidebar({ collapsed }: SidebarProps) {
   return (
     <aside
       className={cn(
         'flex h-full shrink-0 flex-col overflow-hidden border-r border-[#333] bg-[#0c0c0c] transition-all duration-300',
-        collapsed ? 'w-[4.5rem] px-2 py-4' : 'w-64 px-4 py-5'
+        collapsed ? 'px-2 py-4' : 'px-4 py-5'
       )}
     >
-      <div className={cn('flex flex-col', collapsed ? 'items-center gap-4' : 'gap-5')}>
-        <div
-          className={cn(
-            'flex min-h-14 items-center border border-[#333] bg-[rgba(255,255,255,0.02)]',
-            collapsed ? 'w-full justify-center rounded-xl px-0' : 'rounded-xl px-3 py-3'
-          )}
-        >
-          {collapsed ? (
-            <span className="text-sm font-semibold uppercase tracking-[0.18em] text-white">
-              AM
+      <div
+        className={cn(
+          'flex min-h-14 items-center border border-[#333] bg-[rgba(255,255,255,0.02)]',
+          collapsed ? 'w-full justify-center rounded-xl px-0' : 'rounded-xl px-3 py-3'
+        )}
+      >
+        {collapsed ? (
+          <span className="text-sm font-semibold uppercase tracking-[0.18em] text-white">
+            AM
+          </span>
+        ) : (
+          <div className="flex flex-col gap-1">
+            <span className="text-[0.68rem] uppercase tracking-[0.22em] text-[#8f8f8f]">
+              Agent
             </span>
-          ) : (
-            <div className="flex flex-col gap-1">
-              <span className="text-[0.68rem] uppercase tracking-[0.22em] text-[#8f8f8f]">
-                Agent
-              </span>
-              <span className="text-sm font-semibold uppercase tracking-[0.12em] text-white">
-                Monitor
-              </span>
-            </div>
-          )}
-        </div>
+            <span className="text-sm font-semibold uppercase tracking-[0.12em] text-white">
+              Monitor
+            </span>
+          </div>
+        )}
       </div>
       <nav className={cn('mt-5 flex flex-col gap-2', collapsed && 'items-center')}>
         {NAV_ITEMS.map(({ to, label, ariaLabel, icon: Icon, end }) => (
