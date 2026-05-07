@@ -1,3 +1,4 @@
+import { type Key } from 'react'
 import { BarChart3, LayoutDashboard, TerminalSquare, type LucideIcon } from 'lucide-react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
@@ -55,11 +56,11 @@ export function Sidebar({ collapsed }: SidebarProps) {
         : 'border-transparent hover:border-[rgba(71,255,156,0.18)] hover:bg-[rgba(71,255,156,0.1)] hover:text-[#cccccc]'
     )
 
-  const renderNavButton = ({ to, label, ariaLabel, icon: Icon, end }: NavItem) => {
+  const renderNavButton = ({ to, label, ariaLabel, icon: Icon, end }: NavItem, key?: Key) => {
     const isActive = isNavItemActive(to, end)
 
     return (
-      <Button asChild variant="ghost" className={navButtonClassName(isActive)}>
+      <Button key={key} asChild variant="ghost" className={navButtonClassName(isActive)}>
         <NavLink to={to} end={end} aria-label={ariaLabel}>
           <Icon className="size-4 shrink-0" />
           {collapsed ? <span className="sr-only">{ariaLabel}</span> : <span>{label}</span>}
@@ -105,7 +106,7 @@ export function Sidebar({ collapsed }: SidebarProps) {
                 </TooltipContent>
               </Tooltip>
             ) : (
-              <div key={item.to}>{button}</div>
+              renderNavButton(item, item.to)
             )
           })}
         </nav>
