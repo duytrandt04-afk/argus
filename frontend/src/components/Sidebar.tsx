@@ -4,7 +4,7 @@ import {
   TerminalSquare,
   type LucideIcon,
 } from 'lucide-react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -45,6 +45,10 @@ const NAV_ITEMS: NavItem[] = [
 ]
 
 export function Sidebar({ collapsed }: SidebarProps) {
+  const location = useLocation()
+  const isNavItemActive = (to: string, end: boolean) =>
+    end ? location.pathname === to : location.pathname.startsWith(to)
+
   return (
     <aside
       className={cn(
@@ -74,27 +78,30 @@ export function Sidebar({ collapsed }: SidebarProps) {
         )}
       </div>
       <nav className={cn('mt-5 flex flex-col gap-2', collapsed && 'items-center')}>
-        {NAV_ITEMS.map(({ to, label, ariaLabel, icon: Icon, end }) => (
-          <NavLink key={to} to={to} end={end}>
-            {({ isActive }) => (
-              <Button
-                variant="ghost"
-                aria-label={ariaLabel}
-                className={cn(
-                  'h-auto border border-transparent text-[#cccccc] text-[0.8rem] font-normal',
-                  collapsed
-                    ? 'size-10 justify-center rounded-xl px-0'
-                    : 'w-full justify-start rounded-lg px-3 py-[11px]',
-                  'hover:bg-[rgba(71,255,156,0.1)] hover:border-[rgba(71,255,156,0.18)] hover:text-[#cccccc]',
-                  isActive && 'bg-[rgba(71,255,156,0.1)] border-[rgba(71,255,156,0.18)]'
-                )}
-              >
+        {NAV_ITEMS.map(({ to, label, ariaLabel, icon: Icon, end }) => {
+          const isActive = isNavItemActive(to, end)
+
+          return (
+            <Button
+              key={to}
+              asChild
+              variant="ghost"
+              className={cn(
+                'h-auto border border-transparent text-[#cccccc] text-[0.8rem] font-normal',
+                collapsed
+                  ? 'size-10 justify-center rounded-xl px-0'
+                  : 'w-full justify-start rounded-lg px-3 py-[11px]',
+                'hover:bg-[rgba(71,255,156,0.1)] hover:border-[rgba(71,255,156,0.18)] hover:text-[#cccccc]',
+                isActive && 'bg-[rgba(71,255,156,0.1)] border-[rgba(71,255,156,0.18)]'
+              )}
+            >
+              <NavLink to={to} end={end} aria-label={ariaLabel}>
                 <Icon className="size-4 shrink-0" />
                 {collapsed ? <span className="sr-only">{ariaLabel}</span> : <span>{label}</span>}
-              </Button>
-            )}
-          </NavLink>
-        ))}
+              </NavLink>
+            </Button>
+          )
+        })}
       </nav>
     </aside>
   )
