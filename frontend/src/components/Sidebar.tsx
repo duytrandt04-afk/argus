@@ -8,6 +8,7 @@ interface SidebarProps {
 
 const NAV_ITEMS = [
   { to: '/', label: 'Terminal Events', end: true },
+  { to: '/dashboard', label: 'Overview Dashboard', end: false },
   { to: '/usage', label: 'API Usage Tracker', end: false },
 ] as const
 
