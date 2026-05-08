@@ -1,15 +1,17 @@
 import { Fragment, useEffect, type RefObject } from 'react'
-import { BarChart3, LayoutDashboard, TerminalSquare, type LucideIcon } from 'lucide-react'
+import { BarChart3, LayoutDashboard, TerminalSquare, X, type LucideIcon } from 'lucide-react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 
 interface SidebarProps {
+  id?: string
   collapsed: boolean
   mode?: 'desktop' | 'mobile'
   open?: boolean
   onNavigate?: () => void
+  onClose?: () => void
   className?: string
   containerRef?: RefObject<HTMLElement | null>
 }
@@ -47,10 +49,12 @@ const NAV_ITEMS: NavItem[] = [
 ]
 
 export function Sidebar({
+  id,
   collapsed,
   mode = 'desktop',
   open = false,
   onNavigate,
+  onClose,
   className,
   containerRef,
 }: SidebarProps) {
@@ -98,6 +102,7 @@ export function Sidebar({
 
   return (
     <aside
+      id={id}
       ref={containerRef}
       className={cn(
         'flex h-full shrink-0 flex-col overflow-hidden border-r border-[#333] bg-[#0c0c0c] transition-all duration-300 shell-motion',
@@ -124,11 +129,25 @@ export function Sidebar({
         {collapsed ? (
           <span className="text-sm font-semibold uppercase tracking-[0.18em] text-white">AM</span>
         ) : (
-          <div className="flex flex-col gap-1">
-            <span className="text-[0.68rem] uppercase tracking-[0.22em] text-[#8f8f8f]">Agent</span>
-            <span className="text-sm font-semibold uppercase tracking-[0.12em] text-white">
-              Monitor
-            </span>
+          <div className="flex w-full items-center justify-between gap-3">
+            <div className="flex flex-col gap-1">
+              <span className="text-[0.68rem] uppercase tracking-[0.22em] text-[#8f8f8f]">Agent</span>
+              <span className="text-sm font-semibold uppercase tracking-[0.12em] text-white">
+                Monitor
+              </span>
+            </div>
+            {isMobile ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-lg"
+                className="shrink-0 text-muted-foreground hover:text-foreground"
+                onClick={() => onClose?.()}
+                aria-label="Close sidebar"
+              >
+                <X className="size-4" />
+              </Button>
+            ) : null}
           </div>
         )}
       </div>

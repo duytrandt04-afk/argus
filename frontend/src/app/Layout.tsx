@@ -10,6 +10,8 @@ import { Sidebar } from './Sidebar'
 const COLLAPSED_SESSIONS_STORAGE_KEY = 'events_collapsed_sessions'
 const FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+const MOBILE_SIDEBAR_ID = 'mobile-sidebar'
+const DESKTOP_MEDIA_QUERY = '(min-width: 768px)'
 
 function loadCollapsedSessions(): Set<string> {
   try {
@@ -30,12 +32,15 @@ export function Layout() {
   const [collapsedSessions, setCollapsedSessions] = useState<Set<string>>(loadCollapsedSessions)
   const [time, setTime] = useState(() => new Date().toLocaleTimeString())
   const location = useLocation()
+  const [isDesktopViewport, setIsDesktopViewport] = useState(
+    () => window.matchMedia(DESKTOP_MEDIA_QUERY).matches
+  )
   const mobileToggleRef = useRef<HTMLButtonElement | null>(null)
   const mobileSidebarRef = useRef<HTMLElement | null>(null)
   const shellContentRef = useRef<HTMLDivElement | null>(null)
   const lastFocusedElementRef = useRef<HTMLElement | null>(null)
   const { sessions } = useSessions()
-  const mobileOpen = mobileDrawerLocationKey === location.key
+  const mobileOpen = !isDesktopViewport && mobileDrawerLocationKey === location.key
   const sessionUsage = useMemo(
     () =>
       sessions.reduce<Record<string, (typeof sessions)[number]['usage']>>((acc, session) => {
@@ -68,14 +73,28 @@ export function Layout() {
   }, [])
 
   useEffect(() => {
+    const mediaQuery = window.matchMedia(DESKTOP_MEDIA_QUERY)
+    const handleViewportChange = (event: MediaQueryListEvent) => {
+      if (event.matches) {
+        setMobileDrawerLocationKey(null)
+      }
+
+      setIsDesktopViewport(event.matches)
+    }
+
+    mediaQuery.addEventListener('change', handleViewportChange)
+    return () => mediaQuery.removeEventListener('change', handleViewportChange)
+  }, [])
+
+  useEffect(() => {
     const shellContent = shellContentRef.current
     if (!shellContent) return
 
     if (mobileOpen) {
       const fallbackToggle = mobileToggleRef.current
-      shellContent.setAttribute('inert', '')
       lastFocusedElementRef.current =
         document.activeElement instanceof HTMLElement ? document.activeElement : null
+      shellContent.setAttribute('inert', '')
 
       const focusFrame = requestAnimationFrame(() => {
         const focusableElements = Array.from(
@@ -162,10 +181,12 @@ export function Layout() {
       />
 
       <Sidebar
+        id={MOBILE_SIDEBAR_ID}
         collapsed={false}
         mode="mobile"
         open={mobileOpen}
         onNavigate={() => setMobileDrawerLocationKey(null)}
+        onClose={() => setMobileDrawerLocationKey(null)}
         containerRef={mobileSidebarRef}
         className="fixed inset-y-0 left-0 z-50 flex w-[264px] max-w-[calc(100vw-2rem)] md:hidden"
       />
@@ -184,6 +205,8 @@ export function Layout() {
               className="md:hidden"
               onClick={() => setMobileDrawerLocationKey(location.key)}
               aria-label="Open sidebar"
+              aria-controls={MOBILE_SIDEBAR_ID}
+              aria-expanded={mobileOpen}
             >
               <PanelLeft className="size-4" />
             </Button>
