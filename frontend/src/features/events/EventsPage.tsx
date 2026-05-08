@@ -57,7 +57,7 @@ export function EventsPage() {
         setCustomEnd={setCustomEnd}
       />
 
-      <div className="flex-1 p-5 overflow-y-auto min-h-0 relative">
+      <div className="relative min-h-0 flex-1 overflow-y-auto p-3 sm:p-4 lg:p-5">
         {error && (
           <Alert variant="destructive" className="mb-4 bg-red-950/50 border-red-900">
             <AlertTitle>Connection Error</AlertTitle>

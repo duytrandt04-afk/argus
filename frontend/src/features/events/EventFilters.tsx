@@ -38,11 +38,11 @@ export function EventFilters({
   setCustomEnd,
 }: EventFiltersProps) {
   return (
-    <div className="flex gap-5 items-center px-4 py-[10px] bg-[#111] border-b border-[#333] flex-wrap">
-      <div className="flex items-center gap-2">
+    <div className="flex flex-col gap-3 border-b border-[#333] bg-[#111] px-4 py-[10px] sm:flex-row sm:flex-wrap sm:items-center sm:gap-5">
+      <div className="flex w-full items-center gap-2 sm:w-auto">
         <span className="text-[0.7rem] uppercase text-[#666]">Action</span>
         <Select value={actionFilter} onValueChange={setActionFilter}>
-          <SelectTrigger className="h-auto py-1 px-2 text-[0.8rem] bg-black border-[#333] text-[#cccccc] w-[100px] focus:ring-0 focus:ring-offset-0">
+          <SelectTrigger className="h-auto w-full px-2 py-1 text-[0.8rem] bg-black border-[#333] text-[#cccccc] sm:w-[100px] focus:ring-0 focus:ring-offset-0">
             <SelectValue />
           </SelectTrigger>
           <SelectContent className="bg-[#111] border-[#333] text-[#cccccc]">
@@ -71,20 +71,20 @@ export function EventFilters({
         </Select>
       </div>
 
-      <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+      <div className="flex w-full min-w-0 items-center gap-2 sm:min-w-[220px] sm:flex-1">
         <span className="text-[0.7rem] uppercase text-[#666]">Search</span>
         <Input
-          className="h-auto py-1 px-2 text-[0.8rem] bg-black border-[#333] text-[#cccccc] placeholder:text-[#666] focus-visible:ring-0 focus-visible:ring-offset-0"
+          className="h-auto w-full px-2 py-1 text-[0.8rem] bg-black border-[#333] text-[#cccccc] placeholder:text-[#666] focus-visible:ring-0 focus-visible:ring-offset-0"
           placeholder="Filter by path, prompt, or session ID..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex w-full items-center gap-2 sm:w-auto">
         <span className="text-[0.7rem] uppercase text-[#666]">Sort</span>
         <Select value={sortOrder} onValueChange={setSortOrder}>
-          <SelectTrigger className="h-auto py-1 px-2 text-[0.8rem] bg-black border-[#333] text-[#cccccc] w-[110px] focus:ring-0 focus:ring-offset-0">
+          <SelectTrigger className="h-auto w-full px-2 py-1 text-[0.8rem] bg-black border-[#333] text-[#cccccc] sm:w-[110px] focus:ring-0 focus:ring-offset-0">
             <SelectValue />
           </SelectTrigger>
           <SelectContent className="bg-[#111] border-[#333] text-[#cccccc]">
@@ -96,10 +96,10 @@ export function EventFilters({
         </Select>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex w-full items-center gap-2 sm:w-auto">
         <span className="text-[0.7rem] uppercase text-[#666]">Time</span>
         <Select value={timeRange} onValueChange={setTimeRange}>
-          <SelectTrigger className="h-auto py-1 px-2 text-[0.8rem] bg-black border-[#333] text-[#cccccc] w-[160px] focus:ring-0 focus:ring-offset-0">
+          <SelectTrigger className="h-auto w-full px-2 py-1 text-[0.8rem] bg-black border-[#333] text-[#cccccc] sm:w-[160px] focus:ring-0 focus:ring-offset-0">
             <SelectValue />
           </SelectTrigger>
           <SelectContent className="bg-[#111] border-[#333] text-[#cccccc]">
@@ -119,19 +119,19 @@ export function EventFilters({
 
       {timeRange === 'custom' && (
         <>
-          <div className="flex items-center gap-2">
+          <div className="flex w-full items-center gap-2 sm:w-auto">
             <span className="text-[0.7rem] uppercase text-[#666]">Start</span>
             <Input
-              className="h-auto py-1 px-2 text-[0.8rem] bg-black border-[#333] text-[#cccccc] placeholder:text-[#666] focus-visible:ring-0 w-[160px]"
+              className="h-auto w-full px-2 py-1 text-[0.8rem] bg-black border-[#333] text-[#cccccc] placeholder:text-[#666] focus-visible:ring-0 sm:w-[160px]"
               placeholder="2026-05-05 10:00:00"
               value={customStart}
               onChange={(e) => setCustomStart(e.target.value)}
             />
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex w-full items-center gap-2 sm:w-auto">
             <span className="text-[0.7rem] uppercase text-[#666]">End</span>
             <Input
-              className="h-auto py-1 px-2 text-[0.8rem] bg-black border-[#333] text-[#cccccc] placeholder:text-[#666] focus-visible:ring-0 w-[160px]"
+              className="h-auto w-full px-2 py-1 text-[0.8rem] bg-black border-[#333] text-[#cccccc] placeholder:text-[#666] focus-visible:ring-0 sm:w-[160px]"
               placeholder="2026-05-05 12:00:00"
               value={customEnd}
               onChange={(e) => setCustomEnd(e.target.value)}
