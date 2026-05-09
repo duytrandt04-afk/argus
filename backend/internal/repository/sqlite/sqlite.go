@@ -251,14 +251,14 @@ func (d *DB) GetDashboardStats(since, until string) (*domain.DashboardStats, err
 	var eventArgs []any
 	var sessionArgs []any
 	if since != "" {
-		eventClauses = append(eventClauses, "created_at >= ?")
-		sessionClauses = append(sessionClauses, "started_at >= ?")
+		eventClauses = append(eventClauses, "datetime(created_at) >= datetime(?)")
+		sessionClauses = append(sessionClauses, "datetime(started_at) >= datetime(?)")
 		eventArgs = append(eventArgs, since)
 		sessionArgs = append(sessionArgs, since)
 	}
 	if until != "" {
-		eventClauses = append(eventClauses, "created_at <= ?")
-		sessionClauses = append(sessionClauses, "started_at <= ?")
+		eventClauses = append(eventClauses, "datetime(created_at) <= datetime(?)")
+		sessionClauses = append(sessionClauses, "datetime(started_at) <= datetime(?)")
 		eventArgs = append(eventArgs, until)
 		sessionArgs = append(sessionArgs, until)
 	}

@@ -27,8 +27,18 @@ Hook delivery fails if backend not running.
 
 ```bash
 cd backend
-go run main.go
+go run ./cmd/server/main.go
 ```
+
+Use `DB_PATH` if you want to pin a specific database file:
+
+```bash
+# Use your own DB file
+cd backend
+DB_PATH=/absolute/path/to/my.db go run ./cmd/server/main.go
+```
+
+Without `DB_PATH`, backend always uses `hooker.db` in the current working directory.
 
 ### 2. Codex setup (recommended)
 
@@ -217,7 +227,7 @@ Minimal `~/.claude/settings.json` hook forwarding example:
 **1. Backend (Go)**
 ```bash
 cd backend
-go run main.go
+go run ./cmd/server/main.go
 
 # Development commands:
 # go test ./...

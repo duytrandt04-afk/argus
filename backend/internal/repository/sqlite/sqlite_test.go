@@ -196,3 +196,40 @@ func TestList_respectsLimit(t *testing.T) {
 		t.Errorf("got %d events, want 3", len(events))
 	}
 }
+
+func TestGetDashboardStats_filtersEventsAcrossTimezoneOffsets(t *testing.T) {
+	db := newTestDB(t)
+
+	usage := domain.SessionUsage{
+		InputTokens:         10,
+		OutputTokens:        2,
+		CacheCreationTokens: 0,
+		CacheReadTokens:     0,
+		Turns:               1,
+	}
+	if err := db.UpsertSession("sess1", "codex", "gpt-5.4", "startup", "/cwd", "/transcript", usage); err != nil {
+		t.Fatalf("UpsertSession: %v", err)
+	}
+
+	e := domain.NormalizedEvent{
+		Time:          "2026-05-09T23:50:00+07:00",
+		Agent:         "codex",
+		Session:       "sess1",
+		HookEventName: "PostToolUse",
+		TurnID:        "turn1",
+		ToolUseID:     "tool1",
+		Action:        "BASH",
+		RawPayload:    []byte(`{}`),
+	}
+	if err := db.Add(e); err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+
+	stats, err := db.GetDashboardStats("2026-04-25T17:00:00.000Z", "2026-05-09T16:59:59.999Z")
+	if err != nil {
+		t.Fatalf("GetDashboardStats: %v", err)
+	}
+	if stats.TotalEvents != 1 {
+		t.Fatalf("TotalEvents = %d, want 1", stats.TotalEvents)
+	}
+}

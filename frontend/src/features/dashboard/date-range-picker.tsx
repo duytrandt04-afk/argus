@@ -1,24 +1,12 @@
 import { CalendarIcon, ChevronDownIcon } from 'lucide-react'
-import {
-  endOfDay,
-  format,
-  isBefore,
-  isSameDay,
-  startOfDay,
-  startOfMonth,
-  startOfWeek,
-  subDays,
-} from 'date-fns'
+import { isBefore, isSameDay } from 'date-fns'
 import type { DateRange } from 'react-day-picker'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { cn } from '@/lib/utils'
-
-const PRESETS = ['wtd', 'mtd', '7d', '14d', '30d'] as const
-
-export type DashboardRangePreset = (typeof PRESETS)[number] | 'custom'
+import { formatRangeLabel, PRESETS, type DashboardRangePreset } from './date-range'
 
 type DashboardDateRangePickerProps = {
   value: DateRange
@@ -38,7 +26,11 @@ export function DashboardDateRangePicker({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="w-full justify-between sm:w-auto sm:min-w-[240px]">
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full justify-between sm:w-auto sm:min-w-[240px]"
+        >
           <span className="flex items-center gap-2">
             <CalendarIcon data-icon="inline-start" />
             {label}
@@ -107,48 +99,6 @@ export function DashboardDateRangePicker({
       </PopoverContent>
     </Popover>
   )
-}
-
-export function presetToDateRange(preset: Exclude<DashboardRangePreset, 'custom'>): DateRange {
-  const now = new Date()
-
-  switch (preset) {
-    case 'wtd':
-      return { from: startOfWeek(now, { weekStartsOn: 0 }), to: now }
-    case 'mtd':
-      return { from: startOfMonth(now), to: now }
-    case '7d':
-      return { from: subDays(now, 6), to: now }
-    case '14d':
-      return { from: subDays(now, 13), to: now }
-    case '30d':
-      return { from: subDays(now, 29), to: now }
-  }
-}
-
-export function formatRangeLabel(range: DateRange) {
-  if (!range.from) return 'Select date range'
-  if (!range.to) return format(range.from, 'MM/dd/yy')
-  return `${format(range.from, 'MM/dd/yy')} - ${format(range.to, 'MM/dd/yy')}`
-}
-
-export function rangeToDashboardQuery(range: DateRange) {
-  if (!range.from) return ''
-  const start = startOfDay(range.from).toISOString()
-  const end = endOfDay(range.to ?? range.from).toISOString()
-  const params = new URLSearchParams({ start, end })
-  return params.toString()
-}
-
-export function rangeToUsageRange(range: DateRange) {
-  if (!range.from) return '7d'
-  const end = range.to ?? range.from
-  const spanMs = endOfDay(end).getTime() - startOfDay(range.from).getTime()
-  const spanDays = Math.max(1, Math.ceil(spanMs / (24 * 60 * 60 * 1000)))
-  if (spanDays <= 1) return '24h'
-  if (spanDays <= 7) return '7d'
-  if (spanDays <= 30) return '30d'
-  return 'all'
 }
 
 function presetLabel(value: Exclude<DashboardRangePreset, 'custom'>) {

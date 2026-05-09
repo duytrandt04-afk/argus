@@ -1,17 +1,46 @@
+import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Layout } from './app/Layout'
-import { Dashboard } from './pages/Dashboard'
-import { EventsPage as Events } from './features/events/EventsPage'
-import { UsagePage as Usage } from './features/usage/UsagePage'
+
+const Dashboard = lazy(() =>
+  import('./pages/Dashboard').then((module) => ({ default: module.Dashboard }))
+)
+const Events = lazy(() =>
+  import('./features/events/EventsPage').then((module) => ({ default: module.EventsPage }))
+)
+const Usage = lazy(() =>
+  import('./features/usage/UsagePage').then((module) => ({ default: module.UsagePage }))
+)
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Layout />}>
-          <Route index element={<Events />} />
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="usage" element={<Usage />} />
+          <Route
+            index
+            element={
+              <Suspense fallback={null}>
+                <Events />
+              </Suspense>
+            }
+          />
+          <Route
+            path="dashboard"
+            element={
+              <Suspense fallback={null}>
+                <Dashboard />
+              </Suspense>
+            }
+          />
+          <Route
+            path="usage"
+            element={
+              <Suspense fallback={null}>
+                <Usage />
+              </Suspense>
+            }
+          />
         </Route>
       </Routes>
     </BrowserRouter>

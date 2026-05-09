@@ -100,8 +100,8 @@ export function UsagePanel({ title = 'OpenAI Usage', dashboardRange = '7d' }: Us
           <div className="max-w-[400px]">
             <p className="mb-2 font-medium">Admin API Key Required</p>
             <p className="text-sm">
-              Enter your {isOpenAI ? 'OpenAI' : 'Anthropic'} Admin API key to view usage
-              statistics. This key is stored locally in your browser.
+              Enter your {isOpenAI ? 'OpenAI' : 'Anthropic'} Admin API key to view usage statistics.
+              This key is stored locally in your browser.
             </p>
           </div>
         </div>

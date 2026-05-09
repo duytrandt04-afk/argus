@@ -218,9 +218,6 @@ export function Layout() {
             >
               <PanelLeft className="size-4" />
             </Button>
-            <span className="hidden text-[0.65rem] font-medium tracking-[0.08em] text-[#555] md:inline">
-              hooker
-            </span>
           </div>
           <span className="tabular-nums text-[#555]">
             {now.toLocaleDateString()} {now.toLocaleTimeString()}

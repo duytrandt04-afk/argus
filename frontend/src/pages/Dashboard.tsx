@@ -8,12 +8,12 @@ import { DashboardSkeleton } from '@/features/dashboard/DashboardSkeleton'
 import { SummaryStats } from '@/features/dashboard/SummaryStats'
 import { TokenUsagePanel } from '@/features/dashboard/TokenUsagePanel'
 import {
-  DashboardDateRangePicker,
   presetToDateRange,
   rangeToDashboardQuery,
   rangeToUsageRange,
   type DashboardRangePreset,
-} from '@/features/dashboard/date-range-picker'
+} from '@/features/dashboard/date-range'
+import { DashboardDateRangePicker } from '@/features/dashboard/date-range-picker'
 import { UsagePanel } from '@/features/usage/UsagePanel'
 import { useDashboardStats } from '@/features/dashboard/hooks/useDashboardStats'
 import { cn } from '@/lib/utils'

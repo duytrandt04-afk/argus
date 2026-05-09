@@ -1,5 +1,6 @@
 import { Fragment, useEffect, type RefObject } from 'react'
 import {
+  FishingHook,
   LayoutDashboard,
   PanelLeft,
   TerminalSquare,
@@ -82,9 +83,7 @@ export function Sidebar({
   const desktopToggleLabel = collapsed ? 'Expand sidebar' : 'Collapse sidebar'
   const desktopToggleButtonClassName = cn(
     'h-9 gap-0 border border-transparent text-[0.8rem] font-normal text-[#666] shadow-none transition-colors duration-200 hover:bg-white/[0.06] hover:text-[#aaa]',
-    collapsed
-      ? 'size-9 justify-center rounded-lg px-0'
-      : 'size-9 justify-center rounded-lg px-0'
+    collapsed ? 'size-9 justify-center rounded-lg px-0' : 'size-9 justify-center rounded-lg px-0'
   )
 
   const renderNavButton = ({ to, label, ariaLabel, icon: Icon, end }: NavItem) => {
@@ -147,8 +146,8 @@ export function Sidebar({
         <div className="flex min-h-12 items-center px-2 py-2">
           <div className="flex w-full items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">
-              <div className="flex size-6 items-center justify-center rounded-md bg-[rgba(255,255,255,0.12)]">
-                <TerminalSquare className="size-3.5 text-[#d8d8d8]" />
+              <div className="flex size-6 items-center justify-center">
+                <FishingHook className="size-3.5 text-[#9a9a9a]" />
               </div>
               <span className="text-[0.78rem] font-semibold tracking-[0.04em] text-[#ccc]">
                 hooker
@@ -181,8 +180,8 @@ export function Sidebar({
             )}
             style={{ transition: 'opacity 180ms ease, width 240ms cubic-bezier(0.22,1,0.36,1)' }}
           >
-            <div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-[rgba(255,255,255,0.12)]">
-              <TerminalSquare className="size-3.5 text-[#d8d8d8]" />
+            <div className="flex size-6 shrink-0 items-center justify-center">
+              <FishingHook className="size-3.5 text-[#9a9a9a]" />
             </div>
             <span className="sidebar-label-motion sidebar-label-open whitespace-nowrap text-[0.78rem] font-semibold tracking-[0.04em] text-[#ccc]">
               hooker

@@ -339,7 +339,8 @@ export function useOpenAIUsage(
         0
       const tokenCount =
         bucket.results?.reduce(
-          (sum, result) => sum + Number(result.input_tokens || 0) + Number(result.output_tokens || 0),
+          (sum, result) =>
+            sum + Number(result.input_tokens || 0) + Number(result.output_tokens || 0),
           0
         ) ?? 0
 
@@ -352,7 +353,6 @@ export function useOpenAIUsage(
         models: {},
       })
     })
-
     ;(modData.data ?? []).forEach((bucket) => {
       const date = usageDateFromUnix(bucket.start_time)
       const dayEntry = dailyMap.get(date) ?? makeDailyPoint(date)
@@ -365,7 +365,6 @@ export function useOpenAIUsage(
         dayEntry.models[result.model] = (dayEntry.models[result.model] || 0) + count
       })
     })
-
     ;(keyData.data ?? []).forEach((bucket) => {
       bucket.results?.forEach((result) => {
         if (!result.api_key_id) return
@@ -386,7 +385,11 @@ export function useOpenAIUsage(
     }
     setStatsCacheKey(usageCacheKey(provider, range))
     setStats(result)
-    cacheUsageResult(new Date(start * 1000).toISOString(), new Date(end * 1000).toISOString(), result)
+    cacheUsageResult(
+      new Date(start * 1000).toISOString(),
+      new Date(end * 1000).toISOString(),
+      result
+    )
   }
 
   const fetchAnthropicUsage = async (key: string) => {
@@ -426,7 +429,6 @@ export function useOpenAIUsage(
         models: {},
       })
     })
-
     ;(modelData.data ?? []).forEach((bucket) => {
       const date = usageDateFromRFC3339(bucket.starting_at)
       const dayEntry = dailyMap.get(date) ?? makeDailyPoint(date)
@@ -439,7 +441,6 @@ export function useOpenAIUsage(
         dayEntry.models[result.model] = (dayEntry.models[result.model] || 0) + count
       })
     })
-
     ;(keyData.data ?? []).forEach((bucket) => {
       bucket.results?.forEach((result) => {
         if (!result.api_key_id) return
