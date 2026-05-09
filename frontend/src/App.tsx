@@ -1,7 +1,8 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { Layout } from './components/Layout'
-import { Events } from './pages/Events'
-import { Usage } from './pages/Usage'
+import { Layout } from './app/Layout'
+import { Dashboard } from './pages/Dashboard'
+import { EventsPage as Events } from './features/events/EventsPage'
+import { UsagePage as Usage } from './features/usage/UsagePage'
 
 export default function App() {
   return (
@@ -9,6 +10,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<Events />} />
+          <Route path="dashboard" element={<Dashboard />} />
           <Route path="usage" element={<Usage />} />
         </Route>
       </Routes>

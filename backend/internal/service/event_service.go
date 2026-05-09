@@ -1,9 +1,13 @@
 package service
 
 import (
+	"slices"
+	"strings"
 	"sync"
 	"time"
 
+	"agent-monitor/internal/agents/claudecode"
+	"agent-monitor/internal/agents/codex"
 	"agent-monitor/internal/domain"
 	"agent-monitor/internal/repository"
 )
@@ -25,7 +29,13 @@ func (s *EventService) AddEvent(e domain.NormalizedEvent) error {
 		return err
 	}
 	if e.Session != "" {
-		if err := s.repo.UpsertSession(e.Session, e.Agent, e.Model, e.Source, e.CWD, e.TranscriptPath); err != nil {
+		var usage domain.SessionUsage
+		if e.Agent == "claudecode" {
+			usage = claudecode.ComputeUsage(e.TranscriptPath)
+		} else {
+			usage = codex.ComputeUsage(e.TranscriptPath)
+		}
+		if err := s.repo.UpsertSession(e.Session, e.Agent, e.Model, e.Source, e.CWD, e.TranscriptPath, usage); err != nil {
 			return err
 		}
 	}
@@ -39,6 +49,207 @@ func (s *EventService) ListEvents(limit int) ([]domain.NormalizedEvent, error) {
 
 func (s *EventService) SessionModel(sessionID string) (string, error) {
 	return s.repo.SessionModel(sessionID)
+}
+
+func (s *EventService) ListSessions() ([]domain.Session, error) {
+	sessions, err := s.repo.ListSessions()
+	if err != nil {
+		return nil, err
+	}
+	if err := s.backfillSessionUsage(sessions); err != nil {
+		return nil, err
+	}
+	return sessions, nil
+}
+
+func (s *EventService) GetDashboardStats(since string) (*domain.DashboardStats, error) {
+	sessions, err := s.repo.ListSessions()
+	if err != nil {
+		return nil, err
+	}
+	if err := s.backfillSessionUsage(sessions); err != nil {
+		return nil, err
+	}
+	stats, err := s.repo.GetDashboardStats(since)
+	if err != nil {
+		return nil, err
+	}
+	if stats == nil {
+		stats = &domain.DashboardStats{
+			Timeline:     []domain.TimelineBucket{},
+			TopActions:   []domain.ActionCount{},
+			AgentUsage:   []domain.AgentModelUsage{},
+			SessionUsage: []domain.DashboardSessionUsage{},
+		}
+	}
+	enrichDashboardStats(stats, sessions, since)
+	return stats, nil
+}
+
+func (s *EventService) backfillSessionUsage(sessions []domain.Session) error {
+	for i := range sessions {
+		if hasUsage(sessions[i].Usage) || sessions[i].TranscriptPath == "" {
+			continue
+		}
+		usage := computeUsage(sessions[i].Agent, sessions[i].TranscriptPath)
+		if !hasUsage(usage) {
+			continue
+		}
+		sessions[i].Usage = usage
+		if err := s.repo.UpsertSession(
+			sessions[i].SessionID,
+			sessions[i].Agent,
+			sessions[i].Model,
+			sessions[i].Source,
+			sessions[i].CWD,
+			sessions[i].TranscriptPath,
+			usage,
+		); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func computeUsage(agent, transcriptPath string) domain.SessionUsage {
+	return computeUsageBreakdown(agent, transcriptPath).Total
+}
+
+func computeUsageBreakdown(agent, transcriptPath string) domain.UsageBreakdown {
+	if agent == "claudecode" || claudecode.MatchesTranscript(transcriptPath) {
+		return claudecode.ComputeUsageBreakdown(transcriptPath)
+	}
+	return codex.ComputeUsageBreakdown(transcriptPath)
+}
+
+func hasUsage(usage domain.SessionUsage) bool {
+	return usage.InputTokens > 0 ||
+		usage.OutputTokens > 0 ||
+		usage.CacheCreationTokens > 0 ||
+		usage.CacheReadTokens > 0 ||
+		usage.Turns > 0
+}
+
+func enrichDashboardStats(stats *domain.DashboardStats, sessions []domain.Session, since string) {
+	filteredSessions := make([]domain.Session, 0, len(sessions))
+	for _, session := range sessions {
+		if sessionStartedBefore(session, since) {
+			continue
+		}
+		filteredSessions = append(filteredSessions, session)
+	}
+
+	stats.TotalSessions = len(filteredSessions)
+	stats.TotalInputTokens = 0
+	stats.TotalOutputTokens = 0
+	stats.AgentUsage = []domain.AgentModelUsage{}
+	stats.SessionUsage = make([]domain.DashboardSessionUsage, 0, len(filteredSessions))
+
+	agentUsage := map[string]*domain.AgentModelUsage{}
+	for _, session := range filteredSessions {
+		breakdown := computeUsageBreakdown(session.Agent, session.TranscriptPath)
+		if !hasUsage(breakdown.Total) {
+			breakdown.Total = session.Usage
+		}
+		sessionModels := dashboardModels(session, breakdown)
+		if len(sessionModels) == 0 && hasUsage(session.Usage) {
+			sessionModels = []domain.DashboardModelUsage{fallbackDashboardModel(session)}
+		}
+
+		stats.TotalInputTokens += breakdown.Total.InputTokens
+		stats.TotalOutputTokens += breakdown.Total.OutputTokens
+
+		stats.SessionUsage = append(stats.SessionUsage, domain.DashboardSessionUsage{
+			SessionID:  session.SessionID,
+			Agent:      session.Agent,
+			Provider:   providerForAgent(session.Agent),
+			Model:      session.Model,
+			StartedAt:  session.StartedAt,
+			LastSeenAt: session.LastSeenAt,
+			Input:      breakdown.Total.InputTokens,
+			Output:     breakdown.Total.OutputTokens,
+			Models:     sessionModels,
+		})
+
+		for _, model := range sessionModels {
+			key := strings.Join([]string{model.Provider, model.Agent, model.Model}, "|")
+			if agentUsage[key] == nil {
+				agentUsage[key] = &domain.AgentModelUsage{
+					Provider: model.Provider,
+					Agent:    model.Agent,
+					Model:    model.Model,
+				}
+			}
+			agentUsage[key].Input += model.Input
+			agentUsage[key].Output += model.Output
+		}
+	}
+
+	for _, usage := range agentUsage {
+		stats.AgentUsage = append(stats.AgentUsage, *usage)
+	}
+	slices.SortFunc(stats.AgentUsage, func(a, b domain.AgentModelUsage) int {
+		at := a.Input + a.Output
+		bt := b.Input + b.Output
+		if at != bt {
+			return bt - at
+		}
+		if a.Provider != b.Provider {
+			return strings.Compare(a.Provider, b.Provider)
+		}
+		return strings.Compare(a.Model, b.Model)
+	})
+	slices.SortFunc(stats.SessionUsage, func(a, b domain.DashboardSessionUsage) int {
+		return strings.Compare(b.LastSeenAt, a.LastSeenAt)
+	})
+}
+
+func sessionStartedBefore(session domain.Session, since string) bool {
+	if since == "" {
+		return false
+	}
+	return session.StartedAt != "" && session.StartedAt < since
+}
+
+func dashboardModels(session domain.Session, breakdown domain.UsageBreakdown) []domain.DashboardModelUsage {
+	models := make([]domain.DashboardModelUsage, 0, len(breakdown.Models))
+	for _, usage := range breakdown.Models {
+		models = append(models, domain.DashboardModelUsage{
+			Provider:      providerForAgent(session.Agent),
+			Agent:         session.Agent,
+			Model:         usage.Model,
+			Input:         usage.InputTokens,
+			Output:        usage.OutputTokens,
+			CacheCreation: usage.CacheCreationTokens,
+			CacheRead:     usage.CacheReadTokens,
+			Turns:         usage.Turns,
+		})
+	}
+	return models
+}
+
+func fallbackDashboardModel(session domain.Session) domain.DashboardModelUsage {
+	return domain.DashboardModelUsage{
+		Provider:      providerForAgent(session.Agent),
+		Agent:         session.Agent,
+		Model:         session.Model,
+		Input:         session.Usage.InputTokens,
+		Output:        session.Usage.OutputTokens,
+		CacheCreation: session.Usage.CacheCreationTokens,
+		CacheRead:     session.Usage.CacheReadTokens,
+		Turns:         session.Usage.Turns,
+	}
+}
+
+func providerForAgent(agent string) string {
+	switch agent {
+	case "codex":
+		return "openai"
+	case "claudecode":
+		return "anthropic"
+	default:
+		return agent
+	}
 }
 
 func (s *EventService) Subscribe() <-chan domain.NormalizedEvent {

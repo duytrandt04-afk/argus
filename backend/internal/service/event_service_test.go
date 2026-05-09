@@ -2,21 +2,25 @@ package service_test
 
 import (
 	"errors"
+	"os"
 	"sync"
 	"testing"
 	"time"
 
 	"agent-monitor/internal/domain"
+	"agent-monitor/internal/repository/sqlite"
 	"agent-monitor/internal/service"
 )
 
 type mockRepo struct {
 	mu        sync.Mutex
 	events    []domain.NormalizedEvent
+	sessions  []domain.Session
 	models    map[string]string
 	addErr    error
 	upsertErr error
 	upserts   int
+	lastUsage domain.SessionUsage
 }
 
 func (m *mockRepo) Add(e domain.NormalizedEvent) error {
@@ -47,7 +51,17 @@ func (m *mockRepo) SessionModel(sessionID string) (string, error) {
 	return m.models[sessionID], nil
 }
 
-func (m *mockRepo) UpsertSession(sessionID, agent, model, source, cwd, transcriptPath string) error {
+func (m *mockRepo) ListSessions() ([]domain.Session, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return append([]domain.Session{}, m.sessions...), nil
+}
+
+func (m *mockRepo) GetDashboardStats(_ string) (*domain.DashboardStats, error) {
+	return nil, nil
+}
+
+func (m *mockRepo) UpsertSession(sessionID, _, model, _, _, _ string, usage domain.SessionUsage) error {
 	if m.upsertErr != nil {
 		return m.upsertErr
 	}
@@ -57,6 +71,7 @@ func (m *mockRepo) UpsertSession(sessionID, agent, model, source, cwd, transcrip
 		m.models = map[string]string{}
 	}
 	m.upserts++
+	m.lastUsage = usage
 	if model != "" {
 		m.models[sessionID] = model
 	}
@@ -149,6 +164,118 @@ func TestAddEventReturnsUpsertError(t *testing.T) {
 	})
 	if err == nil || err.Error() != "boom" {
 		t.Fatalf("err = %v, want boom", err)
+	}
+}
+
+func TestListSessionsBackfillsZeroUsageFromTranscript(t *testing.T) {
+	transcript := t.TempDir() + "/session.jsonl"
+	data := `{"type":"event_msg","payload":{"type":"token_count","info":{"total_token_usage":{"input_tokens":120,"cached_input_tokens":40,"output_tokens":8}}}}` + "\n"
+	if err := os.WriteFile(transcript, []byte(data), 0o600); err != nil {
+		t.Fatalf("write transcript: %v", err)
+	}
+	repo := &mockRepo{sessions: []domain.Session{{
+		SessionID:      "s1",
+		Agent:          "codex",
+		TranscriptPath: transcript,
+	}}}
+	svc := service.New(repo)
+
+	sessions, err := svc.ListSessions()
+	if err != nil {
+		t.Fatalf("ListSessions: %v", err)
+	}
+
+	if got := sessions[0].Usage.InputTokens; got != 120 {
+		t.Fatalf("input tokens = %d, want 120", got)
+	}
+	if repo.upserts != 1 {
+		t.Fatalf("upserts = %d, want 1", repo.upserts)
+	}
+	if repo.lastUsage.OutputTokens != 8 || repo.lastUsage.CacheReadTokens != 40 {
+		t.Fatalf("persisted usage = %+v, want output=8 cache_read=40", repo.lastUsage)
+	}
+}
+
+func TestGetDashboardStatsBackfillsZeroUsageFromTranscript(t *testing.T) {
+	transcript := t.TempDir() + "/codex-session.jsonl"
+	data := `{"type":"event_msg","payload":{"type":"token_count","info":{"total_token_usage":{"input_tokens":120,"cached_input_tokens":40,"output_tokens":8}}}}` + "\n"
+	if err := os.WriteFile(transcript, []byte(data), 0o600); err != nil {
+		t.Fatalf("write transcript: %v", err)
+	}
+
+	repo, err := sqlite.New(":memory:")
+	if err != nil {
+		t.Fatalf("sqlite.New: %v", err)
+	}
+	if err := repo.UpsertSession(
+		"s1", "codex", "gpt-5.4", "startup", "/tmp", transcript, domain.SessionUsage{},
+	); err != nil {
+		t.Fatalf("UpsertSession: %v", err)
+	}
+
+	svc := service.New(repo)
+	stats, err := svc.GetDashboardStats("")
+	if err != nil {
+		t.Fatalf("GetDashboardStats: %v", err)
+	}
+
+	if stats.TotalInputTokens != 120 {
+		t.Fatalf("total input tokens = %d, want 120", stats.TotalInputTokens)
+	}
+	if stats.TotalOutputTokens != 8 {
+		t.Fatalf("total output tokens = %d, want 8", stats.TotalOutputTokens)
+	}
+	if len(stats.AgentUsage) != 1 {
+		t.Fatalf("agent usage len = %d, want 1", len(stats.AgentUsage))
+	}
+	if stats.AgentUsage[0].Agent != "codex" || stats.AgentUsage[0].Input != 120 || stats.AgentUsage[0].Output != 8 {
+		t.Fatalf("agent usage = %+v, want codex input=120 output=8", stats.AgentUsage[0])
+	}
+}
+
+func TestGetDashboardStatsReturnsSessionUsageBreakdown(t *testing.T) {
+	transcript := t.TempDir() + "/codex-switch-session.jsonl"
+	data := "" +
+		`{"type":"turn_context","payload":{"model":"gpt-5.5"}}` + "\n" +
+		`{"type":"event_msg","payload":{"type":"token_count","info":{"total_token_usage":{"input_tokens":10,"cached_input_tokens":4,"output_tokens":2}}}}` + "\n" +
+		`{"type":"turn_context","payload":{"model":"gpt-5.4"}}` + "\n" +
+		`{"type":"event_msg","payload":{"type":"token_count","info":{"total_token_usage":{"input_tokens":25,"cached_input_tokens":10,"output_tokens":5}}}}` + "\n"
+	if err := os.WriteFile(transcript, []byte(data), 0o600); err != nil {
+		t.Fatalf("write transcript: %v", err)
+	}
+
+	repo, err := sqlite.New(":memory:")
+	if err != nil {
+		t.Fatalf("sqlite.New: %v", err)
+	}
+	if err := repo.UpsertSession(
+		"s1", "codex", "gpt-5.4", "startup", "/tmp", transcript, domain.SessionUsage{},
+	); err != nil {
+		t.Fatalf("UpsertSession: %v", err)
+	}
+
+	svc := service.New(repo)
+	stats, err := svc.GetDashboardStats("")
+	if err != nil {
+		t.Fatalf("GetDashboardStats: %v", err)
+	}
+
+	if len(stats.SessionUsage) != 1 {
+		t.Fatalf("session usage len = %d, want 1", len(stats.SessionUsage))
+	}
+	sessionUsage := stats.SessionUsage[0]
+	if sessionUsage.SessionID != "s1" || sessionUsage.Agent != "codex" || sessionUsage.Provider != "openai" {
+		t.Fatalf("session usage = %+v, want session_id=s1 agent=codex provider=openai", sessionUsage)
+	}
+	if sessionUsage.Input != 25 || sessionUsage.Output != 5 {
+		t.Fatalf("session usage totals = %+v, want input=25 output=5", sessionUsage)
+	}
+	if len(sessionUsage.Models) != 2 {
+		t.Fatalf("session usage models len = %d, want 2", len(sessionUsage.Models))
+	}
+
+	if len(stats.AgentUsage) != 2 {
+		t.Fatalf("agent usage len = %d, want 2", len(stats.AgentUsage))
 	}
 }
 
