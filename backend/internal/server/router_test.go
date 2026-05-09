@@ -54,3 +54,14 @@ func TestNewRouterOpenAIRouteIsGETOnly(t *testing.T) {
 		t.Fatalf("status = %d, want 405", rec.Code)
 	}
 }
+
+func TestNewRouterAnthropicRouteIsGETOnly(t *testing.T) {
+	req := httptest.NewRequest(http.MethodPost, "/api/anthropic/organizations/usage_report/messages", nil)
+	rec := httptest.NewRecorder()
+
+	newTestRouter().ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusMethodNotAllowed {
+		t.Fatalf("status = %d, want 405", rec.Code)
+	}
+}

@@ -7,13 +7,14 @@ import { ActivityPanel } from '@/features/dashboard/ActivityPanel'
 import { DashboardSkeleton } from '@/features/dashboard/DashboardSkeleton'
 import { SummaryStats } from '@/features/dashboard/SummaryStats'
 import { TokenUsagePanel } from '@/features/dashboard/TokenUsagePanel'
+import { UsagePanel } from '@/features/usage/UsagePanel'
 import { DASHBOARD_TIME_RANGES, apiRange } from '@/features/dashboard/dashboard-utils'
 import { useDashboardStats } from '@/features/dashboard/hooks/useDashboardStats'
 import { cn } from '@/lib/utils'
 
 export function Dashboard() {
   const [timeRange, setTimeRange] = useState('all')
-  const [view, setView] = useState<'activity' | 'tokens'>('tokens')
+  const [view, setView] = useState<'activity' | 'tokens' | 'api-usage'>('tokens')
   const { stats, loading, refreshing, reload } = useDashboardStats(apiRange(timeRange))
 
   return (
@@ -53,16 +54,23 @@ export function Dashboard() {
         ) : (
           <>
             <SummaryStats stats={stats} />
-            <Tabs value={view} onValueChange={(value) => setView(value as 'activity' | 'tokens')}>
+            <Tabs
+              value={view}
+              onValueChange={(value) => setView(value as 'activity' | 'tokens' | 'api-usage')}
+            >
               <TabsList variant="line" className="w-full flex-wrap justify-start sm:w-auto">
                 <TabsTrigger value="tokens">Token usage</TabsTrigger>
                 <TabsTrigger value="activity">Activity</TabsTrigger>
+                <TabsTrigger value="api-usage">API key usage</TabsTrigger>
               </TabsList>
               <TabsContent value="tokens">
                 <TokenUsagePanel stats={stats} />
               </TabsContent>
               <TabsContent value="activity">
                 <ActivityPanel stats={stats} />
+              </TabsContent>
+              <TabsContent value="api-usage">
+                <UsagePanel title="API Key Usage Tracking" dashboardRange={timeRange} />
               </TabsContent>
             </Tabs>
           </>

@@ -127,8 +127,9 @@ func Normalize(raw []byte) (domain.NormalizedEvent, error) {
 		action = fileutil.ToolToAction(p.ToolName)
 	}
 
-	if path == "" && cmd != "" && action != "BASH" {
-		path = fileutil.ExtractPathFromCommand(cmd)
+	isApplyPatchTool := strings.Contains(strings.ToLower(p.ToolName), "apply_patch")
+	if path == "" && cmd != "" && action != "BASH" && !isApplyPatchTool {
+		path = fileutil.ResolvePath(p.CWD, fileutil.ExtractPathFromCommand(cmd))
 	}
 
 	displayPath := path
@@ -179,6 +180,7 @@ func Normalize(raw []byte) (domain.NormalizedEvent, error) {
 		ToolResultStdout:    toolResultStdout(p.ToolResponse),
 		ToolResultStderr:    toolResultStderr(p.ToolResponse),
 		DurationMS:          p.DurationMS,
+		Trigger:             p.Trigger,
 	}, nil
 }
 

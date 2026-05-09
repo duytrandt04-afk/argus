@@ -92,6 +92,27 @@ func TestExtractPathFromCommand_directory(t *testing.T) {
 	}
 }
 
+func TestExtractPathFromCommand_ignoreSlashOnlyToken(t *testing.T) {
+	cmd := "*** Begin Patch\n@@\n // Keep display in sync\n*** End Patch\n"
+	if got := fileutil.ExtractPathFromCommand(cmd); got != "" {
+		t.Errorf("got %q, want empty", got)
+	}
+}
+
+func TestExtractPathFromCommand_trimTrailingPunctuation(t *testing.T) {
+	got := fileutil.ExtractPathFromCommand(`echo /home/user/project")`)
+	if got != "/home/user/project" {
+		t.Errorf("got %q, want /home/user/project", got)
+	}
+}
+
+func TestExtractPathFromCommand_relativePath(t *testing.T) {
+	got := fileutil.ExtractPathFromCommand("read ./hooks/useOpenAIUsage")
+	if got != "./hooks/useOpenAIUsage" {
+		t.Errorf("got %q, want ./hooks/useOpenAIUsage", got)
+	}
+}
+
 func TestComputeContext(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "f.go")

@@ -78,7 +78,14 @@ func HookEventAction(hookName string) string {
 
 func ExtractPathFromCommand(cmd string) string {
 	for _, tok := range strings.Fields(cmd) {
-		tok = strings.Trim(tok, `"'`)
+		tok = sanitizePathToken(tok)
+		if tok == "" {
+			continue
+		}
+		if strings.Trim(tok, "/") == "" {
+			// Ignore bare slash/comment-like tokens such as "/" or "//".
+			continue
+		}
 		if !strings.HasPrefix(tok, "/") && !strings.HasPrefix(tok, "./") {
 			continue
 		}
@@ -88,6 +95,15 @@ func ExtractPathFromCommand(cmd string) string {
 		}
 	}
 	return ""
+}
+
+func sanitizePathToken(tok string) string {
+	tok = strings.TrimSpace(tok)
+	tok = strings.Trim(tok, `"'`)
+	tok = strings.TrimLeft(tok, "([{")
+	tok = strings.TrimRight(tok, `),;]}`)
+	tok = strings.Trim(tok, `"'`)
+	return tok
 }
 
 // FindStartLine returns the 1-based line number where oldStr begins in filePath.

@@ -16,7 +16,8 @@ export function EventBadges({ event: e }: EventBadgesProps) {
     (e.subagent_id && e.action === 'AGENT') ||
     e.task_id ||
     e.notification_type ||
-    e.change_type
+    e.change_type ||
+    e.trigger
 
   if (!hasAny) return null
 
@@ -93,6 +94,14 @@ export function EventBadges({ event: e }: EventBadgesProps) {
           className="text-[0.68rem] text-[#888] border-white/5 bg-white/[0.04] px-[6px] py-[2px] h-auto rounded"
         >
           <strong className="text-[#aaa] font-semibold mr-1">Change:</strong> {e.change_type}
+        </Badge>
+      )}
+      {e.trigger && (
+        <Badge
+          variant="outline"
+          className="text-[0.68rem] text-[#888] border-white/5 bg-white/[0.04] px-[6px] py-[2px] h-auto rounded"
+        >
+          <strong className="text-[#aaa] font-semibold mr-1">Trigger:</strong> {e.trigger}
         </Badge>
       )}
     </div>

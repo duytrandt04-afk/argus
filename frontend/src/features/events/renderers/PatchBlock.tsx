@@ -50,15 +50,15 @@ function parseApplyPatch(text: string, initialLine = 1): PatchRow[] {
     }
 
     if (marker === '-') {
-      out.push({ kind: 'del', num: oldLine, text: content })
+      out.push({ kind: 'del', num: currentNum, text: content })
       oldLine++
       newLine++ // Keep display in sync for single-column view
     } else if (marker === '+') {
-      out.push({ kind: 'add', num: newLine, text: content })
+      out.push({ kind: 'add', num: currentNum, text: content })
       newLine++
       oldLine++ // Keep display in sync for single-column view
     } else if (marker === ' ') {
-      out.push({ kind: 'ctx', num: oldLine, text: content })
+      out.push({ kind: 'ctx', num: currentNum, text: content })
       oldLine++
       newLine++
     }

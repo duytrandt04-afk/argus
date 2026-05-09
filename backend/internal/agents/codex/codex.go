@@ -53,8 +53,8 @@ func ParseApplyPatch(command string) (filePath string, hunks []ParseHunk) {
 	for _, line := range lines {
 		trimmed := strings.TrimSpace(line)
 		if !inHunk {
-			if strings.HasPrefix(trimmed, "*** ") && !strings.HasPrefix(trimmed, "*** Begin Patch") && !strings.HasPrefix(trimmed, "*** End Patch") {
-				filePath = strings.TrimPrefix(trimmed, "*** ")
+			if p := patchFilePathFromHeader(trimmed); p != "" {
+				filePath = p
 				continue
 			}
 			if m := hunkHeader.FindStringSubmatch(trimmed); m != nil {
@@ -118,6 +118,21 @@ func ParseApplyPatch(command string) (filePath string, hunks []ParseHunk) {
 	}
 
 	return filePath, hunks
+}
+
+func patchFilePathFromHeader(trimmed string) string {
+	switch {
+	case strings.HasPrefix(trimmed, "*** Update File: "):
+		return strings.TrimPrefix(trimmed, "*** Update File: ")
+	case strings.HasPrefix(trimmed, "*** Add File: "):
+		return strings.TrimPrefix(trimmed, "*** Add File: ")
+	case strings.HasPrefix(trimmed, "*** Delete File: "):
+		return strings.TrimPrefix(trimmed, "*** Delete File: ")
+	case strings.HasPrefix(trimmed, "*** Move to: "):
+		return strings.TrimPrefix(trimmed, "*** Move to: ")
+	default:
+		return ""
+	}
 }
 
 func firstN(s string, n int) string {
@@ -261,8 +276,10 @@ func Normalize(raw []byte) (domain.NormalizedEvent, error) {
 		action = fileutil.ToolToAction(p.ToolName)
 	}
 
-	if path == "" && cmd != "" && action != "BASH" {
-		path = fileutil.ExtractPathFromCommand(cmd)
+	isApplyPatchTool := strings.Contains(strings.ToLower(p.ToolName), "apply_patch")
+
+	if path == "" && cmd != "" && action != "BASH" && !isApplyPatchTool {
+		path = fileutil.ResolvePath(p.CWD, fileutil.ExtractPathFromCommand(cmd))
 	}
 
 	displayPath := path
@@ -275,7 +292,7 @@ func Normalize(raw []byte) (domain.NormalizedEvent, error) {
 		NewStr: firstNonEmpty(p.ToolInput.NewStr, p.ToolInput.NewString),
 	})
 	var startLine int
-	if strings.Contains(strings.ToLower(p.ToolName), "apply_patch") {
+	if isApplyPatchTool {
 		patchPath, hunks := ParseApplyPatch(cmd)
 
 		if path == "" && patchPath != "" {
@@ -392,6 +409,7 @@ func Normalize(raw []byte) (domain.NormalizedEvent, error) {
 		ToolResultStdout:    toolResultStdout(p.ToolResponse),
 		ToolResultStderr:    toolResultStderr(p.ToolResponse),
 		DurationMS:          p.DurationMS,
+		Trigger:             p.Trigger,
 	}, nil
 }
 

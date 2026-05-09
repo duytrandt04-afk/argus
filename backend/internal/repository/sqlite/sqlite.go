@@ -30,6 +30,9 @@ var schema004 string
 //go:embed migrations/005_session_usage.sql
 var schema005 string
 
+//go:embed migrations/006_compact_trigger.sql
+var schema006 string
+
 type DB struct {
 	db *sql.DB
 }
@@ -59,6 +62,7 @@ func (d *DB) migrate() error {
 		{3, schema003},
 		{4, schema004},
 		{5, schema005},
+		{6, schema006},
 	}
 	for _, m := range migrations {
 		var count int
@@ -89,8 +93,8 @@ func (d *DB) Add(e domain.NormalizedEvent) error {
 			task_id, task_title, task_description,
 			notification_type, notification_title, notification_message,
 			change_type, old_cwd, new_cwd, tool_calls_json,
-			tool_result_stdout, tool_result_stderr, duration_ms
-		) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+			tool_result_stdout, tool_result_stderr, duration_ms, trigger
+		) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
 		e.Time, e.Agent, e.Session, e.HookEventName, e.TurnID, e.ToolUseID,
 		e.Tool, e.Model, e.Source, e.CWD, e.TranscriptPath,
 		nullStr(e.Action), nullStr(e.Path), nullStr(e.Command),
@@ -102,8 +106,8 @@ func (d *DB) Add(e domain.NormalizedEvent) error {
 		nullStr(e.SubagentID), nullStr(e.SubagentType),
 		nullStr(e.TaskID), nullStr(e.TaskTitle), nullStr(e.TaskDescription),
 		nullStr(e.NotificationType), nullStr(e.NotificationTitle), nullStr(e.NotificationMessage),
-		nullStr(e.ChangeType), nullStr(e.OldCWD), nullStr(e.NewCWD), nullStr(e.ToolCallsJSON),
-		nullStr(e.ToolResultStdout), nullStr(e.ToolResultStderr), nullInt(e.DurationMS),
+			nullStr(e.ChangeType), nullStr(e.OldCWD), nullStr(e.NewCWD), nullStr(e.ToolCallsJSON),
+			nullStr(e.ToolResultStdout), nullStr(e.ToolResultStderr), nullInt(e.DurationMS), nullStr(e.Trigger),
 	)
 	return err
 }
@@ -126,7 +130,7 @@ func (d *DB) List(limit int) ([]domain.NormalizedEvent, error) {
 		       COALESCE(change_type,''), COALESCE(old_cwd,''), COALESCE(new_cwd,''),
 		       COALESCE(tool_calls_json,''),
 		       COALESCE(tool_result_stdout,''), COALESCE(tool_result_stderr,''),
-		       COALESCE(duration_ms,0)
+		       COALESCE(duration_ms,0), COALESCE(trigger,'')
 		FROM hook_events
 		ORDER BY id DESC
 		LIMIT ?`, limit)
@@ -153,7 +157,7 @@ func (d *DB) List(limit int) ([]domain.NormalizedEvent, error) {
 			&e.TaskID, &e.TaskTitle, &e.TaskDescription,
 			&e.NotificationType, &e.NotificationTitle, &e.NotificationMessage,
 			&e.ChangeType, &e.OldCWD, &e.NewCWD, &e.ToolCallsJSON,
-			&e.ToolResultStdout, &e.ToolResultStderr, &e.DurationMS,
+			&e.ToolResultStdout, &e.ToolResultStderr, &e.DurationMS, &e.Trigger,
 		); err != nil {
 			return nil, err
 		}

@@ -91,7 +91,10 @@ export function useEventFilters(events: EventRecord[]) {
           !e.error_message?.toLowerCase().includes(q) &&
           !e.response?.toLowerCase().includes(q) &&
           !e.task_title?.toLowerCase().includes(q) &&
-          !e.subagent_type?.toLowerCase().includes(q)
+          !e.subagent_type?.toLowerCase().includes(q) &&
+          !e.trigger?.toLowerCase().includes(q) &&
+          !e.tool_result_stdout?.toLowerCase().includes(q) &&
+          !e.tool_result_stderr?.toLowerCase().includes(q)
         )
           return false
       }

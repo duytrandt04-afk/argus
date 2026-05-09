@@ -1,6 +1,5 @@
 import { Fragment, useEffect, type RefObject } from 'react'
 import {
-  BarChart3,
   LayoutDashboard,
   PanelLeft,
   TerminalSquare,
@@ -34,13 +33,6 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   {
-    to: '/',
-    label: 'Events',
-    ariaLabel: 'Terminal Events',
-    icon: TerminalSquare,
-    end: true,
-  },
-  {
     to: '/dashboard',
     label: 'Dashboard',
     ariaLabel: 'Overview Dashboard',
@@ -48,11 +40,11 @@ const NAV_ITEMS: NavItem[] = [
     end: false,
   },
   {
-    to: '/usage',
-    label: 'Usage',
-    ariaLabel: 'API Usage Tracker',
-    icon: BarChart3,
-    end: false,
+    to: '/',
+    label: 'Events',
+    ariaLabel: 'Terminal Events',
+    icon: TerminalSquare,
+    end: true,
   },
 ]
 
@@ -83,8 +75,8 @@ export function Sidebar({
       'sidebar-nav-item h-9 gap-0 border text-[0.8rem] font-normal transition-all duration-200',
       collapsed ? 'w-9 justify-start rounded-lg px-0' : 'w-full justify-start rounded-lg px-0',
       isActive
-        ? 'sidebar-nav-active border-[rgba(139,92,246,0.25)] bg-[rgba(139,92,246,0.12)] text-[#e2e0ff]'
-        : 'border-transparent text-[#9a9a9a] hover:border-[rgba(139,92,246,0.15)] hover:bg-[rgba(255,255,255,0.05)] hover:text-[#d4d4d4]'
+        ? 'sidebar-nav-active border-[rgba(255,255,255,0.16)] bg-[rgba(255,255,255,0.09)] text-[#e6e6e6]'
+        : 'border-transparent text-[#9a9a9a] hover:border-[rgba(255,255,255,0.1)] hover:bg-[rgba(255,255,255,0.05)] hover:text-[#d4d4d4]'
     )
 
   const desktopToggleLabel = collapsed ? 'Expand sidebar' : 'Collapse sidebar'
@@ -105,7 +97,7 @@ export function Sidebar({
             <Icon
               className={cn(
                 'size-[15px] shrink-0 transition-colors duration-200',
-                isActive ? 'text-[#a78bfa]' : 'text-current'
+                isActive ? 'text-[#e6e6e6]' : 'text-current'
               )}
             />
           </span>
@@ -155,8 +147,8 @@ export function Sidebar({
         <div className="flex min-h-12 items-center px-2 py-2">
           <div className="flex w-full items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">
-              <div className="flex size-6 items-center justify-center rounded-md bg-[rgba(139,92,246,0.2)]">
-                <TerminalSquare className="size-3.5 text-[#a78bfa]" />
+              <div className="flex size-6 items-center justify-center rounded-md bg-[rgba(255,255,255,0.12)]">
+                <TerminalSquare className="size-3.5 text-[#d8d8d8]" />
               </div>
               <span className="text-[0.78rem] font-semibold tracking-[0.04em] text-[#ccc]">
                 agent-monitor
@@ -189,8 +181,8 @@ export function Sidebar({
             )}
             style={{ transition: 'opacity 180ms ease, width 240ms cubic-bezier(0.22,1,0.36,1)' }}
           >
-            <div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-[rgba(139,92,246,0.2)]">
-              <TerminalSquare className="size-3.5 text-[#a78bfa]" />
+            <div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-[rgba(255,255,255,0.12)]">
+              <TerminalSquare className="size-3.5 text-[#d8d8d8]" />
             </div>
             <span className="sidebar-label-motion sidebar-label-open whitespace-nowrap text-[0.78rem] font-semibold tracking-[0.04em] text-[#ccc]">
               agent-monitor

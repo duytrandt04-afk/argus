@@ -29,6 +29,7 @@ func TestAdd_and_List(t *testing.T) {
 		ToolUseID:     "tool1",
 		Action:        "EDIT",
 		Path:          "/tmp/foo.go",
+		Trigger:       "manual",
 		RawPayload:    []byte(`{}`),
 	}
 
@@ -48,6 +49,9 @@ func TestAdd_and_List(t *testing.T) {
 	}
 	if events[0].Agent != "claudecode" {
 		t.Errorf("Agent = %q, want claudecode", events[0].Agent)
+	}
+	if events[0].Trigger != "manual" {
+		t.Errorf("Trigger = %q, want manual", events[0].Trigger)
 	}
 }
 

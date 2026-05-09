@@ -93,6 +93,16 @@ mark {
   border-color: rgba(126, 255, 165, 0.35);
   background: rgba(126, 255, 165, 0.08);
 }
+.hook-PreCompact {
+  color: #ffd479;
+  border-color: rgba(255, 212, 121, 0.35);
+  background: rgba(255, 212, 121, 0.08);
+}
+.hook-PostCompact {
+  color: #9fffa0;
+  border-color: rgba(159, 255, 160, 0.35);
+  background: rgba(159, 255, 160, 0.08);
+}
 .hook-UserPromptSubmit {
   color: #ff8e8e;
   border-color: rgba(255, 142, 142, 0.35);
