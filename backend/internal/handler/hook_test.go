@@ -6,9 +6,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"agent-monitor/internal/handler"
-	"agent-monitor/internal/repository/sqlite"
-	"agent-monitor/internal/service"
+	"hooker/internal/handler"
+	"hooker/internal/repository/sqlite"
+	"hooker/internal/service"
 )
 
 func newTestService(t *testing.T) *service.EventService {

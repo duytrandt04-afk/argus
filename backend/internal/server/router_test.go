@@ -5,9 +5,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"agent-monitor/internal/domain"
-	"agent-monitor/internal/server"
-	"agent-monitor/internal/service"
+	"hooker/internal/domain"
+	"hooker/internal/server"
+	"hooker/internal/service"
 )
 
 type noopRepo struct{}
@@ -20,7 +20,7 @@ func (noopRepo) SessionModel(string) (string, error) { return "", nil }
 
 func (noopRepo) ListSessions() ([]domain.Session, error) { return nil, nil }
 
-func (noopRepo) GetDashboardStats(string) (*domain.DashboardStats, error) { return nil, nil }
+func (noopRepo) GetDashboardStats(string, string) (*domain.DashboardStats, error) { return nil, nil }
 
 func (noopRepo) UpsertSession(string, string, string, string, string, string, domain.SessionUsage) error {
 	return nil
@@ -46,6 +46,17 @@ func TestNewRouterOptionsReturnsCORSHeaders(t *testing.T) {
 
 func TestNewRouterOpenAIRouteIsGETOnly(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/api/openai/models", nil)
+	rec := httptest.NewRecorder()
+
+	newTestRouter().ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusMethodNotAllowed {
+		t.Fatalf("status = %d, want 405", rec.Code)
+	}
+}
+
+func TestNewRouterAnthropicRouteIsGETOnly(t *testing.T) {
+	req := httptest.NewRequest(http.MethodPost, "/api/anthropic/organizations/usage_report/messages", nil)
 	rec := httptest.NewRecorder()
 
 	newTestRouter().ServeHTTP(rec, req)

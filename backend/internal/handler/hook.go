@@ -7,11 +7,11 @@ import (
 	"net/http"
 	"strings"
 
-	"agent-monitor/internal/agents/claudecode"
-	"agent-monitor/internal/agents/codex"
-	"agent-monitor/internal/domain"
-	"agent-monitor/internal/fileutil"
-	"agent-monitor/internal/service"
+	"hooker/internal/agents/claudecode"
+	"hooker/internal/agents/codex"
+	"hooker/internal/domain"
+	"hooker/internal/fileutil"
+	"hooker/internal/service"
 )
 
 func Hook(svc *service.EventService) http.Handler {
@@ -69,19 +69,39 @@ func enrichContext(e domain.NormalizedEvent) domain.NormalizedEvent {
 		return e
 	}
 
+	searchStr := ""
 	if e.HookEventName == "PreToolUse" && e.OldString != "" {
-		if startLine := fileutil.FindStartLine(e.Path, e.OldString); startLine > 0 {
-			e.StartLine = startLine
-			e.CtxBefore, e.CtxAfter = fileutil.ComputeContext(
-				e.Path, startLine, len(strings.Split(e.OldString, "\n")), 3,
-			)
-		}
+		searchStr = e.OldString
 	} else if e.HookEventName == "PostToolUse" && e.NewString != "" {
-		if startLine := fileutil.FindStartLine(e.Path, e.NewString); startLine > 0 {
-			e.StartLine = startLine
-			e.CtxBefore, e.CtxAfter = fileutil.ComputeContext(
-				e.Path, startLine, len(strings.Split(e.NewString, "\n")), 3,
-			)
+		searchStr = e.NewString
+	} else if e.Action == "EDIT" {
+		// General EDIT action fallback
+		if e.OldString != "" {
+			searchStr = e.OldString
+		} else if e.NewString != "" {
+			searchStr = e.NewString
+		}
+	}
+
+	if searchStr == "" {
+		return e
+	}
+
+	startLine := e.StartLine
+	// If startLine is 0 or 1, it might be missing or snippet-relative.
+	// Try to find the actual position in the file.
+	if startLine <= 1 {
+		if found := fileutil.FindStartLine(e.Path, searchStr); found > 0 {
+			startLine = found
+		}
+	}
+
+	if startLine > 0 {
+		e.StartLine = startLine
+		// Only compute context if not already present or if we found a better startLine
+		if len(e.CtxBefore) == 0 && len(e.CtxAfter) == 0 {
+			lineCount := len(strings.Split(strings.TrimRight(searchStr, "\n"), "\n"))
+			e.CtxBefore, e.CtxAfter = fileutil.ComputeContext(e.Path, startLine, lineCount, 3)
 		}
 	}
 

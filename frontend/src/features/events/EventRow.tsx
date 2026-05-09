@@ -40,7 +40,10 @@ export function EventRow({ event: e, searchQuery }: EventRowProps) {
             {e.hook_event_name && (
               <span className={`hook hook-${e.hook_event_name}`}>{e.hook_event_name}</span>
             )}
-            {(e.hook_event_name === 'PreToolUse' || e.hook_event_name === 'PostToolUse') && (
+            {(e.hook_event_name === 'PreToolUse' ||
+              e.hook_event_name === 'PostToolUse' ||
+              e.hook_event_name === 'PreCompact' ||
+              e.hook_event_name === 'PostCompact') && (
               <span className="event-model">{displayModel(e.model)}</span>
             )}
             {e.action !== 'BASH' && (highlight(e.path || '', searchQuery) as ReactNode)}

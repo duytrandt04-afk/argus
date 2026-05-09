@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"agent-monitor/internal/domain"
+	"hooker/internal/domain"
 )
 
 func ResolvePath(cwd, path string) string {
@@ -78,7 +78,14 @@ func HookEventAction(hookName string) string {
 
 func ExtractPathFromCommand(cmd string) string {
 	for _, tok := range strings.Fields(cmd) {
-		tok = strings.Trim(tok, `"'`)
+		tok = sanitizePathToken(tok)
+		if tok == "" {
+			continue
+		}
+		if strings.Trim(tok, "/") == "" {
+			// Ignore bare slash/comment-like tokens such as "/" or "//".
+			continue
+		}
 		if !strings.HasPrefix(tok, "/") && !strings.HasPrefix(tok, "./") {
 			continue
 		}
@@ -88,6 +95,15 @@ func ExtractPathFromCommand(cmd string) string {
 		}
 	}
 	return ""
+}
+
+func sanitizePathToken(tok string) string {
+	tok = strings.TrimSpace(tok)
+	tok = strings.Trim(tok, `"'`)
+	tok = strings.TrimLeft(tok, "([{")
+	tok = strings.TrimRight(tok, `),;]}`)
+	tok = strings.Trim(tok, `"'`)
+	return tok
 }
 
 // FindStartLine returns the 1-based line number where oldStr begins in filePath.
@@ -105,10 +121,16 @@ func FindStartLine(filePath, oldStr string) int {
 	if len(searchLines) == 0 {
 		return 0
 	}
-	for i := range len(fileLines) - len(searchLines) + 1 {
+	for i := 0; i <= len(fileLines)-len(searchLines); i++ {
 		match := true
-		for j := range len(searchLines) {
-			if strings.TrimSpace(fileLines[i+j]) != strings.TrimSpace(searchLines[j]) {
+		for j := 0; j < len(searchLines); j++ {
+			f := strings.TrimSpace(fileLines[i+j])
+			s := strings.TrimSpace(searchLines[j])
+			if f != s {
+				// Special case: allow empty lines to match even if they have different whitespace
+				if f == "" && s == "" {
+					continue
+				}
 				match = false
 				break
 			}

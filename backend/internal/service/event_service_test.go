@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"agent-monitor/internal/domain"
-	"agent-monitor/internal/repository/sqlite"
-	"agent-monitor/internal/service"
+	"hooker/internal/domain"
+	"hooker/internal/repository/sqlite"
+	"hooker/internal/service"
 )
 
 type mockRepo struct {
@@ -57,7 +57,7 @@ func (m *mockRepo) ListSessions() ([]domain.Session, error) {
 	return append([]domain.Session{}, m.sessions...), nil
 }
 
-func (m *mockRepo) GetDashboardStats(_ string) (*domain.DashboardStats, error) {
+func (m *mockRepo) GetDashboardStats(_, _ string) (*domain.DashboardStats, error) {
 	return nil, nil
 }
 
@@ -214,7 +214,7 @@ func TestGetDashboardStatsBackfillsZeroUsageFromTranscript(t *testing.T) {
 	}
 
 	svc := service.New(repo)
-	stats, err := svc.GetDashboardStats("")
+	stats, err := svc.GetDashboardStats("", "")
 	if err != nil {
 		t.Fatalf("GetDashboardStats: %v", err)
 	}
@@ -255,7 +255,7 @@ func TestGetDashboardStatsReturnsSessionUsageBreakdown(t *testing.T) {
 	}
 
 	svc := service.New(repo)
-	stats, err := svc.GetDashboardStats("")
+	stats, err := svc.GetDashboardStats("", "")
 	if err != nil {
 		t.Fatalf("GetDashboardStats: %v", err)
 	}

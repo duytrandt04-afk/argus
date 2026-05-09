@@ -6,10 +6,10 @@ import (
 	"sync"
 	"time"
 
-	"agent-monitor/internal/agents/claudecode"
-	"agent-monitor/internal/agents/codex"
-	"agent-monitor/internal/domain"
-	"agent-monitor/internal/repository"
+	"hooker/internal/agents/claudecode"
+	"hooker/internal/agents/codex"
+	"hooker/internal/domain"
+	"hooker/internal/repository"
 )
 
 type EventService struct {
@@ -62,7 +62,7 @@ func (s *EventService) ListSessions() ([]domain.Session, error) {
 	return sessions, nil
 }
 
-func (s *EventService) GetDashboardStats(since string) (*domain.DashboardStats, error) {
+func (s *EventService) GetDashboardStats(since, until string) (*domain.DashboardStats, error) {
 	sessions, err := s.repo.ListSessions()
 	if err != nil {
 		return nil, err
@@ -70,7 +70,7 @@ func (s *EventService) GetDashboardStats(since string) (*domain.DashboardStats, 
 	if err := s.backfillSessionUsage(sessions); err != nil {
 		return nil, err
 	}
-	stats, err := s.repo.GetDashboardStats(since)
+	stats, err := s.repo.GetDashboardStats(since, until)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +82,7 @@ func (s *EventService) GetDashboardStats(since string) (*domain.DashboardStats, 
 			SessionUsage: []domain.DashboardSessionUsage{},
 		}
 	}
-	enrichDashboardStats(stats, sessions, since)
+	enrichDashboardStats(stats, sessions, since, until)
 	return stats, nil
 }
 
@@ -130,10 +130,10 @@ func hasUsage(usage domain.SessionUsage) bool {
 		usage.Turns > 0
 }
 
-func enrichDashboardStats(stats *domain.DashboardStats, sessions []domain.Session, since string) {
+func enrichDashboardStats(stats *domain.DashboardStats, sessions []domain.Session, since, until string) {
 	filteredSessions := make([]domain.Session, 0, len(sessions))
 	for _, session := range sessions {
-		if sessionStartedBefore(session, since) {
+		if sessionOutsideRange(session, since, until) {
 			continue
 		}
 		filteredSessions = append(filteredSessions, session)
@@ -204,11 +204,17 @@ func enrichDashboardStats(stats *domain.DashboardStats, sessions []domain.Sessio
 	})
 }
 
-func sessionStartedBefore(session domain.Session, since string) bool {
-	if since == "" {
+func sessionOutsideRange(session domain.Session, since, until string) bool {
+	if session.StartedAt == "" {
 		return false
 	}
-	return session.StartedAt != "" && session.StartedAt < since
+	if since == "" {
+		return until != "" && session.StartedAt > until
+	}
+	if session.StartedAt < since {
+		return true
+	}
+	return until != "" && session.StartedAt > until
 }
 
 func dashboardModels(session domain.Session, breakdown domain.UsageBreakdown) []domain.DashboardModelUsage {

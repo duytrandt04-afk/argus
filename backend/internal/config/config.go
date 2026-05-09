@@ -10,7 +10,7 @@ type Config struct {
 func Load() Config {
 	return Config{
 		Addr:   envOr("ADDR", "127.0.0.1:8765"),
-		DBPath: envOr("DB_PATH", "agent-monitor.db"),
+		DBPath: envOr("DB_PATH", "hooker.db"),
 	}
 }
 

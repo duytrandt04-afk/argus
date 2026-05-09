@@ -46,6 +46,7 @@ export interface EventRecord {
   tool_result_stdout?: string
   tool_result_stderr?: string
   duration_ms?: number
+  trigger?: string
 }
 
 export interface SessionUsage {

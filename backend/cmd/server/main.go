@@ -4,10 +4,10 @@ import (
 	"log"
 	"net/http"
 
-	"agent-monitor/internal/config"
-	"agent-monitor/internal/repository/sqlite"
-	"agent-monitor/internal/server"
-	"agent-monitor/internal/service"
+	"hooker/internal/config"
+	"hooker/internal/repository/sqlite"
+	"hooker/internal/server"
+	"hooker/internal/service"
 )
 
 func main() {

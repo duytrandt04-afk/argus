@@ -3,8 +3,8 @@ package server
 import (
 	"net/http"
 
-	"agent-monitor/internal/handler"
-	"agent-monitor/internal/service"
+	"hooker/internal/handler"
+	"hooker/internal/service"
 )
 
 func NewRouter(svc *service.EventService) http.Handler {
@@ -17,6 +17,7 @@ func NewRouter(svc *service.EventService) http.Handler {
 	mux.Handle("GET /api/sessions", handler.Sessions(svc))
 	mux.Handle("GET /api/dashboard/stats", handler.DashboardStats(svc))
 	mux.Handle("GET /api/openai/", handler.OpenAIProxy())
+	mux.Handle("GET /api/anthropic/", handler.AnthropicProxy())
 
 	return cors(logging(mux))
 }

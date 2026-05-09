@@ -46,6 +46,7 @@ type NormalizedEvent struct {
 	ToolResultStdout    string `json:"tool_result_stdout,omitempty"`
 	ToolResultStderr    string `json:"tool_result_stderr,omitempty"`
 	DurationMS          int    `json:"duration_ms,omitempty"`
+	Trigger             string `json:"trigger,omitempty"`
 }
 
 type CtxLine struct {

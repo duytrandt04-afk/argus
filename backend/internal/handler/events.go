@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"agent-monitor/internal/service"
+	"hooker/internal/service"
 )
 
 func Events(svc *service.EventService) http.Handler {

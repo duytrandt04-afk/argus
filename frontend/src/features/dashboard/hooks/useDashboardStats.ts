@@ -106,8 +106,8 @@ export function normalizeDashboardStats(raw: Partial<DashboardStats>): Dashboard
   }
 }
 
-export function useDashboardStats(range_: string = '') {
-  const cacheKey = useMemo(() => range_ || 'all', [range_])
+export function useDashboardStats(query: string = '') {
+  const cacheKey = useMemo(() => query || 'all', [query])
   const [reloadKey, setReloadKey] = useState(0)
   const [snapshot, setSnapshot] = useState<{ cacheKey: string; stats: DashboardStats | null }>(
     () => ({
@@ -136,7 +136,7 @@ export function useDashboardStats(range_: string = '') {
         setRefreshing(true)
       }
       try {
-        const params = range_ ? `?range=${range_}` : ''
+        const params = query ? `?${query}` : ''
         const res = await fetch(`/api/dashboard/stats${params}`)
         if (res.ok) {
           const data = normalizeDashboardStats((await res.json()) as Partial<DashboardStats>)
@@ -159,7 +159,7 @@ export function useDashboardStats(range_: string = '') {
     return () => {
       mounted = false
     }
-  }, [cacheKey, range_, reloadKey])
+  }, [cacheKey, query, reloadKey])
 
   return { stats, loading, refreshing, reload }
 }
