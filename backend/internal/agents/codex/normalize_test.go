@@ -34,4 +34,7 @@ func TestNormalizeApplyPatchFallsBackToCommandDiff(t *testing.T) {
 	if got.OldString != "old line" || got.NewString != "new line" {
 		t.Fatalf("diff = (%q, %q), want old/new lines", got.OldString, got.NewString)
 	}
+	if got.StartLine != 1 {
+		t.Fatalf("StartLine = %d, want 1", got.StartLine)
+	}
 }

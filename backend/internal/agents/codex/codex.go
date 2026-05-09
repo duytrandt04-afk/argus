@@ -3,6 +3,8 @@ package codex
 import (
 	"bufio"
 	"encoding/json"
+	"fmt"
+	"log"
 	"os"
 	"regexp"
 	"slices"
@@ -25,60 +27,104 @@ func Diff(input DiffInput) (oldStr, newStr string) {
 	return input.OldStr, input.NewStr
 }
 
-var hunkHeader = regexp.MustCompile(`^@@\s*-(\d+)(?:,\d+)?\s+\+(\d+)(?:,\d+)?`)
+var hunkHeader = regexp.MustCompile(`^@@(?:\s*-(\d+)(?:,\d+)?\s+\+(\d+)(?:,\d+)?)?`)
+var lineNumPrefix = regexp.MustCompile(`^\s*\d+\s+`)
 
-// ParseApplyPatch extracts one unified-diff hunk from an apply_patch command body.
-// It returns the target file path, old/new text blocks, and the old-file start line.
-func ParseApplyPatch(command string) (filePath, oldStr, newStr string, startLine int) {
+// ParseHunk represents a single diff hunk with its extracted lines.
+type ParseHunk struct {
+	StartLine   int
+	OldLines    []string
+	NewLines    []string
+	SearchLines []string // Including context for searching
+	PrefixLines int      // Context lines before the first change
+}
+
+// ParseApplyPatch extracts all unified-diff hunks from an apply_patch command body.
+func ParseApplyPatch(command string) (filePath string, hunks []ParseHunk) {
 	if !strings.Contains(command, "*** Begin Patch") {
-		return "", "", "", 0
+		return "", nil
 	}
 
 	lines := strings.Split(command, "\n")
-	var oldLines, newLines []string
+	var hunkIndent string
 	inHunk := false
+	var currentHunk *ParseHunk
 
 	for _, line := range lines {
-		trimmed := strings.TrimLeft(line, " \t")
+		trimmed := strings.TrimSpace(line)
 		if !inHunk {
-			// File path line: "*** path/to/file.go" (between Begin Patch and @@)
 			if strings.HasPrefix(trimmed, "*** ") && !strings.HasPrefix(trimmed, "*** Begin Patch") && !strings.HasPrefix(trimmed, "*** End Patch") {
 				filePath = strings.TrimPrefix(trimmed, "*** ")
 				continue
 			}
 			if m := hunkHeader.FindStringSubmatch(trimmed); m != nil {
-				startLine = atoi(m[1])
+				idx := strings.Index(line, "@@")
+				if idx >= 0 {
+					hunkIndent = line[:idx]
+				}
 				inHunk = true
 			}
 			continue
 		}
 
-		if strings.HasPrefix(trimmed, "@@") || strings.HasPrefix(trimmed, "*** End Patch") {
+		if strings.HasPrefix(trimmed, "@@") {
+			idx := strings.Index(line, "@@")
+			if idx >= 0 {
+				hunkIndent = line[:idx]
+			}
+			currentHunk = nil
+			continue
+		}
+
+		if strings.HasPrefix(trimmed, "*** End Patch") {
 			break
 		}
 		if strings.HasPrefix(trimmed, `\ No newline`) {
 			continue
 		}
-		if strings.HasPrefix(trimmed, " ") {
-			text := strings.TrimPrefix(trimmed, " ")
-			oldLines = append(oldLines, text)
-			newLines = append(newLines, text)
+
+		if !strings.HasPrefix(line, hunkIndent) {
 			continue
 		}
-		if strings.HasPrefix(trimmed, "-") {
-			oldLines = append(oldLines, strings.TrimPrefix(trimmed, "-"))
+		actualLine := line[len(hunkIndent):]
+		if len(actualLine) == 0 {
 			continue
 		}
-		if strings.HasPrefix(trimmed, "+") {
-			newLines = append(newLines, strings.TrimPrefix(trimmed, "+"))
-			continue
+
+		marker := actualLine[0]
+		content := actualLine[1:]
+		cleaned := lineNumPrefix.ReplaceAllString(content, "")
+
+		// Force a new hunk for EVERY minus line or EVERY context block
+		// to ensure they each get a separate FindStartLine call.
+		if marker == '-' || (marker == ' ' && currentHunk != nil && (len(currentHunk.OldLines) > 0 || len(currentHunk.NewLines) > 0)) {
+			currentHunk = nil
+		}
+
+		if currentHunk == nil {
+			hunks = append(hunks, ParseHunk{})
+			currentHunk = &hunks[len(hunks)-1]
+		}
+
+		switch marker {
+		case ' ':
+			currentHunk.SearchLines = append(currentHunk.SearchLines, cleaned)
+		case '-':
+			currentHunk.OldLines = append(currentHunk.OldLines, cleaned)
+			currentHunk.SearchLines = append(currentHunk.SearchLines, cleaned)
+		case '+':
+			currentHunk.NewLines = append(currentHunk.NewLines, cleaned)
 		}
 	}
 
-	if len(oldLines) == 0 && len(newLines) == 0 {
-		return "", "", "", 0
+	return filePath, hunks
+}
+
+func firstN(s string, n int) string {
+	if len(s) <= n {
+		return s
 	}
-	return filePath, strings.Join(oldLines, "\n"), strings.Join(newLines, "\n"), startLine
+	return s[:n] + "..."
 }
 
 func atoi(s string) int {
@@ -208,6 +254,8 @@ func Normalize(raw []byte) (domain.NormalizedEvent, error) {
 
 	path := fileutil.ResolvePath(p.CWD, firstNonEmpty(p.ToolInput.FilePath, p.FilePath))
 	cmd := p.ToolInput.Command
+	log.Printf("[codex] tool=%s cmd_len=%d cmd_preview=%q", p.ToolName, len(cmd), firstN(cmd, 100))
+
 	action := fileutil.HookEventAction(p.HookEventName)
 	if action == "" {
 		action = fileutil.ToolToAction(p.ToolName)
@@ -226,15 +274,83 @@ func Normalize(raw []byte) (domain.NormalizedEvent, error) {
 		OldStr: firstNonEmpty(p.ToolInput.OldStr, p.ToolInput.OldString),
 		NewStr: firstNonEmpty(p.ToolInput.NewStr, p.ToolInput.NewString),
 	})
+	var startLine int
 	if strings.Contains(strings.ToLower(p.ToolName), "apply_patch") {
-		patchPath, patchOld, patchNew, _ := ParseApplyPatch(cmd)
-		if oldStr == "" && newStr == "" {
-			oldStr, newStr = patchOld, patchNew
-		}
+		patchPath, hunks := ParseApplyPatch(cmd)
+
 		if path == "" && patchPath != "" {
 			path = fileutil.ResolvePath(p.CWD, patchPath)
 			displayPath = path
 		}
+
+		// Reconstruct a "perfect" patch with real line numbers
+		var perfectLines []string
+		perfectLines = append(perfectLines, "*** Begin Patch")
+		if path != "" {
+			perfectLines = append(perfectLines, "*** "+path)
+		}
+
+		for _, h := range hunks {
+			actualStart := h.StartLine
+			searchStr := strings.Join(h.SearchLines, "\n")
+			
+			foundLine := 0
+			if path != "" {
+				// 1. Try to find the whole block first
+				if searchStr != "" {
+					foundLine = fileutil.FindStartLine(path, searchStr)
+				}
+				
+				// 2. Fallback: Try to find based on the LONGEST (most unique) context line
+				if foundLine == 0 {
+					bestLine := ""
+					bestIdx := -1
+					for idx, line := range h.SearchLines {
+						trimmed := strings.TrimSpace(line)
+						if len(trimmed) > 10 { // Only trust lines with significant length
+							if len(trimmed) > len(bestLine) {
+								bestLine = trimmed
+								bestIdx = idx
+							}
+						}
+					}
+					
+					if bestLine != "" {
+						if found := fileutil.FindStartLine(path, bestLine); found > 0 {
+							// found is the line of bestLine, so start is found - bestIdx
+							foundLine = found - bestIdx
+						}
+					}
+				}
+			}
+
+			if foundLine > 0 {
+				actualStart = foundLine + h.PrefixLines
+			}
+			if actualStart <= 0 {
+				actualStart = 1
+			}
+
+			// Set the overall event startLine to the first hunk's start
+			if startLine == 0 {
+				startLine = actualStart
+			}
+
+			perfectLines = append(perfectLines, fmt.Sprintf("@@ -%d,1 +%d,1 @@", actualStart, actualStart))
+			for _, line := range h.SearchLines {
+				perfectLines = append(perfectLines, " "+line)
+			}
+			for _, line := range h.NewLines {
+				perfectLines = append(perfectLines, "+"+line)
+			}
+		}
+		perfectLines = append(perfectLines, "*** End Patch")
+		
+		// Use this perfect patch as the command for the UI to render
+		p.ToolInput.Command = strings.Join(perfectLines, "\n")
+		// Clear oldStr/newStr to force PatchBlock usage
+		oldStr = ""
+		newStr = ""
 	}
 
 	return domain.NormalizedEvent{
@@ -255,6 +371,7 @@ func Normalize(raw []byte) (domain.NormalizedEvent, error) {
 		Command:             cmd,
 		OldString:           oldStr,
 		NewString:           newStr,
+		StartLine:           startLine,
 		RawPayload:          raw,
 		PermissionMode:      p.PermissionMode,
 		Response:            firstNonEmpty(p.Response, p.LastAssistantMessage),

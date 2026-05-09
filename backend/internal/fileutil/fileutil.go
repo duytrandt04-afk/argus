@@ -105,10 +105,16 @@ func FindStartLine(filePath, oldStr string) int {
 	if len(searchLines) == 0 {
 		return 0
 	}
-	for i := range len(fileLines) - len(searchLines) + 1 {
+	for i := 0; i <= len(fileLines)-len(searchLines); i++ {
 		match := true
-		for j := range len(searchLines) {
-			if strings.TrimSpace(fileLines[i+j]) != strings.TrimSpace(searchLines[j]) {
+		for j := 0; j < len(searchLines); j++ {
+			f := strings.TrimSpace(fileLines[i+j])
+			s := strings.TrimSpace(searchLines[j])
+			if f != s {
+				// Special case: allow empty lines to match even if they have different whitespace
+				if f == "" && s == "" {
+					continue
+				}
 				match = false
 				break
 			}
