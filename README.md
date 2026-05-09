@@ -256,6 +256,4 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ## License
 
-This project is multi-licensed.
-You may choose any one license listed in [LICENSE](LICENSE).
-Full texts are in `LICENSES/`.
+MIT — free like mass mammoth on open plain.
