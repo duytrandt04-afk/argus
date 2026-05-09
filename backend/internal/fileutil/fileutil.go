@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"agent-monitor/internal/domain"
+	"hooker/internal/domain"
 )
 
 func ResolvePath(cwd, path string) string {

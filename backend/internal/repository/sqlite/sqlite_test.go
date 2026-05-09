@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"agent-monitor/internal/domain"
-	"agent-monitor/internal/repository/sqlite"
+	"hooker/internal/domain"
+	"hooker/internal/repository/sqlite"
 )
 
 func newTestDB(t *testing.T) *sqlite.DB {

@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"agent-monitor/internal/agents/claudecode"
-	"agent-monitor/internal/agents/codex"
+	"hooker/internal/agents/claudecode"
+	"hooker/internal/agents/codex"
 )
 
 func Usage() http.Handler {

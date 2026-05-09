@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"agent-monitor/internal/agents/claudecode"
+	"hooker/internal/agents/claudecode"
 )
 
 func TestComputeUsageBreakdownGroupsAssistantUsageByModel(t *testing.T) {

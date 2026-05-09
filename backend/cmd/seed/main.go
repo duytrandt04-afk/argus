@@ -13,7 +13,7 @@ import (
 
 func main() {
 	// Seed directly against the local SQLite file used by the backend server.
-	dbPath := "/home/leeduy0403/emruy/backend/cmd/server/agent-monitor.db"
+	dbPath := "/home/leeduy0403/emruy/backend/cmd/server/hooker.db"
 	db, err := sql.Open("sqlite", dbPath)
 	if err != nil {
 		log.Fatalf("failed to open db: %v", err)

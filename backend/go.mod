@@ -1,4 +1,4 @@
-module agent-monitor
+module hooker
 
 go 1.25.0
 

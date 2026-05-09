@@ -31,7 +31,7 @@ export function Layout() {
   )
   const [mobileDrawerLocationKey, setMobileDrawerLocationKey] = useState<string | null>(null)
   const [collapsedSessions, setCollapsedSessions] = useState<Set<string>>(loadCollapsedSessions)
-  const [time, setTime] = useState(() => new Date().toLocaleTimeString())
+  const [now, setNow] = useState(() => new Date())
   const location = useLocation()
   const [isDesktopViewport, setIsDesktopViewport] = useState(
     () => window.matchMedia(DESKTOP_MEDIA_QUERY).matches
@@ -69,7 +69,7 @@ export function Layout() {
   }, [collapsedSessions])
 
   useEffect(() => {
-    const timer = setInterval(() => setTime(new Date().toLocaleTimeString()), 1000)
+    const timer = setInterval(() => setNow(new Date()), 1000)
     return () => clearInterval(timer)
   }, [])
 
@@ -219,10 +219,12 @@ export function Layout() {
               <PanelLeft className="size-4" />
             </Button>
             <span className="hidden text-[0.65rem] font-medium tracking-[0.08em] text-[#555] md:inline">
-              agent-monitor
+              hooker
             </span>
           </div>
-          <span className="tabular-nums text-[#555]">{time}</span>
+          <span className="tabular-nums text-[#555]">
+            {now.toLocaleDateString()} {now.toLocaleTimeString()}
+          </span>
         </header>
         <Outlet context={outletContext} />
       </div>

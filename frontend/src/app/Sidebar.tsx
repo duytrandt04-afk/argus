@@ -151,7 +151,7 @@ export function Sidebar({
                 <TerminalSquare className="size-3.5 text-[#d8d8d8]" />
               </div>
               <span className="text-[0.78rem] font-semibold tracking-[0.04em] text-[#ccc]">
-                agent-monitor
+                hooker
               </span>
             </div>
             <Button
@@ -185,7 +185,7 @@ export function Sidebar({
               <TerminalSquare className="size-3.5 text-[#d8d8d8]" />
             </div>
             <span className="sidebar-label-motion sidebar-label-open whitespace-nowrap text-[0.78rem] font-semibold tracking-[0.04em] text-[#ccc]">
-              agent-monitor
+              hooker
             </span>
           </div>
 

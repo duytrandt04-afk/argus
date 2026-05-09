@@ -1,5 +1,5 @@
 {
-  "name": "frontend",
+  "name": "hooker",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -20,9 +20,11 @@
     "@tailwindcss/vite": "^4.2.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
     "lucide-react": "^1.14.0",
     "radix-ui": "^1.4.3",
     "react": "^19.2.5",
+    "react-day-picker": "^10.0.0",
     "react-dom": "^19.2.5",
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.14.2",

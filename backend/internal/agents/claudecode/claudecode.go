@@ -7,8 +7,8 @@ import (
 	"slices"
 	"strings"
 
-	"agent-monitor/internal/domain"
-	"agent-monitor/internal/fileutil"
+	"hooker/internal/domain"
+	"hooker/internal/fileutil"
 )
 
 type DiffInput struct {

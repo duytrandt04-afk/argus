@@ -7,11 +7,11 @@ import (
 	"net/http"
 	"strings"
 
-	"agent-monitor/internal/agents/claudecode"
-	"agent-monitor/internal/agents/codex"
-	"agent-monitor/internal/domain"
-	"agent-monitor/internal/fileutil"
-	"agent-monitor/internal/service"
+	"hooker/internal/agents/claudecode"
+	"hooker/internal/agents/codex"
+	"hooker/internal/domain"
+	"hooker/internal/fileutil"
+	"hooker/internal/service"
 )
 
 func Hook(svc *service.EventService) http.Handler {

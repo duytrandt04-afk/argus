@@ -7,6 +7,7 @@ import type {
 } from '@/types/usage'
 
 const USAGE_BUCKET_LIMIT = 31
+const USAGE_CACHE_PREFIX = 'usage_cache'
 
 const DASHBOARD_RANGE_TO_SECONDS: Record<string, number> = {
   '1h': 60 * 60,
@@ -47,6 +48,17 @@ function toAnthropicTokenCount(result: {
   )
 }
 
+type UsageCachePayload = {
+  fetchedAt: string
+  periodStart: string
+  periodEnd: string
+  stats: UsageStats
+}
+
+function usageCacheKey(provider: 'openai' | 'anthropic', range: string) {
+  return `${USAGE_CACHE_PREFIX}_${provider}_${range}`
+}
+
 export function useOpenAIUsage(
   range: string = '7d',
   provider: 'openai' | 'anthropic' = 'openai',
@@ -56,6 +68,7 @@ export function useOpenAIUsage(
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [stats, setStats] = useState<UsageStats | null>(null)
+  const [statsCacheKey, setStatsCacheKey] = useState(() => usageCacheKey(provider, range))
 
   useEffect(() => {
     localStorage.setItem('openai_admin_key', apiKey)
@@ -63,6 +76,18 @@ export function useOpenAIUsage(
 
   const emptyOpenAIUsageResponse: OpenAIUsageResponse = { data: [] }
   const emptyAnthropicUsageResponse: AnthropicUsageResponse = { data: [] }
+
+  const readCachedStats = (cacheKey: string): UsageStats | null => {
+    const raw = localStorage.getItem(cacheKey)
+    if (!raw) return null
+    try {
+      const cached = JSON.parse(raw) as UsageCachePayload
+      return cached?.stats?.daily ? cached.stats : null
+    } catch {
+      localStorage.removeItem(cacheKey)
+      return null
+    }
+  }
 
   const readOpenAIUsageResponse = async (response: Response): Promise<OpenAIUsageResponse> => {
     if (!response.ok) return emptyOpenAIUsageResponse
@@ -279,6 +304,17 @@ export function useOpenAIUsage(
     models: {},
   })
 
+  const cacheUsageResult = (periodStart: string, periodEnd: string, result: UsageStats) => {
+    const cacheKey = usageCacheKey(provider, range)
+    const payload: UsageCachePayload = {
+      fetchedAt: new Date().toISOString(),
+      periodStart,
+      periodEnd,
+      stats: result,
+    }
+    localStorage.setItem(cacheKey, JSON.stringify(payload))
+  }
+
   const fetchOpenAIUsage = async (key: string) => {
     const end = Math.floor(Date.now() / 1000)
     const start = end - rangeToSeconds(range)
@@ -341,13 +377,16 @@ export function useOpenAIUsage(
     })
 
     const daily = Array.from(dailyMap.values()).sort((a, b) => a.date.localeCompare(b.date))
-    setStats({
+    const result: UsageStats = {
       reqs: Number(totalReqs) || 0,
       toks: Number(totalToks) || 0,
       models: modelsBreakdown,
       keys: keysBreakdown,
       daily,
-    })
+    }
+    setStatsCacheKey(usageCacheKey(provider, range))
+    setStats(result)
+    cacheUsageResult(new Date(start * 1000).toISOString(), new Date(end * 1000).toISOString(), result)
   }
 
   const fetchAnthropicUsage = async (key: string) => {
@@ -410,13 +449,16 @@ export function useOpenAIUsage(
     })
 
     const daily = Array.from(dailyMap.values()).sort((a, b) => a.date.localeCompare(b.date))
-    setStats({
+    const result: UsageStats = {
       reqs: Number(totalReqs) || 0,
       toks: Number(totalToks) || 0,
       models: modelsBreakdown,
       keys: keysBreakdown,
       daily,
-    })
+    }
+    setStatsCacheKey(usageCacheKey(provider, range))
+    setStats(result)
+    cacheUsageResult(start.toISOString(), end.toISOString(), result)
   }
 
   const fetchUsage = async () => {
@@ -428,7 +470,6 @@ export function useOpenAIUsage(
 
     setLoading(true)
     setError('')
-    setStats(null)
 
     try {
       if (provider === 'openai') {
@@ -443,5 +484,8 @@ export function useOpenAIUsage(
     }
   }
 
-  return { apiKey, setApiKey, loading, error, stats, fetchUsage }
+  const activeCacheKey = usageCacheKey(provider, range)
+  const visibleStats = statsCacheKey === activeCacheKey ? stats : readCachedStats(activeCacheKey)
+
+  return { apiKey, setApiKey, loading, error, stats: visibleStats, fetchUsage }
 }

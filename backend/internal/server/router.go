@@ -3,8 +3,8 @@ package server
 import (
 	"net/http"
 
-	"agent-monitor/internal/handler"
-	"agent-monitor/internal/service"
+	"hooker/internal/handler"
+	"hooker/internal/service"
 )
 
 func NewRouter(svc *service.EventService) http.Handler {

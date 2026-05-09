@@ -1,4 +1,4 @@
-# emruy
+# hooker
 
 `emruy` is a premium, real-time agent monitoring dashboard designed for local development with **Claude Code** and **Codex**. It captures hook events (lifecycle, tool usage, prompts) and visualizes them in a streamlined interface, complete with diff rendering and token usage analytics.
 
@@ -243,3 +243,9 @@ pnpm run dev
 
 **3. Dashboard**
 Open [http://localhost:5173](http://localhost:5173) in your browser.
+
+## License
+
+This project is multi-licensed.
+You may choose any one license listed in [LICENSE](LICENSE).
+Full texts are in `LICENSES/`.

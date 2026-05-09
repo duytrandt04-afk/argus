@@ -8,11 +8,12 @@ import (
 	"fmt"
 	"log"
 	"slices"
+	"strings"
 	"time"
 
 	_ "modernc.org/sqlite"
 
-	"agent-monitor/internal/domain"
+	"hooker/internal/domain"
 )
 
 //go:embed migrations/001_init.sql
@@ -237,7 +238,7 @@ func (d *DB) UpsertSession(sessionID, agent, model, source, cwd, transcriptPath 
 	return err
 }
 
-func (d *DB) GetDashboardStats(since string) (*domain.DashboardStats, error) {
+func (d *DB) GetDashboardStats(since, until string) (*domain.DashboardStats, error) {
 	stats := &domain.DashboardStats{
 		Timeline:     []domain.TimelineBucket{},
 		TopActions:   []domain.ActionCount{},
@@ -245,22 +246,39 @@ func (d *DB) GetDashboardStats(since string) (*domain.DashboardStats, error) {
 		SessionUsage: []domain.DashboardSessionUsage{},
 	}
 
-	// Build WHERE clauses based on 'since'
-	eventWhere := ""
-	sessionWhere := ""
-	var args []any
+	var eventClauses []string
+	var sessionClauses []string
+	var eventArgs []any
+	var sessionArgs []any
 	if since != "" {
-		eventWhere = " AND created_at >= ?"
-		sessionWhere = " WHERE started_at >= ?"
-		args = append(args, since)
+		eventClauses = append(eventClauses, "created_at >= ?")
+		sessionClauses = append(sessionClauses, "started_at >= ?")
+		eventArgs = append(eventArgs, since)
+		sessionArgs = append(sessionArgs, since)
+	}
+	if until != "" {
+		eventClauses = append(eventClauses, "created_at <= ?")
+		sessionClauses = append(sessionClauses, "started_at <= ?")
+		eventArgs = append(eventArgs, until)
+		sessionArgs = append(sessionArgs, until)
+	}
+
+	eventWhere := ""
+	if len(eventClauses) > 0 {
+		eventWhere = " WHERE " + strings.Join(eventClauses, " AND ")
+	}
+
+	sessionWhere := ""
+	if len(sessionClauses) > 0 {
+		sessionWhere = " WHERE " + strings.Join(sessionClauses, " AND ")
 	}
 
 	// Basic Counts
-	_ = d.db.QueryRow("SELECT COUNT(*) FROM sessions"+sessionWhere, args...).Scan(&stats.TotalSessions)
-	_ = d.db.QueryRow("SELECT COUNT(*) FROM hook_events WHERE 1=1"+eventWhere, args...).Scan(&stats.TotalEvents)
+	_ = d.db.QueryRow("SELECT COUNT(*) FROM sessions"+sessionWhere, sessionArgs...).Scan(&stats.TotalSessions)
+	_ = d.db.QueryRow("SELECT COUNT(*) FROM hook_events"+eventWhere, eventArgs...).Scan(&stats.TotalEvents)
 
 	var in, out sql.NullInt64
-	_ = d.db.QueryRow("SELECT SUM(input_tokens), SUM(output_tokens) FROM sessions"+sessionWhere, args...).Scan(&in, &out)
+	_ = d.db.QueryRow("SELECT SUM(input_tokens), SUM(output_tokens) FROM sessions"+sessionWhere, sessionArgs...).Scan(&in, &out)
 	stats.TotalInputTokens = int(in.Int64)
 	stats.TotalOutputTokens = int(out.Int64)
 
@@ -268,10 +286,10 @@ func (d *DB) GetDashboardStats(since string) (*domain.DashboardStats, error) {
 	if rows, err := d.db.Query(`
 		SELECT strftime('%Y-%m-%d %H:00', created_at) as bucket, COUNT(*) 
 		FROM hook_events 
-		WHERE created_at IS NOT NULL`+eventWhere+`
+		WHERE created_at IS NOT NULL`+buildAndClause(eventClauses)+`
 		GROUP BY bucket 
 		ORDER BY bucket ASC
-	`, args...); err == nil {
+	`, eventArgs...); err == nil {
 		defer rows.Close()
 		for rows.Next() {
 			var b domain.TimelineBucket
@@ -288,11 +306,11 @@ func (d *DB) GetDashboardStats(since string) (*domain.DashboardStats, error) {
 	if rows, err := d.db.Query(`
 		SELECT action, COUNT(*) as count 
 		FROM hook_events 
-		WHERE action IS NOT NULL AND action != ''`+eventWhere+`
+		WHERE action IS NOT NULL AND action != ''`+buildAndClause(eventClauses)+`
 		GROUP BY action 
 		ORDER BY count DESC 
 		LIMIT 10
-	`, args...); err == nil {
+	`, eventArgs...); err == nil {
 		defer rows.Close()
 		for rows.Next() {
 			var a domain.ActionCount
@@ -310,7 +328,7 @@ func (d *DB) GetDashboardStats(since string) (*domain.DashboardStats, error) {
 		SELECT agent, model, SUM(input_tokens), SUM(output_tokens) 
 		FROM sessions`+sessionWhere+`
 		GROUP BY agent, model
-	`, args...); err == nil {
+	`, sessionArgs...); err == nil {
 		defer rows.Close()
 		for rows.Next() {
 			var u domain.AgentModelUsage
@@ -324,6 +342,13 @@ func (d *DB) GetDashboardStats(since string) (*domain.DashboardStats, error) {
 	}
 
 	return stats, nil
+}
+
+func buildAndClause(clauses []string) string {
+	if len(clauses) == 0 {
+		return ""
+	}
+	return " AND " + strings.Join(clauses, " AND ")
 }
 
 func dedupKey(e domain.NormalizedEvent) string {

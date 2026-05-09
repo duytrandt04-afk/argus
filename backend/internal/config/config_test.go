@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"agent-monitor/internal/config"
+	"hooker/internal/config"
 )
 
 func TestLoad_defaults(t *testing.T) {
@@ -18,8 +18,8 @@ func TestLoad_defaults(t *testing.T) {
 	if cfg.Addr != "127.0.0.1:8765" {
 		t.Errorf("Addr = %q, want 127.0.0.1:8765", cfg.Addr)
 	}
-	if cfg.DBPath != "agent-monitor.db" {
-		t.Errorf("DBPath = %q, want agent-monitor.db", cfg.DBPath)
+	if cfg.DBPath != "hooker.db" {
+		t.Errorf("DBPath = %q, want hooker.db", cfg.DBPath)
 	}
 }
 

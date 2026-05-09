@@ -94,7 +94,7 @@ export function AgentSession({
                   </span>
                 )
               })()}
-            {events.length} events • {lastTime.toLocaleTimeString()}
+            {events.length} events • {lastTime.toLocaleDateString()} • {lastTime.toLocaleTimeString()}
           </div>
         </div>
       </CollapsibleTrigger>

@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"agent-monitor/internal/fileutil"
+	"hooker/internal/fileutil"
 )
 
 func TestResolvePath_absolute(t *testing.T) {

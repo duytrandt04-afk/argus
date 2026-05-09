@@ -52,8 +52,8 @@ export function UsagePanel({ title = 'OpenAI Usage', dashboardRange = '7d' }: Us
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-4 border-b border-border pb-6">
-        <h1 className="text-[22px] font-semibold text-foreground">{title}</h1>
-        <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center">
+        {title ? <h1 className="text-[22px] font-semibold text-foreground">{title}</h1> : null}
+        <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
           <Input
             type="password"
             placeholder={isOpenAI ? 'OpenAI Admin API Key...' : 'Anthropic Admin API Key...'}

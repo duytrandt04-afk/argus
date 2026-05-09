@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"agent-monitor/internal/domain"
-	"agent-monitor/internal/service"
+	"hooker/internal/domain"
+	"hooker/internal/service"
 )
 
 func Sessions(svc *service.EventService) http.Handler {
