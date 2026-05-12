@@ -1,6 +1,7 @@
 import { Fragment, useEffect, type RefObject } from 'react'
 import {
   FishingHook,
+  GitFork,
   LayoutDashboard,
   PanelLeft,
   TerminalSquare,
@@ -46,6 +47,13 @@ const NAV_ITEMS: NavItem[] = [
     ariaLabel: 'Terminal Events',
     icon: TerminalSquare,
     end: true,
+  },
+  {
+    to: '/sessions',
+    label: 'Sessions',
+    ariaLabel: 'Sessions Waterfall',
+    icon: GitFork,
+    end: false,
   },
 ]
 

@@ -1,9 +1,18 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import type { Dispatch, SetStateAction } from 'react'
 import type { EventRecord } from '@/types/events'
 
-export function useEventFilters(events: EventRecord[]) {
+export function useEventFilters(
+  events: EventRecord[],
+  searchQuery: string,
+  setSearchQuery: Dispatch<SetStateAction<string>>
+) {
+  const [searchParams] = useSearchParams()
+  const [sessionFilter] = useState<string>(() => searchParams.get('session') ?? '')
+
   const [actionFilter, setActionFilter] = useState('all')
-  const [searchQuery, setSearchQuery] = useState('')
+  const [agentFilter, setAgentFilter] = useState('all')
   const [sortOrder, setSortOrder] = useState('newest')
   const [timeRange, setTimeRange] = useState(
     () => localStorage.getItem('events_time_range') ?? '15m'
@@ -66,6 +75,14 @@ export function useEventFilters(events: EventRecord[]) {
     }
   }, [nowMs, timeRange])
 
+  const availableAgents = useMemo(() => {
+    const agents = new Set<string>()
+    for (const e of events) {
+      if (e.agent) agents.add(e.agent)
+    }
+    return Array.from(agents).sort()
+  }, [events])
+
   const filteredEvents = useMemo(() => {
     return events.filter((e) => {
       const eventTime = new Date(e.time).getTime()
@@ -79,6 +96,10 @@ export function useEventFilters(events: EventRecord[]) {
       }
 
       if (actionFilter !== 'all' && e.action !== actionFilter) return false
+
+      if (agentFilter !== 'all' && e.agent !== agentFilter) return false
+
+      if (sessionFilter && e.session !== sessionFilter) return false
 
       if (searchQuery) {
         const q = searchQuery.toLowerCase()
@@ -100,11 +121,14 @@ export function useEventFilters(events: EventRecord[]) {
       }
       return true
     })
-  }, [events, actionFilter, searchQuery, timeRange, customStart, customEnd, rangeStartMs])
+  }, [events, actionFilter, agentFilter, searchQuery, timeRange, customStart, customEnd, rangeStartMs, sessionFilter])
 
   return {
     actionFilter,
     setActionFilter,
+    agentFilter,
+    setAgentFilter,
+    availableAgents,
     searchQuery,
     setSearchQuery,
     sortOrder,
@@ -116,5 +140,6 @@ export function useEventFilters(events: EventRecord[]) {
     customEnd,
     setCustomEnd,
     filteredEvents,
+    sessionFilter,
   }
 }

@@ -11,6 +11,9 @@ const Events = lazy(() =>
 const Usage = lazy(() =>
   import('./features/usage/UsagePage').then((module) => ({ default: module.UsagePage }))
 )
+const Sessions = lazy(() =>
+  import('./features/sessions/SessionsPage').then((m) => ({ default: m.SessionsPage }))
+)
 
 export default function App() {
   return (
@@ -38,6 +41,14 @@ export default function App() {
             element={
               <Suspense fallback={null}>
                 <Usage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="sessions"
+            element={
+              <Suspense fallback={null}>
+                <Sessions />
               </Suspense>
             }
           />

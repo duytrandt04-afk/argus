@@ -1,24 +1,7 @@
 import { useEffect, useState } from 'react'
+import type { Session } from '@/types/sessions'
 
-export interface SessionUsage {
-  input_tokens: number
-  output_tokens: number
-  cache_creation_tokens: number
-  cache_read_tokens: number
-  turns: number
-}
-
-export interface Session {
-  session_id: string
-  agent: string
-  model: string
-  source: string
-  cwd: string
-  transcript_path: string
-  started_at: string
-  last_seen_at: string
-  usage: SessionUsage
-}
+export type { Session }
 
 export function useSessions() {
   const [sessions, setSessions] = useState<Session[]>([])

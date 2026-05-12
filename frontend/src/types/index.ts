@@ -9,6 +9,8 @@ export type {
   TooltipState,
 } from './events'
 
+export type { Session, SessionUsageType, SessionTreeNode } from './sessions'
+
 export type {
   OpenAIBucketResult,
   OpenAIBucket,
