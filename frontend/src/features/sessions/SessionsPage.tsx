@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSessionTree } from './hooks/useSessionTree'
-import { SessionTree } from './SessionTree'
-import { SessionGantt } from './SessionGantt'
+import { TraceBlock } from './TraceBlock'
 import { SessionDetail } from './SessionDetail'
 import type { SessionTreeNode } from '@/types/sessions'
 import { isRunning } from './utils'
@@ -81,32 +80,27 @@ export function SessionsPage() {
         </select>
       </div>
 
-      <div style={{ flex: 1, display: 'flex', minHeight: 0, overflow: 'hidden' }}>
+      <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
         {loading ? (
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#444', fontSize: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#444', fontSize: 12 }}>
             Loading…
           </div>
         ) : nodes.length === 0 ? (
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#444', fontSize: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#444', fontSize: 12 }}>
             No sessions found. Start a Claude Code or Codex session.
           </div>
         ) : (
-          <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-            <SessionTree
-              nodes={nodes}
-              expanded={expanded}
-              selectedNode={selectedNode}
+          nodes.map((node) => (
+            <TraceBlock
+              key={node.session.session_id}
+              node={node}
+              expanded={expanded.has(node.session.session_id)}
+              selected={selectedNode}
               onSelect={setSelectedNode}
               onToggleExpand={toggleExpand}
               now={now}
             />
-            <SessionGantt
-              nodes={nodes}
-              expanded={expanded}
-              selectedNode={selectedNode}
-              now={now}
-            />
-          </div>
+          ))
         )}
       </div>
 
@@ -118,12 +112,8 @@ export function SessionsPage() {
 function countActiveSessions(nodes: SessionTreeNode[], now: number): number {
   let total = 0
   for (const node of nodes) {
-    if (isRunning(node.session, now)) {
-      total += 1
-    }
-    if (node.children.length > 0) {
-      total += countActiveSessions(node.children, now)
-    }
+    if (isRunning(node.session, now)) total += 1
+    if (node.children.length > 0) total += countActiveSessions(node.children, now)
   }
   return total
 }
