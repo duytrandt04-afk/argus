@@ -1,30 +1,4 @@
-import type { Session, SessionTreeNode } from '@/types/sessions'
-
-export interface FlatRow {
-  node: SessionTreeNode
-  depth: number
-  isRoot: boolean
-  rootNode: SessionTreeNode
-}
-
-export function flattenTree(nodes: SessionTreeNode[], expanded: Set<string>): FlatRow[] {
-  const rows: FlatRow[] = []
-
-  function walk(list: SessionTreeNode[], depth: number, root: SessionTreeNode) {
-    for (const node of list) {
-      rows.push({ node, depth, isRoot: depth === 0, rootNode: root })
-      if (expanded.has(node.session.session_id) && node.children.length > 0) {
-        walk(node.children, depth + 1, depth === 0 ? node : root)
-      }
-    }
-  }
-
-  for (const root of nodes) {
-    walk([root], 0, root)
-  }
-
-  return rows
-}
+import type { Session } from '@/types/sessions'
 
 export function isRunning(session: Session, now: number): boolean {
   const endedAt = session.ended_at ? new Date(session.ended_at).getTime() : NaN
@@ -76,18 +50,3 @@ export function shortenCwd(cwd: string): string {
   return cwd.replace(/^\/Users\/[^/]+/, '~').replace(/^\/home\/[^/]+/, '~')
 }
 
-export function agentColor(agent: string): string {
-  switch (agent) {
-    case 'claudecode': return 'var(--brand)'
-    case 'codex': return 'var(--dim)'
-    default: return 'var(--agent)'
-  }
-}
-
-export function barColor(agent: string, running: boolean): string {
-  if (running) return '#16a34a'
-  switch (agent) {
-    case 'claudecode': return '#7c3aed'
-    default: return '#1d4ed8'
-  }
-}
