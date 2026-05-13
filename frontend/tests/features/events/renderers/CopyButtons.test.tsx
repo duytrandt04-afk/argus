@@ -1,8 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { CommandBlock } from '../CommandBlock'
-import { StopBlock } from '../StopBlock'
-import { ToolResultBlock } from '../ToolResultBlock'
+import { CommandBlock } from '@/features/events/renderers/CommandBlock'
+import { StopBlock } from '@/features/events/renderers/StopBlock'
+import { ToolResultBlock } from '@/features/events/renderers/ToolResultBlock'
 
 describe('Event renderer copy buttons', () => {
   const writeText = vi.fn()

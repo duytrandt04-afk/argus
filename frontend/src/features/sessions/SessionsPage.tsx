@@ -51,7 +51,7 @@ export function SessionsPage() {
     })
   }
 
-  const activeCount = nodes.filter((n) => isRunning(n.session, now)).length
+  const activeCount = countActiveSessions(nodes, now)
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, background: '#0c0c0c' }}>
@@ -113,4 +113,17 @@ export function SessionsPage() {
       <SessionDetail node={selectedNode} now={now} />
     </div>
   )
+}
+
+function countActiveSessions(nodes: SessionTreeNode[], now: number): number {
+  let total = 0
+  for (const node of nodes) {
+    if (isRunning(node.session, now)) {
+      total += 1
+    }
+    if (node.children.length > 0) {
+      total += countActiveSessions(node.children, now)
+    }
+  }
+  return total
 }

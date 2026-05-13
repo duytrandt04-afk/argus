@@ -27,12 +27,25 @@ export function flattenTree(nodes: SessionTreeNode[], expanded: Set<string>): Fl
 }
 
 export function isRunning(session: Session, now: number): boolean {
-  return now - new Date(session.last_seen_at).getTime() < 10_000
+  const endedAt = session.ended_at ? new Date(session.ended_at).getTime() : NaN
+  if (Number.isFinite(endedAt)) {
+    return false
+  }
+  const lastSeen = new Date(session.last_seen_at).getTime()
+  return Number.isFinite(lastSeen) && now - lastSeen < 10_000
 }
 
 export function sessionDurationMs(session: Session, now: number): number {
   const start = new Date(session.started_at).getTime()
-  const end = isRunning(session, now) ? now : new Date(session.last_seen_at).getTime()
+  const endedAt = session.ended_at ? new Date(session.ended_at).getTime() : NaN
+  const end = Number.isFinite(endedAt)
+    ? endedAt
+    : isRunning(session, now)
+      ? now
+      : new Date(session.last_seen_at).getTime()
+  if (!Number.isFinite(start) || !Number.isFinite(end)) {
+    return 0
+  }
   return Math.max(0, end - start)
 }
 

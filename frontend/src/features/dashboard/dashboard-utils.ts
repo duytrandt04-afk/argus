@@ -1,5 +1,9 @@
-import type { AgentModelUsage, DashboardStats, TimelineBucket } from './hooks/useDashboardStats'
+import type {
+  AgentModelUsage,
+  DashboardStats,
+} from './hooks/useDashboardStats'
 import { displayModel, displayProviderModel } from '@/lib/utils'
+import { AGENTS } from '@/agents'
 
 export const DASHBOARD_TIME_RANGES = [
   { label: '1h', value: '1h' },
@@ -109,14 +113,113 @@ export function toTimelineData(stats: DashboardStats | null) {
   if (!stats) return []
   return stats.timeline.map((bucket) => ({
     ...bucket,
-    localLabel: formatTimelineLabel(bucket),
+    localLabel: formatTimelineLabel(bucket.date, stats.timeline_granularity),
   }))
 }
 
-function formatTimelineLabel(bucket: TimelineBucket) {
-  const utcDate = new Date(`${bucket.date.replace(' ', 'T')}:00Z`)
-  if (Number.isNaN(utcDate.getTime())) return bucket.date
+export function toTimelineByAgentChartData(stats: DashboardStats | null, query: string = '') {
+  if (!stats || stats.timeline_by_agent.length === 0) {
+    return { data: [] as Array<Record<string, number | string>>, series: [] as string[] }
+  }
+
+  const byDate = new Map<string, Record<string, number | string>>()
+  const series = new Set<string>()
+
+  for (const bucket of stats.timeline_by_agent) {
+    const key = bucket.agent || 'unknown'
+    series.add(key)
+    const row =
+      byDate.get(bucket.date) ??
+      {
+        date: bucket.date,
+        localLabel: formatTimelineLabel(bucket.date, stats.timeline_granularity),
+      }
+    row[key] = Number(bucket.count || 0)
+    byDate.set(bucket.date, row)
+  }
+
+  const orderedSeries = [...series].sort((a, b) => agentLabel(a).localeCompare(agentLabel(b)))
+  const keysFromRange = timelineKeysFromQuery(query, stats.timeline_granularity)
+  const orderedKeys =
+    keysFromRange.length > 0
+      ? [...new Set([...keysFromRange, ...byDate.keys()])].sort((a, b) => a.localeCompare(b))
+      : [...byDate.keys()].sort((a, b) => a.localeCompare(b))
+
+  const data = orderedKeys.map((key) => {
+    const row =
+      byDate.get(key) ??
+      ({
+        date: key,
+        localLabel: formatTimelineLabel(key, stats.timeline_granularity),
+      } as Record<string, number | string>)
+    const next = { ...row } as Record<string, number | string>
+    for (const seriesKey of orderedSeries) {
+      if (typeof next[seriesKey] !== 'number') {
+        next[seriesKey] = 0
+      }
+    }
+    return next
+  })
+
+  return { data, series: orderedSeries }
+}
+
+function formatTimelineLabel(date: string, granularity: DashboardStats['timeline_granularity']) {
+  const utcDate = new Date(`${date.replace(' ', 'T')}:00Z`)
+  if (Number.isNaN(utcDate.getTime())) return date
+  if (granularity === 'day') {
+    return utcDate.toLocaleDateString([], { month: 'short', day: '2-digit' })
+  }
   return utcDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
+}
+
+function timelineKeysFromQuery(query: string, granularity: DashboardStats['timeline_granularity']) {
+  if (!query) return []
+  const params = new URLSearchParams(query)
+  const start = params.get('start')
+  const end = params.get('end')
+  if (!start || !end) return []
+
+  const startDate = new Date(start)
+  const endDate = new Date(end)
+  if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) return []
+  if (endDate < startDate) return []
+
+  const stepMs = granularity === 'day' ? 24 * 60 * 60 * 1000 : 60 * 60 * 1000
+  const current = bucketFloor(startDate, granularity).getTime()
+  const last = bucketFloor(endDate, granularity).getTime()
+
+  const keys: string[] = []
+  for (let ts = current; ts <= last; ts += stepMs) {
+    keys.push(toBucketKey(new Date(ts), granularity))
+  }
+  return keys
+}
+
+function bucketFloor(date: Date, granularity: DashboardStats['timeline_granularity']) {
+  const year = date.getUTCFullYear()
+  const month = date.getUTCMonth()
+  const day = date.getUTCDate()
+  const hour = date.getUTCHours()
+  if (granularity === 'day') {
+    return new Date(Date.UTC(year, month, day, 0, 0, 0, 0))
+  }
+  return new Date(Date.UTC(year, month, day, hour, 0, 0, 0))
+}
+
+function toBucketKey(date: Date, granularity: DashboardStats['timeline_granularity']) {
+  const year = date.getUTCFullYear()
+  const month = `${date.getUTCMonth() + 1}`.padStart(2, '0')
+  const day = `${date.getUTCDate()}`.padStart(2, '0')
+  if (granularity === 'day') {
+    return `${year}-${month}-${day} 00:00`
+  }
+  const hour = `${date.getUTCHours()}`.padStart(2, '0')
+  return `${year}-${month}-${day} ${hour}:00`
+}
+
+function agentLabel(agent: string) {
+  return AGENTS.find((item) => item.id === agent)?.label || (agent === 'unknown' ? 'Unknown' : agent)
 }
 
 export type TokenChartDatum = ReturnType<typeof toTokenChartData>[number]

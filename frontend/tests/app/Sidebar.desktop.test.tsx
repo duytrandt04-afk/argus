@@ -2,7 +2,7 @@ import type { ComponentProps } from 'react'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
-import { Sidebar } from '../Sidebar'
+import { Sidebar } from '@/app/Sidebar'
 
 function renderSidebar(props: ComponentProps<typeof Sidebar>) {
   return render(

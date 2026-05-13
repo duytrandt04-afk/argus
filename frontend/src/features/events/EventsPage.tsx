@@ -11,14 +11,20 @@ import type { LayoutOutletContext, TooltipState } from '@/types'
 
 export function EventsPage() {
   const { events, refreshing, error, reload } = useEvents()
-  const { collapsedSessions, setCollapsedSessions, sessionUsage } =
-    useOutletContext<LayoutOutletContext>()
+  const {
+    collapsedSessions,
+    setCollapsedSessions,
+    sessionUsage,
+    searchQuery,
+    setSearchQuery,
+  } = useOutletContext<LayoutOutletContext>()
 
   const {
     actionFilter,
     setActionFilter,
-    searchQuery,
-    setSearchQuery,
+    agentFilter,
+    setAgentFilter,
+    availableAgents,
     sortOrder,
     setSortOrder,
     timeRange,
@@ -28,7 +34,7 @@ export function EventsPage() {
     customEnd,
     setCustomEnd,
     filteredEvents,
-  } = useEventFilters(events)
+  } = useEventFilters(events, searchQuery, setSearchQuery)
 
   const [tooltip, setTooltip] = useState<TooltipState | null>(null)
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
@@ -64,8 +70,9 @@ export function EventsPage() {
         id="event-filters"
         actionFilter={actionFilter}
         setActionFilter={setActionFilter}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
+        agentFilter={agentFilter}
+        setAgentFilter={setAgentFilter}
+        availableAgents={availableAgents}
         sortOrder={sortOrder}
         setSortOrder={setSortOrder}
         timeRange={timeRange}

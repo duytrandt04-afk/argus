@@ -12,8 +12,9 @@ import {
 type EventFiltersProps = {
   actionFilter: string
   setActionFilter: (v: string) => void
-  searchQuery: string
-  setSearchQuery: (v: string) => void
+  agentFilter: string
+  setAgentFilter: (v: string) => void
+  availableAgents: string[]
   sortOrder: string
   setSortOrder: (v: string) => void
   timeRange: string
@@ -29,8 +30,9 @@ type EventFiltersProps = {
 export function EventFilters({
   actionFilter,
   setActionFilter,
-  searchQuery,
-  setSearchQuery,
+  agentFilter,
+  setAgentFilter,
+  availableAgents,
   sortOrder,
   setSortOrder,
   timeRange,
@@ -82,15 +84,26 @@ export function EventFilters({
         </Select>
       </div>
 
-      <div className="flex w-full min-w-0 items-center gap-2 sm:min-w-[220px] sm:flex-1">
-        <span className="text-[0.7rem] uppercase text-[#666]">Search</span>
-        <Input
-          className="h-auto w-full px-2 py-1 text-[0.8rem] bg-black border-[#333] text-[#cccccc] placeholder:text-[#666] focus-visible:ring-0 focus-visible:ring-offset-0"
-          placeholder="Filter by path, prompt, or session ID..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-      </div>
+      {availableAgents.length > 0 && (
+        <div className="flex w-full items-center gap-2 sm:w-auto">
+          <span className="text-[0.7rem] uppercase text-[#666]">Agent</span>
+          <Select value={agentFilter} onValueChange={setAgentFilter}>
+            <SelectTrigger className="h-auto w-full px-2 py-1 text-[0.8rem] bg-black border-[#333] text-[#cccccc] sm:w-[120px] focus:ring-0 focus:ring-offset-0">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-[#111] border-[#333] text-[#cccccc]">
+              <SelectGroup>
+                <SelectItem value="all">ALL</SelectItem>
+                {availableAgents.map((agent) => (
+                  <SelectItem key={agent} value={agent}>
+                    {agent.toUpperCase()}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       <div className="flex w-full items-center gap-2 sm:w-auto">
         <span className="text-[0.7rem] uppercase text-[#666]">Sort</span>

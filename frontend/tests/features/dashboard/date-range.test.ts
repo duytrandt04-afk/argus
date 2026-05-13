@@ -4,7 +4,7 @@ import {
   presetToDateRange,
   rangeToDashboardQuery,
   rangeToUsageRange,
-} from '../date-range'
+} from '@/features/dashboard/date-range'
 
 describe('date-range helpers', () => {
   it('returns a 14-day preset with a bounded range', () => {

@@ -71,6 +71,7 @@ type Session struct {
 	TranscriptPath string       `json:"transcript_path"`
 	StartedAt      string       `json:"started_at"`
 	LastSeenAt     string       `json:"last_seen_at"`
+	EndedAt        string       `json:"ended_at,omitempty"`
 	Usage          SessionUsage `json:"usage"`
 }
 

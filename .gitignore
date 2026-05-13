@@ -36,3 +36,5 @@ frontend/.vite/
 .superpowers/
 
 .cache
+
+docs/

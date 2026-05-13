@@ -1,10 +1,13 @@
+import type { ReactNode } from 'react'
+import { highlight } from '@/lib/format'
 import { CopyIconButton } from './CopyIconButton'
 
 type StopBlockProps = {
   response: string
+  searchQuery?: string
 }
 
-export function StopBlock({ response }: StopBlockProps) {
+export function StopBlock({ response, searchQuery = '' }: StopBlockProps) {
   if (!response) return null
 
   return (
@@ -18,7 +21,7 @@ export function StopBlock({ response }: StopBlockProps) {
         />
       </div>
       <pre className="mt-1 mb-0 max-h-[400px] overflow-y-auto whitespace-pre-wrap break-words font-[inherit] text-[0.75rem] text-[#a0a0a0]">
-        {response}
+        {highlight(response, searchQuery) as ReactNode}
       </pre>
     </div>
   )

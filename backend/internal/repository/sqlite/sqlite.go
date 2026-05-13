@@ -34,6 +34,9 @@ var schema005 string
 //go:embed migrations/006_compact_trigger.sql
 var schema006 string
 
+//go:embed migrations/007_session_ended_at.sql
+var schema007 string
+
 type DB struct {
 	db *sql.DB
 }
@@ -64,6 +67,7 @@ func (d *DB) migrate() error {
 		{4, schema004},
 		{5, schema005},
 		{6, schema006},
+		{7, schema007},
 	}
 	for _, m := range migrations {
 		var count int
@@ -187,7 +191,7 @@ func (d *DB) SessionModel(sessionID string) (string, error) {
 func (d *DB) ListSessions() ([]domain.Session, error) {
 	rows, err := d.db.Query(`
 		SELECT session_id, agent, COALESCE(model,''), COALESCE(source,''), COALESCE(cwd,''), 
-		       COALESCE(transcript_path,''), started_at, last_seen_at,
+		       COALESCE(transcript_path,''), started_at, last_seen_at, COALESCE(ended_at,''),
 		       COALESCE(input_tokens,0), COALESCE(output_tokens,0), COALESCE(cache_creation_tokens,0), 
 		       COALESCE(cache_read_tokens,0), COALESCE(turns,0)
 		FROM sessions
@@ -202,7 +206,7 @@ func (d *DB) ListSessions() ([]domain.Session, error) {
 		var s domain.Session
 		if err := rows.Scan(
 			&s.SessionID, &s.Agent, &s.Model, &s.Source, &s.CWD,
-			&s.TranscriptPath, &s.StartedAt, &s.LastSeenAt,
+			&s.TranscriptPath, &s.StartedAt, &s.LastSeenAt, &s.EndedAt,
 			&s.Usage.InputTokens, &s.Usage.OutputTokens, &s.Usage.CacheCreationTokens,
 			&s.Usage.CacheReadTokens, &s.Usage.Turns,
 		); err != nil {
@@ -216,23 +220,45 @@ func (d *DB) ListSessions() ([]domain.Session, error) {
 	return sessions, nil
 }
 
-func (d *DB) UpsertSession(sessionID, agent, model, source, cwd, transcriptPath string, usage domain.SessionUsage) error {
-	now := time.Now().Format(time.RFC3339)
+func (d *DB) UpsertSession(sessionID, agent, model, source, cwd, transcriptPath, eventTime, endedAt string, usage domain.SessionUsage) error {
+	if eventTime == "" {
+		eventTime = time.Now().Format(time.RFC3339)
+	}
 	_, err := d.db.Exec(`
 		INSERT INTO sessions (
-			session_id, agent, model, source, cwd, transcript_path, started_at, last_seen_at,
+			session_id, agent, model, source, cwd, transcript_path, started_at, last_seen_at, ended_at,
 			input_tokens, output_tokens, cache_creation_tokens, cache_read_tokens, turns
 		)
-		VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
+		VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
 		ON CONFLICT(session_id) DO UPDATE SET
 			model        = COALESCE(NULLIF(excluded.model,''), sessions.model),
-			last_seen_at = excluded.last_seen_at,
+			last_seen_at = CASE
+				WHEN datetime(excluded.last_seen_at) > datetime(sessions.last_seen_at)
+				THEN excluded.last_seen_at
+				ELSE sessions.last_seen_at
+			END,
+			ended_at = CASE
+				WHEN (excluded.ended_at IS NULL OR excluded.ended_at = '')
+					AND sessions.ended_at IS NOT NULL AND sessions.ended_at != ''
+					AND datetime(excluded.last_seen_at) > datetime(sessions.ended_at)
+				THEN NULL
+				WHEN excluded.ended_at IS NULL OR excluded.ended_at = ''
+				THEN sessions.ended_at
+				WHEN (sessions.ended_at IS NULL OR sessions.ended_at = '')
+					AND datetime(excluded.ended_at) >= datetime(sessions.last_seen_at)
+				THEN excluded.ended_at
+				WHEN sessions.ended_at IS NULL OR sessions.ended_at = ''
+				THEN sessions.ended_at
+				WHEN datetime(excluded.ended_at) > datetime(sessions.ended_at)
+				THEN excluded.ended_at
+				ELSE sessions.ended_at
+			END,
 			input_tokens = excluded.input_tokens,
 			output_tokens = excluded.output_tokens,
 			cache_creation_tokens = excluded.cache_creation_tokens,
 			cache_read_tokens = excluded.cache_read_tokens,
 			turns = excluded.turns`,
-		sessionID, agent, model, source, cwd, transcriptPath, now, now,
+		sessionID, agent, model, source, cwd, transcriptPath, eventTime, eventTime, nullStr(endedAt),
 		usage.InputTokens, usage.OutputTokens, usage.CacheCreationTokens, usage.CacheReadTokens, usage.Turns,
 	)
 	return err
@@ -437,7 +463,7 @@ func (d *DB) GetSessionTree(since string) ([]domain.SessionTreeNode, error) {
 	// 1. Load sessions since cutoff
 	sessRows, err := d.db.Query(`
 		SELECT session_id, agent, COALESCE(model,''), COALESCE(source,''), COALESCE(cwd,''),
-		       COALESCE(transcript_path,''), started_at, last_seen_at,
+		       COALESCE(transcript_path,''), started_at, last_seen_at, COALESCE(ended_at,''),
 		       COALESCE(input_tokens,0), COALESCE(output_tokens,0),
 		       COALESCE(cache_creation_tokens,0), COALESCE(cache_read_tokens,0), COALESCE(turns,0)
 		FROM sessions
@@ -453,7 +479,7 @@ func (d *DB) GetSessionTree(since string) ([]domain.SessionTreeNode, error) {
 		var s domain.Session
 		if err := sessRows.Scan(
 			&s.SessionID, &s.Agent, &s.Model, &s.Source, &s.CWD,
-			&s.TranscriptPath, &s.StartedAt, &s.LastSeenAt,
+			&s.TranscriptPath, &s.StartedAt, &s.LastSeenAt, &s.EndedAt,
 			&s.Usage.InputTokens, &s.Usage.OutputTokens,
 			&s.Usage.CacheCreationTokens, &s.Usage.CacheReadTokens, &s.Usage.Turns,
 		); err != nil {
@@ -509,32 +535,45 @@ func (d *DB) GetSessionTree(since string) ([]domain.SessionTreeNode, error) {
 		return nil, err
 	}
 
-	// 4. Build parent → []SessionTreeNode map; track which sessions are children
+	// 4. Build parent → []SessionTreeNode map; track which sessions are children.
+	// Only add a child entry when the child session is actually known — this prevents
+	// zero-value Session structs from reaching the frontend when a subagent was spawned
+	// but hasn't sent any events yet (or falls outside the since window).
 	childSessionIDs := map[string]bool{}
 	parentToChildren := map[string][]domain.SessionTreeNode{}
 	for parentID, agentIDs := range parentToAgents {
 		for _, agentID := range agentIDs {
 			childSessID := agentToSession[agentID]
-			if childSessID != "" {
-				childSessionIDs[childSessID] = true
+			if childSessID == "" {
+				continue
 			}
+			childSession, ok := sessionMap[childSessID]
+			if !ok || childSession.SessionID == "" {
+				continue
+			}
+			childSessionIDs[childSessID] = true
 			parentToChildren[parentID] = append(parentToChildren[parentID], domain.SessionTreeNode{
-				Session: sessionMap[childSessID],
+				Session: childSession,
 				AgentID: agentID,
 			})
 		}
 	}
 
-	// 5. Recursively build tree nodes
-	var buildNode func(sessID string) domain.SessionTreeNode
-	buildNode = func(sessID string) domain.SessionTreeNode {
+	// 5. Recursively build tree nodes. visited prevents infinite loops on corrupt data.
+	var buildNode func(sessID string, visited map[string]bool) domain.SessionTreeNode
+	buildNode = func(sessID string, visited map[string]bool) domain.SessionTreeNode {
 		node := domain.SessionTreeNode{Session: sessionMap[sessID]}
 		for _, child := range parentToChildren[sessID] {
-			if child.Session.SessionID != "" {
-				node.Children = append(node.Children, buildNode(child.Session.SessionID))
-			} else {
-				node.Children = append(node.Children, child)
+			cid := child.Session.SessionID
+			if cid == "" || visited[cid] {
+				continue
 			}
+			next := map[string]bool{}
+			for k, v := range visited {
+				next[k] = v
+			}
+			next[cid] = true
+			node.Children = append(node.Children, buildNode(cid, next))
 		}
 		if node.Children == nil {
 			node.Children = []domain.SessionTreeNode{}
@@ -552,10 +591,33 @@ func (d *DB) GetSessionTree(since string) ([]domain.SessionTreeNode, error) {
 	})
 
 	var roots []domain.SessionTreeNode
+	built := map[string]bool{}
+	var markBuilt func(node domain.SessionTreeNode)
+	markBuilt = func(node domain.SessionTreeNode) {
+		if node.Session.SessionID != "" {
+			built[node.Session.SessionID] = true
+		}
+		for _, child := range node.Children {
+			markBuilt(child)
+		}
+	}
 	for _, s := range sorted {
 		if !childSessionIDs[s.SessionID] {
-			roots = append(roots, buildNode(s.SessionID))
+			node := buildNode(s.SessionID, map[string]bool{s.SessionID: true})
+			roots = append(roots, node)
+			markBuilt(node)
 		}
+	}
+
+	// Corrupt cyclical graphs can make every node appear as a child and produce no roots.
+	// Keep tree resilient by adding any unbuilt sessions as standalone roots.
+	for _, s := range sorted {
+		if built[s.SessionID] {
+			continue
+		}
+		node := buildNode(s.SessionID, map[string]bool{s.SessionID: true})
+		roots = append(roots, node)
+		markBuilt(node)
 	}
 	return roots, nil
 }

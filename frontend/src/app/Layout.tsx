@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { PanelLeft } from 'lucide-react'
+import { PanelLeft, Search } from 'lucide-react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import { useSessions } from '@/hooks/useSessions'
 import type { LayoutOutletContext } from '@/types'
@@ -31,6 +32,7 @@ export function Layout() {
   )
   const [mobileDrawerLocationKey, setMobileDrawerLocationKey] = useState<string | null>(null)
   const [collapsedSessions, setCollapsedSessions] = useState<Set<string>>(loadCollapsedSessions)
+  const [searchQuery, setSearchQuery] = useState('')
   const [now, setNow] = useState(() => new Date())
   const location = useLocation()
   const [isDesktopViewport, setIsDesktopViewport] = useState(
@@ -55,7 +57,13 @@ export function Layout() {
     collapsedSessions,
     setCollapsedSessions,
     sessionUsage,
+    searchQuery,
+    setSearchQuery,
   }
+
+  useEffect(() => {
+    if (!location.pathname.startsWith('/events')) setSearchQuery('')
+  }, [location.pathname])
 
   useEffect(() => {
     localStorage.setItem('sidebar_collapsed', collapsed.toString())
@@ -204,8 +212,8 @@ export function Layout() {
         aria-hidden={mobileOpen ? true : undefined}
         className="relative z-0 flex min-h-0 flex-1 flex-col overflow-hidden"
       >
-        <header className="flex flex-wrap items-center justify-between gap-2 border-b border-[#222] bg-[#0c0c0c] px-3 py-2 text-[0.75rem] text-muted-foreground sm:px-4">
-          <div className="flex min-w-0 items-center gap-2">
+        <header className="grid grid-cols-[auto_minmax(0,1fr)] grid-rows-[auto_auto] items-center gap-x-2 gap-y-1 border-b border-[#222] bg-[#0c0c0c] px-3 py-1.5 text-[0.75rem] text-muted-foreground sm:px-4 md:grid-cols-3 md:grid-rows-1 md:gap-y-0">
+          <div className="row-start-1 col-start-1 flex items-center gap-2 md:row-auto md:col-auto">
             <Button
               ref={mobileToggleRef}
               variant="ghost"
@@ -219,9 +227,25 @@ export function Layout() {
               <PanelLeft className="size-4" />
             </Button>
           </div>
-          <span className="tabular-nums text-[#555]">
-            {now.toLocaleDateString()} {now.toLocaleTimeString()}
-          </span>
+
+          <div className="col-span-2 row-start-2 flex min-w-0 justify-center md:col-auto md:row-auto">
+            <div className="relative w-full max-w-full md:max-w-[450px]">
+              <Search className="absolute left-2.5 top-1/2 size-3 -translate-y-1/2 text-[#444]" />
+              <Input
+                className="h-7 w-full border-[#222] bg-black/40 pl-8 pr-3 text-[0.75rem] text-[#ccc] placeholder:text-[#333] focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-[#444] transition-colors"
+                placeholder="Search across events..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="row-start-1 col-start-2 flex min-w-0 items-center justify-end md:row-auto md:col-auto">
+            <span className="tabular-nums text-[#444] shrink-0 font-medium text-right">
+              {now.toLocaleDateString()}{' '}
+              {now.toLocaleTimeString()}
+            </span>
+          </div>
         </header>
         <Outlet context={outletContext} />
       </div>

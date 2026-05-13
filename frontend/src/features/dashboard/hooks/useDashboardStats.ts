@@ -10,6 +10,12 @@ export interface ActionCount {
   value: number
 }
 
+export interface AgentTimelineBucket {
+  date: string
+  agent: string
+  count: number
+}
+
 export interface AgentModelUsage {
   provider: string
   agent: string
@@ -48,7 +54,9 @@ export interface DashboardStats {
   total_events: number
   total_input_tokens: number
   total_output_tokens: number
+  timeline_granularity: 'hour' | 'day'
   timeline: TimelineBucket[]
+  timeline_by_agent: AgentTimelineBucket[]
   top_actions: ActionCount[]
   agent_usage: AgentModelUsage[]
   session_usage: DashboardSessionUsage[]
@@ -99,7 +107,15 @@ export function normalizeDashboardStats(raw: Partial<DashboardStats>): Dashboard
     total_events: Number(raw.total_events || 0),
     total_input_tokens: Number(raw.total_input_tokens || 0),
     total_output_tokens: Number(raw.total_output_tokens || 0),
+    timeline_granularity: raw.timeline_granularity === 'day' ? 'day' : 'hour',
     timeline: Array.isArray(raw.timeline) ? raw.timeline : [],
+    timeline_by_agent: Array.isArray(raw.timeline_by_agent)
+      ? raw.timeline_by_agent.map((bucket) => ({
+          date: bucket.date || '',
+          agent: bucket.agent || 'unknown',
+          count: Number(bucket.count || 0),
+        }))
+      : [],
     top_actions: Array.isArray(raw.top_actions) ? raw.top_actions : [],
     agent_usage: agentUsage,
     session_usage: sessionUsage,

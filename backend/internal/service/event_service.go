@@ -35,7 +35,17 @@ func (s *EventService) AddEvent(e domain.NormalizedEvent) error {
 		} else {
 			usage = codex.ComputeUsage(e.TranscriptPath)
 		}
-		if err := s.repo.UpsertSession(e.Session, e.Agent, e.Model, e.Source, e.CWD, e.TranscriptPath, usage); err != nil {
+		if err := s.repo.UpsertSession(
+			e.Session,
+			e.Agent,
+			e.Model,
+			e.Source,
+			e.CWD,
+			e.TranscriptPath,
+			e.Time,
+			endedAtForEvent(e),
+			usage,
+		); err != nil {
 			return err
 		}
 	}
@@ -105,6 +115,8 @@ func (s *EventService) backfillSessionUsage(sessions []domain.Session) error {
 			sessions[i].Source,
 			sessions[i].CWD,
 			sessions[i].TranscriptPath,
+			sessions[i].LastSeenAt,
+			sessions[i].EndedAt,
 			usage,
 		); err != nil {
 			return err
@@ -257,6 +269,21 @@ func providerForAgent(agent string) string {
 		return "anthropic"
 	default:
 		return agent
+	}
+}
+
+func endedAtForEvent(e domain.NormalizedEvent) string {
+	if e.Time == "" {
+		return ""
+	}
+	if e.Action == "STOP" {
+		return e.Time
+	}
+	switch e.HookEventName {
+	case "SessionEnd", "Stop", "StopFailure":
+		return e.Time
+	default:
+		return ""
 	}
 }
 

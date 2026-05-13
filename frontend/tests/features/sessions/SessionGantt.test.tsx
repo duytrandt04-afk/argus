@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react'
 import { describe, it, expect } from 'vitest'
-import { SessionGantt } from '../SessionGantt'
+import { SessionGantt } from '@/features/sessions/SessionGantt'
 import type { SessionTreeNode } from '@/types/sessions'
 
 const t = (offsetMs: number) => new Date(1_700_000_000_000 + offsetMs).toISOString()

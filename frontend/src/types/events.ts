@@ -47,6 +47,7 @@ export interface EventRecord {
   tool_result_stderr?: string
   duration_ms?: number
   trigger?: string
+  agent?: string
 }
 
 export interface SessionUsage {
@@ -67,6 +68,8 @@ export interface LayoutOutletContext {
   collapsedSessions: Set<string>
   setCollapsedSessions: Dispatch<SetStateAction<Set<string>>>
   sessionUsage: Record<string, SessionUsage>
+  searchQuery: string
+  setSearchQuery: Dispatch<SetStateAction<string>>
 }
 
 export interface EventsResponse {

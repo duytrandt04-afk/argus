@@ -51,6 +51,9 @@ func Hook(svc *service.EventService) http.Handler {
 				e.Model = model
 			}
 		}
+		if e.Model == "" && e.TranscriptPath != "" && claudecode.MatchesTranscript(e.TranscriptPath) {
+			e.Model = claudecode.ModelFromTranscript(e.TranscriptPath)
+		}
 
 		log.Printf("[hook] agent=%s session=%s tool=%s action=%s path=%s", e.Agent, e.Session, e.Tool, e.Action, e.Path)
 

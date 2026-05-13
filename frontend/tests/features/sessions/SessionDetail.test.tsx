@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
-import { SessionDetail } from '../SessionDetail'
+import { SessionDetail } from '@/features/sessions/SessionDetail'
 import type { SessionTreeNode } from '@/types/sessions'
 
 const mockNavigate = vi.fn()

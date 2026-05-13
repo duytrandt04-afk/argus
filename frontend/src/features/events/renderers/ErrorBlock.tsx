@@ -1,9 +1,13 @@
+import type { ReactNode } from 'react'
+import { highlight } from '@/lib/format'
+
 type ErrorBlockProps = {
   errorMessage?: string
   errorType?: string
+  searchQuery?: string
 }
 
-export function ErrorBlock({ errorMessage, errorType }: ErrorBlockProps) {
+export function ErrorBlock({ errorMessage, errorType, searchQuery = '' }: ErrorBlockProps) {
   if (!errorMessage && !errorType) return null
 
   return (
@@ -12,7 +16,7 @@ export function ErrorBlock({ errorMessage, errorType }: ErrorBlockProps) {
         Error{errorType ? `: ${errorType}` : ''}
       </strong>
       {errorMessage && (
-        <pre className="mt-1 mb-0 whitespace-pre-wrap text-[0.73rem]">{errorMessage}</pre>
+        <pre className="mt-1 mb-0 whitespace-pre-wrap text-[0.73rem]">{highlight(errorMessage, searchQuery) as ReactNode}</pre>
       )}
     </div>
   )

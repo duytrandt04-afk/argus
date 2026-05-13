@@ -2,7 +2,7 @@ import { renderHook } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
 import { createElement } from 'react'
-import { useEventFilters } from '../hooks/useEventFilters'
+import { useEventFilters } from '@/features/events/hooks/useEventFilters'
 import type { EventRecord } from '@/types'
 
 const localStorageMock = {

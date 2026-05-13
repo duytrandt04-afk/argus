@@ -15,6 +15,7 @@ export interface Session {
   transcript_path: string
   started_at: string
   last_seen_at: string
+  ended_at?: string
   usage: SessionUsageType
 }
 

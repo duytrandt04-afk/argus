@@ -75,7 +75,7 @@ export function Dashboard() {
                 <TokenUsagePanel stats={stats} />
               </TabsContent>
               <TabsContent value="activity">
-                <ActivityPanel stats={stats} />
+                <ActivityPanel stats={stats} query={query} />
               </TabsContent>
               <TabsContent value="api-usage">
                 <UsagePanel title="" dashboardRange={usageRange} />

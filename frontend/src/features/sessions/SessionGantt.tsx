@@ -18,7 +18,7 @@ export function SessionGantt({ nodes, expanded, selectedNode, now }: Props) {
     <div style={{ flex: 1, overflowY: 'auto', background: '#0f0f0f', position: 'relative' }}>
       <div style={{ height: 28, background: '#111', borderBottom: '1px solid var(--app-border)', flexShrink: 0 }} />
 
-      {rows.map((row) => {
+      {rows.map((row, index) => {
         const { node, isRoot, rootNode } = row
         const sess = node.session
         const selected = selectedNode?.session.session_id === sess.session_id
@@ -31,8 +31,13 @@ export function SessionGantt({ nodes, expanded, selectedNode, now }: Props) {
         if (!isRoot && rootDuration > 0) {
           const childStart = new Date(sess.started_at).getTime() - new Date(rootNode.session.started_at).getTime()
           const childDuration = sessionDurationMs(sess, now)
-          leftPct = Math.max(0, (childStart / rootDuration) * 100)
-          widthPct = Math.min(100 - leftPct, (childDuration / rootDuration) * 100)
+          if (Number.isFinite(childStart) && Number.isFinite(childDuration)) {
+            leftPct = Math.max(0, (childStart / rootDuration) * 100)
+            widthPct = Math.min(100 - leftPct, (childDuration / rootDuration) * 100)
+          } else {
+            leftPct = 0
+            widthPct = 0
+          }
         }
 
         const running = isRunning(sess, now)
@@ -42,7 +47,7 @@ export function SessionGantt({ nodes, expanded, selectedNode, now }: Props) {
 
         return (
           <div
-            key={sess.session_id || node.agent_id}
+            key={sess.session_id || node.agent_id || `${rootNode.session.session_id || 'root'}-${index}`}
             style={{
               height,
               borderBottom: selected ? '1px solid #2d1f4a' : '1px solid #1a1a1a',

@@ -1,12 +1,15 @@
+import type { ReactNode } from 'react'
+import { highlight } from '@/lib/format'
 import { CopyIconButton } from './CopyIconButton'
 
 type ToolResultBlockProps = {
   stdout?: string
   stderr?: string
   durationMs?: number
+  searchQuery?: string
 }
 
-export function ToolResultBlock({ stdout, stderr, durationMs }: ToolResultBlockProps) {
+export function ToolResultBlock({ stdout, stderr, durationMs, searchQuery = '' }: ToolResultBlockProps) {
   if (!stdout && !stderr) return null
 
   return (
@@ -27,7 +30,7 @@ export function ToolResultBlock({ stdout, stderr, durationMs }: ToolResultBlockP
             />
           </div>
           <pre className="px-3 py-2 mb-0 whitespace-pre-wrap break-words text-[0.73rem] text-[#a0a0a0] max-h-[240px] overflow-y-auto font-[inherit]">
-            {stdout}
+            {highlight(stdout, searchQuery) as ReactNode}
           </pre>
         </div>
       )}
@@ -42,7 +45,7 @@ export function ToolResultBlock({ stdout, stderr, durationMs }: ToolResultBlockP
             />
           </div>
           <pre className="px-3 py-2 mb-0 whitespace-pre-wrap break-words text-[0.73rem] text-[#ff9999] max-h-[120px] overflow-y-auto font-[inherit]">
-            {stderr}
+            {highlight(stderr, searchQuery) as ReactNode}
           </pre>
         </div>
       )}

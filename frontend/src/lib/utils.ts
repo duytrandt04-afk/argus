@@ -6,7 +6,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function displayModel(model?: string | null) {
-  return model || 'harness'
+  return model ?? ''
 }
 
 export function displayProvider(provider?: string | null) {
@@ -16,10 +16,11 @@ export function displayProvider(provider?: string | null) {
     case 'anthropic':
       return 'Anthropic'
     default:
-      return provider || 'Unknown'
+      return provider ?? ''
   }
 }
 
 export function displayProviderModel(provider?: string | null, model?: string | null) {
-  return `${displayProvider(provider)} / ${displayModel(model)}`
+  const parts = [displayProvider(provider), displayModel(model)].filter(Boolean)
+  return parts.join(' / ')
 }

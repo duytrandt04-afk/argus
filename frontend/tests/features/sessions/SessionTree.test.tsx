@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
-import { SessionTree } from '../SessionTree'
+import { SessionTree } from '@/features/sessions/SessionTree'
 import type { SessionTreeNode } from '@/types/sessions'
 
 const makeNode = (id: string, children: SessionTreeNode[] = []): SessionTreeNode => ({

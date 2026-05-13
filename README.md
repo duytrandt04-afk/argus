@@ -235,6 +235,8 @@ go run ./cmd/server/main.go
 # golangci-lint run ./...
 ```
 
+Backend tests are organized under `backend/tests/...` (mirrored by package path).
+
 If your shell or sandbox blocks writes to `~/.cache`, run backend checks with workspace-local caches instead:
 ```bash
 cd backend
@@ -250,6 +252,8 @@ cd frontend
 pnpm install
 pnpm run dev
 ```
+
+Frontend tests are organized under `frontend/tests/...`.
 
 **3. Dashboard**
 Open [http://localhost:5173](http://localhost:5173) in your browser.

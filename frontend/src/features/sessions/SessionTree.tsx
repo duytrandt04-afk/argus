@@ -23,7 +23,7 @@ export function SessionTree({ nodes, expanded, selectedNode, onSelect, onToggleE
         <span style={{ fontSize: 9, color: '#444', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Agent / Session</span>
       </div>
 
-      {rows.map((row) => {
+      {rows.map((row, index) => {
         const { node, depth, isRoot } = row
         const sess = node.session
         const selected = selectedNode?.session.session_id === sess.session_id
@@ -32,10 +32,11 @@ export function SessionTree({ nodes, expanded, selectedNode, onSelect, onToggleE
         const hasChildren = node.children.length > 0
         const isExpanded = expanded.has(sess.session_id)
         const height = isRoot ? ROW_HEIGHT_ROOT : ROW_HEIGHT_CHILD
+        const rowKey = sess.session_id || node.agent_id || `${row.rootNode.session.session_id || 'root'}-${index}`
 
         return (
           <div
-            key={sess.session_id || node.agent_id}
+            key={rowKey}
             style={{
               display: 'flex',
               alignItems: 'center',

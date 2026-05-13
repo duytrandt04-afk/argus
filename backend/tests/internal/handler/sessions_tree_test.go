@@ -20,7 +20,7 @@ func TestSessionsTreeHandler_returnsJSON(t *testing.T) {
 	}
 	svc := service.New(db)
 
-	if err := db.UpsertSession("s1", "claudecode", "", "", "/tmp", "", domain.SessionUsage{}); err != nil {
+	if err := db.UpsertSession("s1", "claudecode", "", "", "/tmp", "", time.Now().UTC().Format(time.RFC3339), "", domain.SessionUsage{}); err != nil {
 		t.Fatalf("UpsertSession: %v", err)
 	}
 

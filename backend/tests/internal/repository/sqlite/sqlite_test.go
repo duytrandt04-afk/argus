@@ -114,7 +114,7 @@ func TestAdd_emptyModelStaysEmpty(t *testing.T) {
 func TestUpsertSession_and_SessionModel(t *testing.T) {
 	db := newTestDB(t)
 
-	if err := db.UpsertSession("sess1", "claudecode", "claude-opus-4-7", "startup", "/cwd", "/transcript", domain.SessionUsage{}); err != nil {
+	if err := db.UpsertSession("sess1", "claudecode", "claude-opus-4-7", "startup", "/cwd", "/transcript", time.Now().UTC().Format(time.RFC3339), "", domain.SessionUsage{}); err != nil {
 		t.Fatalf("UpsertSession: %v", err)
 	}
 
@@ -130,7 +130,7 @@ func TestUpsertSession_and_SessionModel(t *testing.T) {
 func TestUpsertSession_emptyModelStaysEmpty(t *testing.T) {
 	db := newTestDB(t)
 
-	if err := db.UpsertSession("sess1", "codex", "", "startup", "/cwd", "/transcript", domain.SessionUsage{}); err != nil {
+	if err := db.UpsertSession("sess1", "codex", "", "startup", "/cwd", "/transcript", time.Now().UTC().Format(time.RFC3339), "", domain.SessionUsage{}); err != nil {
 		t.Fatalf("UpsertSession: %v", err)
 	}
 
@@ -146,10 +146,10 @@ func TestUpsertSession_emptyModelStaysEmpty(t *testing.T) {
 func TestUpsertSession_emptyModelDoesNotOverwriteRealModel(t *testing.T) {
 	db := newTestDB(t)
 
-	if err := db.UpsertSession("sess1", "codex", "gpt-5.4", "startup", "/cwd", "/transcript", domain.SessionUsage{}); err != nil {
+	if err := db.UpsertSession("sess1", "codex", "gpt-5.4", "startup", "/cwd", "/transcript", time.Now().UTC().Format(time.RFC3339), "", domain.SessionUsage{}); err != nil {
 		t.Fatalf("first UpsertSession: %v", err)
 	}
-	if err := db.UpsertSession("sess1", "codex", "", "hook", "/cwd", "/transcript", domain.SessionUsage{}); err != nil {
+	if err := db.UpsertSession("sess1", "codex", "", "hook", "/cwd", "/transcript", time.Now().UTC().Format(time.RFC3339), "", domain.SessionUsage{}); err != nil {
 		t.Fatalf("second UpsertSession: %v", err)
 	}
 
@@ -170,6 +170,102 @@ func TestSessionModel_missing(t *testing.T) {
 	}
 	if model != "" {
 		t.Errorf("model = %q, want empty", model)
+	}
+}
+
+func TestUpsertSession_lastSeenAtUsesChronologicalComparison(t *testing.T) {
+	db := newTestDB(t)
+	first := "2026-05-10T10:00:00Z"
+	second := "2026-05-10T03:01:00-07:00" // 10:01:00Z (newer than first)
+	older := "2026-05-10T09:59:59Z"
+
+	if err := db.UpsertSession("sess-time", "codex", "gpt-5.4", "startup", "/cwd", "/transcript", first, "", domain.SessionUsage{}); err != nil {
+		t.Fatalf("first UpsertSession: %v", err)
+	}
+	if err := db.UpsertSession("sess-time", "codex", "gpt-5.4", "hook", "/cwd", "/transcript", second, "", domain.SessionUsage{}); err != nil {
+		t.Fatalf("second UpsertSession: %v", err)
+	}
+	if err := db.UpsertSession("sess-time", "codex", "gpt-5.4", "hook", "/cwd", "/transcript", older, "", domain.SessionUsage{}); err != nil {
+		t.Fatalf("third UpsertSession: %v", err)
+	}
+
+	sessions, err := db.ListSessions()
+	if err != nil {
+		t.Fatalf("ListSessions: %v", err)
+	}
+	if len(sessions) != 1 {
+		t.Fatalf("sessions len = %d, want 1", len(sessions))
+	}
+	if sessions[0].LastSeenAt != second {
+		t.Fatalf("last_seen_at = %q, want %q", sessions[0].LastSeenAt, second)
+	}
+}
+
+func TestUpsertSession_endedAtSetAndClearedByNewerActivity(t *testing.T) {
+	db := newTestDB(t)
+	start := "2026-05-10T10:00:00Z"
+	stop := "2026-05-10T10:05:00Z"
+	resume := "2026-05-10T10:06:00Z"
+
+	if err := db.UpsertSession("sess-ended", "codex", "gpt-5.4", "startup", "/cwd", "/transcript", start, "", domain.SessionUsage{}); err != nil {
+		t.Fatalf("first UpsertSession: %v", err)
+	}
+	if err := db.UpsertSession("sess-ended", "codex", "gpt-5.4", "hook", "/cwd", "/transcript", stop, stop, domain.SessionUsage{}); err != nil {
+		t.Fatalf("second UpsertSession: %v", err)
+	}
+
+	sessions, err := db.ListSessions()
+	if err != nil {
+		t.Fatalf("ListSessions: %v", err)
+	}
+	if sessions[0].EndedAt != stop {
+		t.Fatalf("ended_at = %q, want %q", sessions[0].EndedAt, stop)
+	}
+
+	if err := db.UpsertSession("sess-ended", "codex", "gpt-5.4", "hook", "/cwd", "/transcript", resume, "", domain.SessionUsage{}); err != nil {
+		t.Fatalf("third UpsertSession: %v", err)
+	}
+	sessions, err = db.ListSessions()
+	if err != nil {
+		t.Fatalf("ListSessions: %v", err)
+	}
+	if sessions[0].EndedAt != "" {
+		t.Fatalf("ended_at = %q, want empty after newer activity", sessions[0].EndedAt)
+	}
+}
+
+func TestUpsertSession_staleStopAfterResumeDoesNotResurrectEndedAt(t *testing.T) {
+	db := newTestDB(t)
+	start := "2026-05-10T10:00:00Z"
+	stop := "2026-05-10T10:05:00Z"
+	resume := "2026-05-10T10:06:00Z"
+
+	if err := db.UpsertSession("sess-stale-stop", "codex", "gpt-5.4", "startup", "/cwd", "/transcript", start, "", domain.SessionUsage{}); err != nil {
+		t.Fatalf("first UpsertSession: %v", err)
+	}
+	if err := db.UpsertSession("sess-stale-stop", "codex", "gpt-5.4", "hook", "/cwd", "/transcript", stop, stop, domain.SessionUsage{}); err != nil {
+		t.Fatalf("second UpsertSession: %v", err)
+	}
+	if err := db.UpsertSession("sess-stale-stop", "codex", "gpt-5.4", "hook", "/cwd", "/transcript", resume, "", domain.SessionUsage{}); err != nil {
+		t.Fatalf("third UpsertSession: %v", err)
+	}
+	// Stale stop arrives after resume (out-of-order ingestion), must not flip session back to ended.
+	if err := db.UpsertSession("sess-stale-stop", "codex", "gpt-5.4", "hook", "/cwd", "/transcript", stop, stop, domain.SessionUsage{}); err != nil {
+		t.Fatalf("fourth UpsertSession: %v", err)
+	}
+
+	sessions, err := db.ListSessions()
+	if err != nil {
+		t.Fatalf("ListSessions: %v", err)
+	}
+	if len(sessions) != 1 {
+		t.Fatalf("sessions len = %d, want 1", len(sessions))
+	}
+	if sessions[0].EndedAt != "" {
+		t.Fatalf("ended_at = %q, want empty after stale stop", sessions[0].EndedAt)
+	}
+	if sessions[0].LastSeenAt != resume {
+		t.Fatalf("last_seen_at = %q, want %q", sessions[0].LastSeenAt, resume)
 	}
 }
 
@@ -207,7 +303,7 @@ func TestGetDashboardStats_filtersEventsAcrossTimezoneOffsets(t *testing.T) {
 		CacheReadTokens:     0,
 		Turns:               1,
 	}
-	if err := db.UpsertSession("sess1", "codex", "gpt-5.4", "startup", "/cwd", "/transcript", usage); err != nil {
+	if err := db.UpsertSession("sess1", "codex", "gpt-5.4", "startup", "/cwd", "/transcript", time.Now().UTC().Format(time.RFC3339), "", usage); err != nil {
 		t.Fatalf("UpsertSession: %v", err)
 	}
 
@@ -270,7 +366,12 @@ func addEvent(t *testing.T, db *sqlite.DB, e domain.NormalizedEvent) {
 
 func addSession(t *testing.T, db *sqlite.DB, sessionID, agent string) {
 	t.Helper()
-	if err := db.UpsertSession(sessionID, agent, "", "", "/tmp", "", domain.SessionUsage{}); err != nil {
+	addSessionAt(t, db, sessionID, agent, time.Now().UTC())
+}
+
+func addSessionAt(t *testing.T, db *sqlite.DB, sessionID, agent string, eventTime time.Time) {
+	t.Helper()
+	if err := db.UpsertSession(sessionID, agent, "", "", "/tmp", "", eventTime.Format(time.RFC3339), "", domain.SessionUsage{}); err != nil {
 		t.Fatalf("UpsertSession: %v", err)
 	}
 }
@@ -389,5 +490,77 @@ func TestGetSessionTree_nested(t *testing.T) {
 	}
 	if len(tree[0].Children[0].Children) != 1 {
 		t.Fatalf("grandchildren = %d, want 1", len(tree[0].Children[0].Children))
+	}
+}
+
+func TestGetSessionTree_skipsChildOutsideSinceWindow(t *testing.T) {
+	db := newTestDB(t)
+	now := time.Now().UTC()
+	within := now.Add(-15 * time.Minute)
+	outside := now.Add(-8 * 24 * time.Hour)
+	since := now.Add(-7 * 24 * time.Hour).Format(time.RFC3339)
+
+	addSessionAt(t, db, "parent", "claudecode", within)
+	addSessionAt(t, db, "child-outside", "claudecode", outside)
+
+	addEvent(t, db, domain.NormalizedEvent{
+		Time: now.Format(time.RFC3339), Agent: "claudecode",
+		Session: "parent", HookEventName: "SubagentStart",
+		TurnID: "t1", ToolUseID: "u1", SubagentID: "agent-old",
+	})
+	addEvent(t, db, domain.NormalizedEvent{
+		Time: now.Format(time.RFC3339), Agent: "claudecode",
+		Session: "child-outside", HookEventName: "PreToolUse",
+		TurnID: "t2", ToolUseID: "u2", SubagentID: "agent-old",
+	})
+
+	tree, err := db.GetSessionTree(since)
+	if err != nil {
+		t.Fatalf("GetSessionTree: %v", err)
+	}
+	if len(tree) != 1 {
+		t.Fatalf("roots = %d, want 1", len(tree))
+	}
+	if tree[0].Session.SessionID != "parent" {
+		t.Fatalf("root session = %q, want parent", tree[0].Session.SessionID)
+	}
+	if len(tree[0].Children) != 0 {
+		t.Fatalf("children = %d, want 0", len(tree[0].Children))
+	}
+}
+
+func TestGetSessionTree_cycleDoesNotRecurseInfinitely(t *testing.T) {
+	db := newTestDB(t)
+	addSession(t, db, "root", "claudecode")
+	addSession(t, db, "child", "claudecode")
+
+	addEvent(t, db, domain.NormalizedEvent{
+		Time: time.Now().Format(time.RFC3339), Agent: "claudecode",
+		Session: "root", HookEventName: "SubagentStart",
+		TurnID: "t1", ToolUseID: "u1", SubagentID: "agent-child",
+	})
+	addEvent(t, db, domain.NormalizedEvent{
+		Time: time.Now().Format(time.RFC3339), Agent: "claudecode",
+		Session: "child", HookEventName: "SubagentStart",
+		TurnID: "t2", ToolUseID: "u2", SubagentID: "agent-root",
+	})
+	addEvent(t, db, domain.NormalizedEvent{
+		Time: time.Now().Format(time.RFC3339), Agent: "claudecode",
+		Session: "child", HookEventName: "PreToolUse",
+		TurnID: "t3", ToolUseID: "u3", SubagentID: "agent-child",
+	})
+	addEvent(t, db, domain.NormalizedEvent{
+		Time: time.Now().Format(time.RFC3339), Agent: "claudecode",
+		Session: "root", HookEventName: "PreToolUse",
+		TurnID: "t4", ToolUseID: "u4", SubagentID: "agent-root",
+	})
+
+	since := time.Now().Add(-time.Hour).Format(time.RFC3339)
+	tree, err := db.GetSessionTree(since)
+	if err != nil {
+		t.Fatalf("GetSessionTree: %v", err)
+	}
+	if len(tree) == 0 {
+		t.Fatal("expected at least one root node for cycle fallback")
 	}
 }

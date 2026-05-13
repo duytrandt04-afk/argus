@@ -33,7 +33,7 @@ export function useSessionTree(since: string) {
     es.onmessage = (ev) => {
       try {
         const e = JSON.parse(ev.data as string) as EventRecord
-        if (e.hook_event_name === 'SubagentStart' || e.hook_event_name === 'SessionStart') {
+        if (shouldRefreshTree(e)) {
           fetchTree()
         }
       } catch { /* ignore parse errors */ }
@@ -42,4 +42,20 @@ export function useSessionTree(since: string) {
   }, [fetchTree])
 
   return { nodes, loading, error, sseConnected }
+}
+
+function shouldRefreshTree(event: EventRecord) {
+  if (!event.session) return false
+  if (event.action === 'STOP') return true
+
+  switch (event.hook_event_name) {
+    case 'SessionStart':
+    case 'SessionEnd':
+    case 'SubagentStart':
+    case 'SubagentStop':
+    case 'Stop':
+      return true
+    default:
+      return false
+  }
 }

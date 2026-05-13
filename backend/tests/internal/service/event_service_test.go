@@ -21,6 +21,7 @@ type mockRepo struct {
 	upsertErr error
 	upserts   int
 	lastUsage domain.SessionUsage
+	lastEnded string
 }
 
 func (m *mockRepo) Add(e domain.NormalizedEvent) error {
@@ -65,7 +66,7 @@ func (m *mockRepo) GetSessionTree(_ string) ([]domain.SessionTreeNode, error) {
 	return nil, nil
 }
 
-func (m *mockRepo) UpsertSession(sessionID, _, model, _, _, _ string, usage domain.SessionUsage) error {
+func (m *mockRepo) UpsertSession(sessionID, _, model, _, _, _, _, endedAt string, usage domain.SessionUsage) error {
 	if m.upsertErr != nil {
 		return m.upsertErr
 	}
@@ -76,6 +77,7 @@ func (m *mockRepo) UpsertSession(sessionID, _, model, _, _, _ string, usage doma
 	}
 	m.upserts++
 	m.lastUsage = usage
+	m.lastEnded = endedAt
 	if model != "" {
 		m.models[sessionID] = model
 	}
@@ -171,6 +173,26 @@ func TestAddEventReturnsUpsertError(t *testing.T) {
 	}
 }
 
+func TestAddEventStopSetsEndedAt(t *testing.T) {
+	repo := &mockRepo{}
+	svc := service.New(repo)
+
+	eventTime := "2026-05-13T10:00:00Z"
+	if err := svc.AddEvent(domain.NormalizedEvent{
+		Time:          eventTime,
+		Agent:         "codex",
+		Session:       "s1",
+		HookEventName: "Stop",
+		Action:        "STOP",
+	}); err != nil {
+		t.Fatalf("AddEvent: %v", err)
+	}
+
+	if repo.lastEnded != eventTime {
+		t.Fatalf("ended_at = %q, want %q", repo.lastEnded, eventTime)
+	}
+}
+
 func TestListSessionsBackfillsZeroUsageFromTranscript(t *testing.T) {
 	transcript := t.TempDir() + "/session.jsonl"
 	data := `{"type":"event_msg","payload":{"type":"token_count","info":{"total_token_usage":{"input_tokens":120,"cached_input_tokens":40,"output_tokens":8}}}}` + "\n"
@@ -212,7 +234,7 @@ func TestGetDashboardStatsBackfillsZeroUsageFromTranscript(t *testing.T) {
 		t.Fatalf("sqlite.New: %v", err)
 	}
 	if err := repo.UpsertSession(
-		"s1", "codex", "gpt-5.4", "startup", "/tmp", transcript, domain.SessionUsage{},
+		"s1", "codex", "gpt-5.4", "startup", "/tmp", transcript, time.Now().UTC().Format(time.RFC3339), "", domain.SessionUsage{},
 	); err != nil {
 		t.Fatalf("UpsertSession: %v", err)
 	}
@@ -253,7 +275,7 @@ func TestGetDashboardStatsReturnsSessionUsageBreakdown(t *testing.T) {
 		t.Fatalf("sqlite.New: %v", err)
 	}
 	if err := repo.UpsertSession(
-		"s1", "codex", "gpt-5.4", "startup", "/tmp", transcript, domain.SessionUsage{},
+		"s1", "codex", "gpt-5.4", "startup", "/tmp", transcript, time.Now().UTC().Format(time.RFC3339), "", domain.SessionUsage{},
 	); err != nil {
 		t.Fatalf("UpsertSession: %v", err)
 	}
