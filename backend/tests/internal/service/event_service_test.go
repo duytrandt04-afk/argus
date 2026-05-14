@@ -43,6 +43,21 @@ func (m *mockRepo) List(limit int) ([]domain.NormalizedEvent, error) {
 	return append([]domain.NormalizedEvent{}, m.events...), nil
 }
 
+func (m *mockRepo) ListBySession(sessionID string, limit int) ([]domain.NormalizedEvent, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	filtered := make([]domain.NormalizedEvent, 0)
+	for _, e := range m.events {
+		if e.Session == sessionID {
+			filtered = append(filtered, e)
+		}
+	}
+	if limit > 0 && len(filtered) > limit {
+		return filtered[len(filtered)-limit:], nil
+	}
+	return append([]domain.NormalizedEvent{}, filtered...), nil
+}
+
 func (m *mockRepo) SessionModel(sessionID string) (string, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -254,8 +269,48 @@ func TestGetDashboardStatsBackfillsZeroUsageFromTranscript(t *testing.T) {
 	if len(stats.AgentUsage) != 1 {
 		t.Fatalf("agent usage len = %d, want 1", len(stats.AgentUsage))
 	}
-	if stats.AgentUsage[0].Agent != "codex" || stats.AgentUsage[0].Input != 120 || stats.AgentUsage[0].Output != 8 {
-		t.Fatalf("agent usage = %+v, want codex input=120 output=8", stats.AgentUsage[0])
+	if stats.AgentUsage[0].Agent != "codex" ||
+		stats.AgentUsage[0].Input != 120 ||
+		stats.AgentUsage[0].Output != 8 ||
+		stats.AgentUsage[0].CacheRead != 40 ||
+		stats.AgentUsage[0].CacheCreation != 0 {
+		t.Fatalf("agent usage = %+v, want codex input=120 output=8 cache_read=40 cache_creation=0", stats.AgentUsage[0])
+	}
+}
+
+func TestGetDashboardStatsIncludesClaudeCodeCacheTokensInAgentUsage(t *testing.T) {
+	transcript := t.TempDir() + "/claude-session.jsonl"
+	data := `{"type":"assistant","message":{"model":"claude-sonnet-4-6","usage":{"input_tokens":12,"output_tokens":3,"cache_creation_input_tokens":2,"cache_read_input_tokens":20}}}` + "\n"
+	if err := os.WriteFile(transcript, []byte(data), 0o600); err != nil {
+		t.Fatalf("write transcript: %v", err)
+	}
+
+	repo, err := sqlite.New(":memory:")
+	if err != nil {
+		t.Fatalf("sqlite.New: %v", err)
+	}
+	if err := repo.UpsertSession(
+		"s-cc", "claudecode", "claude-sonnet-4-6", "startup", "/tmp", transcript, time.Now().UTC().Format(time.RFC3339), "", domain.SessionUsage{},
+	); err != nil {
+		t.Fatalf("UpsertSession: %v", err)
+	}
+
+	svc := service.New(repo)
+	stats, err := svc.GetDashboardStats("", "")
+	if err != nil {
+		t.Fatalf("GetDashboardStats: %v", err)
+	}
+	if len(stats.AgentUsage) != 1 {
+		t.Fatalf("agent usage len = %d, want 1", len(stats.AgentUsage))
+	}
+	got := stats.AgentUsage[0]
+	if got.Agent != "claudecode" ||
+		got.Model != "claude-sonnet-4-6" ||
+		got.Input != 12 ||
+		got.Output != 3 ||
+		got.CacheCreation != 2 ||
+		got.CacheRead != 20 {
+		t.Fatalf("agent usage = %+v, want claudecode model=claude-sonnet-4-6 input=12 output=3 cache_creation=2 cache_read=20", got)
 	}
 }
 

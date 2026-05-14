@@ -111,11 +111,13 @@ type AgentTimelineBucket struct {
 }
 
 type AgentModelUsage struct {
-	Provider string `json:"provider"`
-	Agent    string `json:"agent"`
-	Model    string `json:"model"`
-	Input    int    `json:"input"`
-	Output   int    `json:"output"`
+	Provider      string `json:"provider"`
+	Agent         string `json:"agent"`
+	Model         string `json:"model"`
+	Input         int    `json:"input"`
+	Output        int    `json:"output"`
+	CacheCreation int    `json:"cache_creation"`
+	CacheRead     int    `json:"cache_read"`
 }
 
 type ModelUsageBreakdown struct {

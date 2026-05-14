@@ -57,6 +57,10 @@ func (s *EventService) ListEvents(limit int) ([]domain.NormalizedEvent, error) {
 	return s.repo.List(limit)
 }
 
+func (s *EventService) ListEventsBySession(sessionID string, limit int) ([]domain.NormalizedEvent, error) {
+	return s.repo.ListBySession(sessionID, limit)
+}
+
 func (s *EventService) SessionModel(sessionID string) (string, error) {
 	return s.repo.SessionModel(sessionID)
 }
@@ -185,19 +189,21 @@ func enrichDashboardStats(stats *domain.DashboardStats, sessions []domain.Sessio
 			Models:     sessionModels,
 		})
 
-		for _, model := range sessionModels {
-			key := strings.Join([]string{model.Provider, model.Agent, model.Model}, "|")
-			if agentUsage[key] == nil {
+			for _, model := range sessionModels {
+				key := strings.Join([]string{model.Provider, model.Agent, model.Model}, "|")
+				if agentUsage[key] == nil {
 				agentUsage[key] = &domain.AgentModelUsage{
 					Provider: model.Provider,
 					Agent:    model.Agent,
 					Model:    model.Model,
 				}
+				}
+				agentUsage[key].Input += model.Input
+				agentUsage[key].Output += model.Output
+				agentUsage[key].CacheCreation += model.CacheCreation
+				agentUsage[key].CacheRead += model.CacheRead
 			}
-			agentUsage[key].Input += model.Input
-			agentUsage[key].Output += model.Output
 		}
-	}
 
 	for _, usage := range agentUsage {
 		stats.AgentUsage = append(stats.AgentUsage, *usage)

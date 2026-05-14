@@ -118,7 +118,15 @@ func (d *DB) Add(e domain.NormalizedEvent) error {
 }
 
 func (d *DB) List(limit int) ([]domain.NormalizedEvent, error) {
-	rows, err := d.db.Query(`
+	return d.listWithWhere("", nil, limit)
+}
+
+func (d *DB) ListBySession(sessionID string, limit int) ([]domain.NormalizedEvent, error) {
+	return d.listWithWhere("WHERE session_id = ?", []any{sessionID}, limit)
+}
+
+func (d *DB) listWithWhere(where string, args []any, limit int) ([]domain.NormalizedEvent, error) {
+	query := `
 		SELECT created_at, agent, session_id, hook_event_name,
 		       COALESCE(turn_id,''), COALESCE(tool_use_id,''),
 		       COALESCE(tool_name,''), COALESCE(model,''), COALESCE(source,''),
@@ -137,8 +145,19 @@ func (d *DB) List(limit int) ([]domain.NormalizedEvent, error) {
 		       COALESCE(tool_result_stdout,''), COALESCE(tool_result_stderr,''),
 		       COALESCE(duration_ms,0), COALESCE(trigger,'')
 		FROM hook_events
-		ORDER BY id DESC
-		LIMIT ?`, limit)
+	`
+	if where != "" {
+		query += where + "\n"
+	}
+	query += "ORDER BY id DESC\n"
+
+	queryArgs := append([]any{}, args...)
+	if limit > 0 {
+		query += "LIMIT ?"
+		queryArgs = append(queryArgs, limit)
+	}
+
+	rows, err := d.db.Query(query, queryArgs...)
 	if err != nil {
 		return nil, err
 	}
@@ -374,14 +393,14 @@ func (d *DB) GetDashboardStats(since, until string) (*domain.DashboardStats, err
 
 	// Agent Usage
 	if rows, err := d.db.Query(`
-		SELECT agent, model, SUM(input_tokens), SUM(output_tokens) 
+		SELECT agent, model, SUM(input_tokens), SUM(output_tokens), SUM(cache_creation_tokens), SUM(cache_read_tokens)
 		FROM sessions`+sessionWhere+`
 		GROUP BY agent, model
 	`, sessionArgs...); err == nil {
 		defer rows.Close()
 		for rows.Next() {
 			var u domain.AgentModelUsage
-			if err := rows.Scan(&u.Agent, &u.Model, &u.Input, &u.Output); err == nil {
+			if err := rows.Scan(&u.Agent, &u.Model, &u.Input, &u.Output, &u.CacheCreation, &u.CacheRead); err == nil {
 				stats.AgentUsage = append(stats.AgentUsage, u)
 			}
 		}
