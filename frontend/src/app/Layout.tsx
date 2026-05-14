@@ -9,9 +9,19 @@ import type { LayoutOutletContext } from '@/types'
 import { Sidebar } from './Sidebar'
 
 const COLLAPSED_SESSIONS_STORAGE_KEY = 'events_collapsed_sessions'
+const SIDEBAR_COLLAPSED_STORAGE_KEY = 'events_sidebar_collapsed'
 const FOCUSABLE_SELECTOR = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
 const MOBILE_SIDEBAR_ID = 'mobile-sidebar'
 const DESKTOP_MEDIA_QUERY = '(min-width: 768px)'
+
+function loadSidebarCollapsed(): boolean {
+  try {
+    const raw = localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY)
+    return raw !== null ? JSON.parse(raw) : true
+  } catch {
+    return true
+  }
+}
 
 function loadCollapsedSessions(): Set<string> {
   try {
@@ -27,10 +37,8 @@ function loadCollapsedSessions(): Set<string> {
 }
 
 export function Layout() {
-  const [collapsed, setCollapsed] = useState(
-    () => localStorage.getItem('sidebar_collapsed') === 'true'
-  )
   const [mobileDrawerLocationKey, setMobileDrawerLocationKey] = useState<string | null>(null)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(loadSidebarCollapsed)
   const [collapsedSessions, setCollapsedSessions] = useState<Set<string>>(loadCollapsedSessions)
   const [searchQuery, setSearchQuery] = useState('')
   const [now, setNow] = useState(() => new Date())
@@ -66,15 +74,15 @@ export function Layout() {
   }, [location.pathname])
 
   useEffect(() => {
-    localStorage.setItem('sidebar_collapsed', collapsed.toString())
-  }, [collapsed])
-
-  useEffect(() => {
     localStorage.setItem(
       COLLAPSED_SESSIONS_STORAGE_KEY,
       JSON.stringify(Array.from(collapsedSessions))
     )
   }, [collapsedSessions])
+
+  useEffect(() => {
+    localStorage.setItem(SIDEBAR_COLLAPSED_STORAGE_KEY, JSON.stringify(sidebarCollapsed))
+  }, [sidebarCollapsed])
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000)
@@ -178,13 +186,13 @@ export function Layout() {
     <div
       className={cn(
         'relative flex h-dvh min-h-0 flex-col overflow-hidden bg-background md:grid md:h-screen md:transition-[grid-template-columns] md:duration-[280ms] md:ease-[cubic-bezier(0.22,1,0.36,1)] shell-motion',
-        collapsed ? 'md:grid-cols-[56px_minmax(0,1fr)]' : 'md:grid-cols-[240px_minmax(0,1fr)]'
+        sidebarCollapsed ? 'md:grid-cols-[56px_minmax(0,1fr)]' : 'md:grid-cols-[240px_minmax(0,1fr)]'
       )}
     >
       <Sidebar
-        collapsed={collapsed}
+        collapsed={sidebarCollapsed}
+        onToggleCollapse={() => setSidebarCollapsed((prev) => !prev)}
         mode="desktop"
-        onToggleCollapse={() => setCollapsed((current) => !current)}
         className="hidden md:flex"
       />
 

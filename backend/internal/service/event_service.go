@@ -57,6 +57,10 @@ func (s *EventService) ListEvents(limit int) ([]domain.NormalizedEvent, error) {
 	return s.repo.List(limit)
 }
 
+func (s *EventService) ListEventsBySession(sessionID string, limit int) ([]domain.NormalizedEvent, error) {
+	return s.repo.ListBySession(sessionID, limit)
+}
+
 func (s *EventService) SessionModel(sessionID string) (string, error) {
 	return s.repo.SessionModel(sessionID)
 }
@@ -313,4 +317,8 @@ func (s *EventService) broadcast(e domain.NormalizedEvent) {
 
 func (s *EventService) GetSessionTree(since string) ([]domain.SessionTreeNode, error) {
 	return s.repo.GetSessionTree(since)
+}
+
+func (s *EventService) GetTraces() ([]domain.NormalizedEvent, error) {
+	return s.repo.GetTraces()
 }
