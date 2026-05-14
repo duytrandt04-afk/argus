@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import type { EventRecord, EventsResponse } from '@/types'
 
 function eventKey(e: EventRecord): string {
@@ -6,9 +7,15 @@ function eventKey(e: EventRecord): string {
 }
 
 export function useEvents() {
+  const [searchParams] = useSearchParams()
+  const sessionFilter = searchParams.get('session') ?? ''
   const [events, setEvents] = useState<EventRecord[]>([])
   const [error, setError] = useState<string | null>(null)
   const [refreshing, setRefreshing] = useState(false)
+
+  useEffect(() => {
+    setEvents([])
+  }, [sessionFilter])
 
   const mergeEvents = useCallback((incoming: EventRecord[]) => {
     setEvents((prev) => {
@@ -27,7 +34,10 @@ export function useEvents() {
   const reload = useCallback(async () => {
     setRefreshing(true)
     try {
-      const res = await fetch('/api/events')
+      const params = new URLSearchParams()
+      if (sessionFilter) params.set('session', sessionFilter)
+      const qs = params.toString()
+      const res = await fetch(`/api/events${qs ? `?${qs}` : ''}`)
       if (!res.ok) throw new Error(`Failed to reload events: ${res.status}`)
       const data = (await res.json()) as EventsResponse
       mergeEvents(data.events ?? [])
@@ -37,14 +47,17 @@ export function useEvents() {
     } finally {
       setRefreshing(false)
     }
-  }, [mergeEvents])
+  }, [mergeEvents, sessionFilter])
 
   useEffect(() => {
     const seen = new Set<string>()
     const buffer: EventRecord[] = []
     let rafId: number | undefined
 
-    const es = new EventSource('/api/events/stream')
+    const params = new URLSearchParams()
+    if (sessionFilter) params.set('session', sessionFilter)
+    const qs = params.toString()
+    const es = new EventSource(`/api/events/stream${qs ? `?${qs}` : ''}`)
 
     const flush = () => {
       const batch = buffer.splice(0)
@@ -77,7 +90,7 @@ export function useEvents() {
       es.close()
       if (rafId !== undefined) cancelAnimationFrame(rafId)
     }
-  }, [mergeEvents])
+  }, [mergeEvents, sessionFilter])
 
   return { events, error, refreshing, reload }
 }

@@ -5,12 +5,19 @@ import (
 	"fmt"
 	"net/http"
 
+	"hooker/internal/domain"
 	"hooker/internal/service"
 )
 
+const (
+	defaultEventsLimit = 1000
+	sessionEventsLimit = 5000
+)
+
 func Events(svc *service.EventService) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		events, err := svc.ListEvents(1000)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		sessionID := r.URL.Query().Get("session")
+		events, err := listEvents(svc, sessionID)
 		if err != nil {
 			http.Error(w, "list events", http.StatusInternalServerError)
 			return
@@ -37,7 +44,8 @@ func EventsStream(svc *service.EventService) http.Handler {
 		ch := svc.Subscribe()
 		defer svc.Unsubscribe(ch)
 
-		if existing, err := svc.ListEvents(1000); err == nil {
+		sessionID := r.URL.Query().Get("session")
+		if existing, err := listEvents(svc, sessionID); err == nil {
 			for _, e := range existing {
 				sendSSE(w, e)
 			}
@@ -50,6 +58,9 @@ func EventsStream(svc *service.EventService) http.Handler {
 				if !ok {
 					return
 				}
+				if sessionID != "" && e.Session != sessionID {
+					continue
+				}
 				sendSSE(w, e)
 				flusher.Flush()
 			case <-r.Context().Done():
@@ -57,6 +68,13 @@ func EventsStream(svc *service.EventService) http.Handler {
 			}
 		}
 	})
+}
+
+func listEvents(svc *service.EventService, sessionID string) ([]domain.NormalizedEvent, error) {
+	if sessionID != "" {
+		return svc.ListEventsBySession(sessionID, sessionEventsLimit)
+	}
+	return svc.ListEvents(defaultEventsLimit)
 }
 
 func sendSSE(w http.ResponseWriter, v any) {
