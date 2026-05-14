@@ -329,3 +329,7 @@ func (s *EventService) broadcast(e domain.NormalizedEvent) {
 func (s *EventService) GetSessionTree(since string) ([]domain.SessionTreeNode, error) {
 	return s.repo.GetSessionTree(since)
 }
+
+func (s *EventService) GetTraces() ([]domain.NormalizedEvent, error) {
+	return s.repo.GetTraces()
+}

@@ -196,6 +196,67 @@ func (d *DB) listWithWhere(where string, args []any, limit int) ([]domain.Normal
 	return events, nil
 }
 
+func (d *DB) ListBySession(sessionID string, limit int) ([]domain.NormalizedEvent, error) {
+	rows, err := d.db.Query(`
+		SELECT created_at, agent, session_id, hook_event_name,
+		       COALESCE(turn_id,''), COALESCE(tool_use_id,''),
+		       COALESCE(tool_name,''), COALESCE(model,''), COALESCE(source,''),
+		       COALESCE(cwd,''), COALESCE(transcript_path,''),
+		       COALESCE(action,''), COALESCE(path,''), COALESCE(command,''),
+		       COALESCE(old_string,''), COALESCE(new_string,''),
+		       COALESCE(start_line,0), ctx_before, ctx_after,
+		       COALESCE(prompt,''), COALESCE(description,''),
+		       COALESCE(permission_mode,''), COALESCE(response,''),
+		       COALESCE(error_message,''), COALESCE(error_type,''),
+		       COALESCE(subagent_id,''), COALESCE(subagent_type,''),
+		       COALESCE(task_id,''), COALESCE(task_title,''), COALESCE(task_description,''),
+		       COALESCE(notification_type,''), COALESCE(notification_title,''), COALESCE(notification_message,''),
+		       COALESCE(change_type,''), COALESCE(old_cwd,''), COALESCE(new_cwd,''),
+		       COALESCE(tool_calls_json,''),
+		       COALESCE(tool_result_stdout,''), COALESCE(tool_result_stderr,''),
+		       COALESCE(duration_ms,0), COALESCE(trigger,'')
+		FROM hook_events
+		WHERE session_id = ?
+		ORDER BY id DESC
+		LIMIT ?`, sessionID, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var events []domain.NormalizedEvent
+	for rows.Next() {
+		var e domain.NormalizedEvent
+		var ctxBefore, ctxAfter string
+		if err := rows.Scan(
+			&e.Time, &e.Agent, &e.Session, &e.HookEventName,
+			&e.TurnID, &e.ToolUseID, &e.Tool, &e.Model, &e.Source,
+			&e.CWD, &e.TranscriptPath,
+			&e.Action, &e.Path, &e.Command,
+			&e.OldString, &e.NewString, &e.StartLine,
+			&ctxBefore, &ctxAfter,
+			&e.Prompt, &e.Description,
+			&e.PermissionMode, &e.Response,
+			&e.ErrorMessage, &e.ErrorType,
+			&e.SubagentID, &e.SubagentType,
+			&e.TaskID, &e.TaskTitle, &e.TaskDescription,
+			&e.NotificationType, &e.NotificationTitle, &e.NotificationMessage,
+			&e.ChangeType, &e.OldCWD, &e.NewCWD, &e.ToolCallsJSON,
+			&e.ToolResultStdout, &e.ToolResultStderr, &e.DurationMS, &e.Trigger,
+		); err != nil {
+			return nil, err
+		}
+		_ = json.Unmarshal([]byte(ctxBefore), &e.CtxBefore)
+		_ = json.Unmarshal([]byte(ctxAfter), &e.CtxAfter)
+		events = append(events, e)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	slices.Reverse(events)
+	return events, nil
+}
+
 func (d *DB) SessionModel(sessionID string) (string, error) {
 	var model string
 	err := d.db.QueryRow(
@@ -685,4 +746,66 @@ func (d *DB) GetSessionTree(since string) ([]domain.SessionTreeNode, error) {
 		markBuilt(node)
 	}
 	return roots, nil
+}
+
+func (d *DB) GetTraces() ([]domain.NormalizedEvent, error) {
+	rows, err := d.db.Query(`
+		SELECT created_at, agent, session_id, hook_event_name,
+		       COALESCE(turn_id,''), COALESCE(tool_use_id,''),
+		       COALESCE(tool_name,''), COALESCE(model,''), COALESCE(source,''),
+		       COALESCE(cwd,''), COALESCE(transcript_path,''),
+		       COALESCE(action,''), COALESCE(path,''), COALESCE(command,''),
+		       COALESCE(old_string,''), COALESCE(new_string,''),
+		       COALESCE(start_line,0), ctx_before, ctx_after,
+		       COALESCE(prompt,''), COALESCE(description,''),
+		       COALESCE(permission_mode,''), COALESCE(response,''),
+		       COALESCE(error_message,''), COALESCE(error_type,''),
+		       COALESCE(subagent_id,''), COALESCE(subagent_type,''),
+		       COALESCE(task_id,''), COALESCE(task_title,''), COALESCE(task_description,''),
+		       COALESCE(notification_type,''), COALESCE(notification_title,''), COALESCE(notification_message,''),
+		       COALESCE(change_type,''), COALESCE(old_cwd,''), COALESCE(new_cwd,''),
+		       COALESCE(tool_calls_json,''),
+		       COALESCE(tool_result_stdout,''), COALESCE(tool_result_stderr,''),
+		       COALESCE(duration_ms,0), COALESCE(trigger,'')
+		FROM hook_events
+		WHERE subagent_id IS NOT NULL
+		  AND subagent_type IS NOT NULL
+		  AND COALESCE(subagent_id, '') != ''
+		  AND COALESCE(subagent_type, '') != ''
+		ORDER BY id DESC`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var events []domain.NormalizedEvent
+	for rows.Next() {
+		var e domain.NormalizedEvent
+		var ctxBefore, ctxAfter string
+		if err := rows.Scan(
+			&e.Time, &e.Agent, &e.Session, &e.HookEventName,
+			&e.TurnID, &e.ToolUseID, &e.Tool, &e.Model, &e.Source,
+			&e.CWD, &e.TranscriptPath,
+			&e.Action, &e.Path, &e.Command,
+			&e.OldString, &e.NewString, &e.StartLine,
+			&ctxBefore, &ctxAfter,
+			&e.Prompt, &e.Description,
+			&e.PermissionMode, &e.Response,
+			&e.ErrorMessage, &e.ErrorType,
+			&e.SubagentID, &e.SubagentType,
+			&e.TaskID, &e.TaskTitle, &e.TaskDescription,
+			&e.NotificationType, &e.NotificationTitle, &e.NotificationMessage,
+			&e.ChangeType, &e.OldCWD, &e.NewCWD, &e.ToolCallsJSON,
+			&e.ToolResultStdout, &e.ToolResultStderr, &e.DurationMS, &e.Trigger,
+		); err != nil {
+			return nil, err
+		}
+		_ = json.Unmarshal([]byte(ctxBefore), &e.CtxBefore)
+		_ = json.Unmarshal([]byte(ctxAfter), &e.CtxAfter)
+		events = append(events, e)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return events, nil
 }

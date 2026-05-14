@@ -1,17 +1,26 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { PanelLeft, Search } from 'lucide-react'
+import { PanelLeft } from 'lucide-react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import { useSessions } from '@/hooks/useSessions'
 import type { LayoutOutletContext } from '@/types'
 import { Sidebar } from './Sidebar'
 
 const COLLAPSED_SESSIONS_STORAGE_KEY = 'events_collapsed_sessions'
+const SIDEBAR_COLLAPSED_STORAGE_KEY = 'events_sidebar_collapsed'
 const FOCUSABLE_SELECTOR = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
 const MOBILE_SIDEBAR_ID = 'mobile-sidebar'
 const DESKTOP_MEDIA_QUERY = '(min-width: 768px)'
+
+function loadSidebarCollapsed(): boolean {
+  try {
+    const raw = localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY)
+    return raw !== null ? JSON.parse(raw) : true
+  } catch {
+    return true
+  }
+}
 
 function loadCollapsedSessions(): Set<string> {
   try {
@@ -27,10 +36,8 @@ function loadCollapsedSessions(): Set<string> {
 }
 
 export function Layout() {
-  const [collapsed, setCollapsed] = useState(
-    () => localStorage.getItem('sidebar_collapsed') === 'true'
-  )
   const [mobileDrawerLocationKey, setMobileDrawerLocationKey] = useState<string | null>(null)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(loadSidebarCollapsed)
   const [collapsedSessions, setCollapsedSessions] = useState<Set<string>>(loadCollapsedSessions)
   const [searchQuery, setSearchQuery] = useState('')
   const [now, setNow] = useState(() => new Date())
@@ -66,15 +73,15 @@ export function Layout() {
   }, [location.pathname])
 
   useEffect(() => {
-    localStorage.setItem('sidebar_collapsed', collapsed.toString())
-  }, [collapsed])
-
-  useEffect(() => {
     localStorage.setItem(
       COLLAPSED_SESSIONS_STORAGE_KEY,
       JSON.stringify(Array.from(collapsedSessions))
     )
   }, [collapsedSessions])
+
+  useEffect(() => {
+    localStorage.setItem(SIDEBAR_COLLAPSED_STORAGE_KEY, JSON.stringify(sidebarCollapsed))
+  }, [sidebarCollapsed])
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000)
@@ -178,13 +185,13 @@ export function Layout() {
     <div
       className={cn(
         'relative flex h-dvh min-h-0 flex-col overflow-hidden bg-background md:grid md:h-screen md:transition-[grid-template-columns] md:duration-[280ms] md:ease-[cubic-bezier(0.22,1,0.36,1)] shell-motion',
-        collapsed ? 'md:grid-cols-[56px_minmax(0,1fr)]' : 'md:grid-cols-[240px_minmax(0,1fr)]'
+        sidebarCollapsed ? 'md:grid-cols-[56px_minmax(0,1fr)]' : 'md:grid-cols-[240px_minmax(0,1fr)]'
       )}
     >
       <Sidebar
-        collapsed={collapsed}
+        collapsed={sidebarCollapsed}
+        onToggleCollapse={() => setSidebarCollapsed((prev) => !prev)}
         mode="desktop"
-        onToggleCollapse={() => setCollapsed((current) => !current)}
         className="hidden md:flex"
       />
 
@@ -212,8 +219,8 @@ export function Layout() {
         aria-hidden={mobileOpen ? true : undefined}
         className="relative z-0 flex min-h-0 flex-1 flex-col overflow-hidden"
       >
-        <header className="grid grid-cols-[auto_minmax(0,1fr)] grid-rows-[auto_auto] items-center gap-x-2 gap-y-1 border-b border-[#222] bg-[#0c0c0c] px-3 py-1.5 text-[0.75rem] text-muted-foreground sm:px-4 md:grid-cols-3 md:grid-rows-1 md:gap-y-0">
-          <div className="row-start-1 col-start-1 flex items-center gap-2 md:row-auto md:col-auto">
+        <header className="flex items-center justify-between gap-2 border-b border-[#222] bg-[#0c0c0c] px-3 py-1.5 text-[0.75rem] text-muted-foreground sm:px-4">
+          <div className="flex items-center gap-2">
             <Button
               ref={mobileToggleRef}
               variant="ghost"
@@ -228,19 +235,7 @@ export function Layout() {
             </Button>
           </div>
 
-          <div className="col-span-2 row-start-2 flex min-w-0 justify-center md:col-auto md:row-auto">
-            <div className="relative w-full max-w-full md:max-w-[450px]">
-              <Search className="absolute left-2.5 top-1/2 size-3 -translate-y-1/2 text-[#444]" />
-              <Input
-                className="h-7 w-full border-[#222] bg-black/40 pl-8 pr-3 text-[0.75rem] text-[#ccc] placeholder:text-[#333] focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-[#444] transition-colors"
-                placeholder="Search across events..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="row-start-1 col-start-2 flex min-w-0 items-center justify-end md:row-auto md:col-auto">
+          <div className="flex min-w-0 items-center justify-end">
             <span className="tabular-nums text-[#444] shrink-0 font-medium text-right">
               {now.toLocaleDateString()} {now.toLocaleTimeString()}
             </span>
