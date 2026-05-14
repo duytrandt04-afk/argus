@@ -1,10 +1,10 @@
 # hooker
 
-`hooker` is a premium, real-time agent monitoring dashboard designed for local development with **Claude Code** and **Codex**. It captures hook events (lifecycle, tool usage, prompts) and visualizes them in a streamlined interface, complete with diff rendering and token usage analytics.
+`hooker` is a premium, real-time agent monitoring dashboard designed for local development with **Claude Code**, **Codex**, and **Gemini CLI**. It captures hook events (lifecycle, tool usage, prompts) and visualizes them in a streamlined interface, complete with diff rendering and token usage analytics.
 
 ## Features
 
-- **Unified Monitoring**: Track Claude Code and Codex sessions side-by-side.
+- **Unified Monitoring**: Track Claude Code, Codex, and Gemini CLI sessions side-by-side.
 - **Diff Visualization**: Render code changes directly in the event stream.
 - **Token Analytics**: Real-time token usage tooltips (input, output, and cache efficiency).
 - **Usage Dashboard**: Administrative view for tracking aggregated OpenAI usage, costs, and model breakdowns.
@@ -214,11 +214,33 @@ Minimal `~/.claude/settings.json` hook forwarding example:
 }
 ```
 
-### 4. Quick verification
+### 4. Gemini CLI setup
+
+Minimal `~/.gemini/settings.json` hook forwarding example using `rtk hook gemini`:
+```json
+{
+  "hooks": {
+    "BeforeTool": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "rtk hook gemini | curl -s -X POST http://127.0.0.1:8765/api/hook -H 'Content-Type: application/json' -d @-"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+*Note: Depending on how Gemini CLI invokes the shell, you might need an absolute path to `rtk` or to use a wrapper script.*
+
+### 5. Quick verification
 
 1. Start backend.
 2. Start frontend.
-3. Start Codex in any repo and run one command.
+3. Start Codex or Gemini CLI in any repo and run one command.
 4. Confirm event appears in dashboard.
 5. Trigger `/compact` in Codex and confirm `PreCompact` / `PostCompact` rows appear.
 
