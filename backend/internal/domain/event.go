@@ -89,9 +89,25 @@ type DashboardStats struct {
 	TimelineGranularity string                  `json:"timeline_granularity"`
 	Timeline            []TimelineBucket        `json:"timeline"`
 	TimelineByAgent     []AgentTimelineBucket   `json:"timeline_by_agent"`
+	TokenTimeline        []TokenTimelineBucket      `json:"token_timeline"`
+	TokenTimelineByAgent []TokenTimelineAgentBucket `json:"token_timeline_by_agent"`
 	TopActions          []ActionCount           `json:"top_actions"`
 	AgentUsage          []AgentModelUsage       `json:"agent_usage"`
 	SessionUsage        []DashboardSessionUsage `json:"session_usage"`
+}
+
+type TokenTimelineBucket struct {
+	Date          string `json:"date"`
+	Input         int    `json:"input"`
+	Output        int    `json:"output"`
+	CacheCreation int    `json:"cache_creation"`
+	CacheRead     int    `json:"cache_read"`
+}
+
+type TokenTimelineAgentBucket struct {
+	Date  string `json:"date"`
+	Agent string `json:"agent"`
+	Total int    `json:"total"`
 }
 
 type TimelineBucket struct {

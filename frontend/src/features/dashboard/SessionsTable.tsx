@@ -80,62 +80,83 @@ export function SessionsTable({ stats }: SessionsTableProps) {
                   <TableHead className="px-5">Models</TableHead>
                   <TableHead className="px-5 text-right">Input tokens</TableHead>
                   <TableHead className="px-5 text-right">Output tokens</TableHead>
+                  <TableHead className="px-5 text-right">Cache read</TableHead>
+                  <TableHead className="px-5 text-right">Cache write</TableHead>
                   <TableHead className="px-5 text-right">Total</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {visibleSessions.map((session) => (
-                  <TableRow key={session.session_id}>
-                    <TableCell className="px-5 font-medium">
-                      <div className="grid gap-1">
-                        <span className="font-mono text-xs text-foreground">
-                          {shortSessionId(session.session_id)}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {formatSessionTime(session.last_seen_at)}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="px-5">
-                      <div className="grid gap-1">
-                        <span className="font-medium text-foreground">{session.agent}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {displayProvider(session.provider)}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="px-5">
-                      <div className="flex flex-wrap gap-2">
-                        {session.models.map((model) => {
-                          const modelTotal = model.input + model.output
-                          const sessionTotal = session.input + session.output
-                          return (
-                            <Badge
-                              key={`${session.session_id}-${model.provider}-${model.model}`}
-                              variant="outline"
-                              className="h-auto max-w-full gap-2 rounded-lg px-2 py-1 text-left"
-                            >
-                              <span>{displayProviderModel(model.provider, model.model)}</span>
-                              <span className="font-mono text-[11px] text-muted-foreground">
-                                {formatSharePercent(modelTotal, sessionTotal)} ·{' '}
-                                {modelTotal.toLocaleString()}
-                              </span>
-                            </Badge>
-                          )
-                        })}
-                      </div>
-                    </TableCell>
-                    <TableCell className="px-5 text-right font-mono">
-                      {session.input.toLocaleString()}
-                    </TableCell>
-                    <TableCell className="px-5 text-right font-mono">
-                      {session.output.toLocaleString()}
-                    </TableCell>
-                    <TableCell className="px-5 text-right font-mono font-semibold">
-                      {(session.input + session.output).toLocaleString()}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {visibleSessions.map((session) => {
+                  const sessionCacheRead = session.models.reduce((sum, model) => sum + model.cache_read, 0)
+                  const sessionCacheWrite = session.models.reduce(
+                    (sum, model) => sum + model.cache_creation,
+                    0
+                  )
+                  const sessionTotal =
+                    session.input + session.output + sessionCacheRead + sessionCacheWrite
+
+                  return (
+                    <TableRow key={session.session_id}>
+                      <TableCell className="px-5 font-medium">
+                        <div className="grid gap-1">
+                          <span className="font-mono text-xs text-foreground">
+                            {shortSessionId(session.session_id)}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {formatSessionTime(session.last_seen_at)}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="px-5">
+                        <div className="grid gap-1">
+                          <span className="font-medium text-foreground">{session.agent}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {displayProvider(session.provider)}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="px-5">
+                        <div className="flex flex-wrap gap-2">
+                          {session.models.map((model) => {
+                            const modelTotal =
+                              model.input +
+                              model.output +
+                              model.cache_read +
+                              model.cache_creation
+                            return (
+                              <Badge
+                                key={`${session.session_id}-${model.provider}-${model.model}`}
+                                variant="outline"
+                                className="h-auto max-w-full gap-2 rounded-lg px-2 py-1 text-left"
+                              >
+                                <span>{displayProviderModel(model.provider, model.model)}</span>
+                                <span className="font-mono text-[11px] text-muted-foreground">
+                                  {formatSharePercent(modelTotal, sessionTotal)} ·{' '}
+                                  {modelTotal.toLocaleString()}
+                                </span>
+                              </Badge>
+                            )
+                          })}
+                        </div>
+                      </TableCell>
+                      <TableCell className="px-5 text-right font-mono">
+                        {session.input.toLocaleString()}
+                      </TableCell>
+                      <TableCell className="px-5 text-right font-mono">
+                        {session.output.toLocaleString()}
+                      </TableCell>
+                      <TableCell className="px-5 text-right font-mono">
+                        {sessionCacheRead.toLocaleString()}
+                      </TableCell>
+                      <TableCell className="px-5 text-right font-mono">
+                        {sessionCacheWrite.toLocaleString()}
+                      </TableCell>
+                      <TableCell className="px-5 text-right font-mono font-semibold">
+                        {sessionTotal.toLocaleString()}
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
               </TableBody>
             </Table>
           </>

@@ -2,6 +2,8 @@ package config_test
 
 import (
 	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"hooker/internal/config"
@@ -18,8 +20,8 @@ func TestLoad_defaults(t *testing.T) {
 	if cfg.Addr != "127.0.0.1:8765" {
 		t.Errorf("Addr = %q, want 127.0.0.1:8765", cfg.Addr)
 	}
-	if cfg.DBPath != "hooker.db" {
-		t.Errorf("DBPath = %q, want hooker.db", cfg.DBPath)
+	if !strings.HasSuffix(filepath.ToSlash(cfg.DBPath), "backend/hooker.db") {
+		t.Errorf("DBPath = %q, want suffix backend/hooker.db", cfg.DBPath)
 	}
 }
 

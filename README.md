@@ -38,7 +38,8 @@ cd backend
 DB_PATH=/absolute/path/to/my.db go run ./cmd/server/main.go
 ```
 
-Without `DB_PATH`, backend always uses `hooker.db` in the current working directory.
+Without `DB_PATH`, backend auto-detects project layout and defaults to `backend/hooker.db`.
+Set `DB_PATH` explicitly if you run from unusual directories or want a custom location.
 
 ### 2. Codex setup (recommended)
 
@@ -65,18 +66,6 @@ codex_hooks = true
       }
     ],
     "PreToolUse": [
-      {
-        "matcher": ".*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "curl -s -X POST http://127.0.0.1:8765/api/hook -H 'Content-Type: application/json' -d @-",
-            "timeout": 5
-          }
-        ]
-      }
-    ],
-    "PermissionRequest": [
       {
         "matcher": ".*",
         "hooks": [

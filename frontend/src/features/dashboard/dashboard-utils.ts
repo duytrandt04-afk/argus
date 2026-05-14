@@ -25,9 +25,9 @@ export const MODEL_COLORS: Record<string, string> = {
   'claude-3-5-sonnet-20241022': 'var(--chart-1)',
   'claude-3-opus-20240229': 'var(--chart-1)',
   'claude-3-5-haiku-20241022': 'var(--chart-1)',
-  'claude-4-6-sonnet': 'var(--chart-1)',
-  'claude-4-7-opus': 'var(--chart-1)',
-  'claude-4-5-haiku': 'var(--chart-1)',
+  'claude-sonnet-4-6': 'var(--chart-1)',
+  'claude-opus-4-7': 'var(--chart-1)',
+  'claude-haiku-4-5-20251001': 'var(--chart-1)',
 }
 
 export function apiRange(value: string) {
@@ -82,8 +82,8 @@ export function toTokenShareChartData(stats: DashboardStats | null) {
   }
 
   const sortedUsage = [...stats.agent_usage].sort((a, b) => {
-    const aTotal = a.input + a.output
-    const bTotal = b.input + b.output
+    const aTotal = a.input + a.output + a.cache_creation + a.cache_read
+    const bTotal = b.input + b.output + b.cache_creation + b.cache_read
     if (aTotal !== bTotal) return bTotal - aTotal
     return a.model.localeCompare(b.model)
   })
@@ -93,7 +93,7 @@ export function toTokenShareChartData(stats: DashboardStats | null) {
     label: displayProviderModel(usage.provider, usage.model),
     provider: usage.provider,
     model: usage.model,
-    total: usage.input + usage.output,
+    total: usage.input + usage.output + usage.cache_creation + usage.cache_read,
   }))
 
   const grandTotal = series.reduce((sum, item) => sum + item.total, 0)
@@ -220,6 +220,47 @@ function toBucketKey(date: Date, granularity: DashboardStats['timeline_granulari
 
 function agentLabel(agent: string) {
   return AGENTS.find((item) => item.id === agent)?.label || (agent === 'unknown' ? 'Unknown' : agent)
+}
+
+export function toTokenTimelineByAgentData(stats: DashboardStats | null, query: string = '') {
+  if (!stats || stats.token_timeline_by_agent.length === 0) {
+    return { data: [] as Array<Record<string, number | string>>, series: [] as string[] }
+  }
+
+  const byDate = new Map<string, Record<string, number | string>>()
+  const series = new Set<string>()
+
+  for (const bucket of stats.token_timeline_by_agent) {
+    const key = bucket.agent || 'unknown'
+    series.add(key)
+    const row = byDate.get(bucket.date) ?? {
+      date: bucket.date,
+      localLabel: formatTimelineLabel(bucket.date, stats.timeline_granularity),
+    }
+    row[key] = Number(bucket.total || 0)
+    byDate.set(bucket.date, row)
+  }
+
+  const orderedSeries = [...series].sort((a, b) => agentLabel(a).localeCompare(agentLabel(b)))
+  const keysFromRange = timelineKeysFromQuery(query, stats.timeline_granularity)
+  const orderedKeys =
+    keysFromRange.length > 0
+      ? [...new Set([...keysFromRange, ...byDate.keys()])].sort((a, b) => a.localeCompare(b))
+      : [...byDate.keys()].sort((a, b) => a.localeCompare(b))
+
+  const data = orderedKeys.map((key) => {
+    const row = byDate.get(key) ?? ({
+      date: key,
+      localLabel: formatTimelineLabel(key, stats.timeline_granularity),
+    } as Record<string, number | string>)
+    const next = { ...row } as Record<string, number | string>
+    for (const s of orderedSeries) {
+      if (typeof next[s] !== 'number') next[s] = 0
+    }
+    return next
+  })
+
+  return { data, series: orderedSeries }
 }
 
 export type TokenChartDatum = ReturnType<typeof toTokenChartData>[number]

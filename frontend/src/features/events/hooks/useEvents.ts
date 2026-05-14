@@ -82,6 +82,10 @@ export function useEvents() {
       }
     }
 
+    es.onopen = () => {
+      setError(null)
+    }
+
     es.onerror = () => {
       setError('Connection lost, reconnecting...')
     }

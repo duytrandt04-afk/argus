@@ -16,6 +16,8 @@ func (noopRepo) Add(domain.NormalizedEvent) error { return nil }
 
 func (noopRepo) List(int) ([]domain.NormalizedEvent, error) { return nil, nil }
 
+func (noopRepo) ListBySession(string, int) ([]domain.NormalizedEvent, error) { return nil, nil }
+
 func (noopRepo) SessionModel(string) (string, error) { return "", nil }
 
 func (noopRepo) ListSessions() ([]domain.Session, error) { return nil, nil }

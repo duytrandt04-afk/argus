@@ -16,6 +16,20 @@ export interface AgentTimelineBucket {
   count: number
 }
 
+export interface TokenTimelineBucket {
+  date: string
+  input: number
+  output: number
+  cache_creation: number
+  cache_read: number
+}
+
+export interface TokenTimelineAgentBucket {
+  date: string
+  agent: string
+  total: number
+}
+
 export interface AgentModelUsage {
   provider: string
   agent: string
@@ -57,6 +71,8 @@ export interface DashboardStats {
   timeline_granularity: 'hour' | 'day'
   timeline: TimelineBucket[]
   timeline_by_agent: AgentTimelineBucket[]
+  token_timeline: TokenTimelineBucket[]
+  token_timeline_by_agent: TokenTimelineAgentBucket[]
   top_actions: ActionCount[]
   agent_usage: AgentModelUsage[]
   session_usage: DashboardSessionUsage[]
@@ -102,6 +118,24 @@ export function normalizeDashboardStats(raw: Partial<DashboardStats>): Dashboard
       }))
     : []
 
+  const tokenTimeline = Array.isArray(raw.token_timeline)
+    ? raw.token_timeline.map((b) => ({
+        date: b.date || '',
+        input: Number(b.input || 0),
+        output: Number(b.output || 0),
+        cache_creation: Number(b.cache_creation || 0),
+        cache_read: Number(b.cache_read || 0),
+      }))
+    : []
+
+  const tokenTimelineByAgent = Array.isArray(raw.token_timeline_by_agent)
+    ? raw.token_timeline_by_agent.map((b) => ({
+        date: b.date || '',
+        agent: b.agent || 'unknown',
+        total: Number(b.total || 0),
+      }))
+    : []
+
   return {
     total_sessions: Number(raw.total_sessions || 0),
     total_events: Number(raw.total_events || 0),
@@ -109,6 +143,8 @@ export function normalizeDashboardStats(raw: Partial<DashboardStats>): Dashboard
     total_output_tokens: Number(raw.total_output_tokens || 0),
     timeline_granularity: raw.timeline_granularity === 'day' ? 'day' : 'hour',
     timeline: Array.isArray(raw.timeline) ? raw.timeline : [],
+    token_timeline: tokenTimeline,
+    token_timeline_by_agent: tokenTimelineByAgent,
     timeline_by_agent: Array.isArray(raw.timeline_by_agent)
       ? raw.timeline_by_agent.map((bucket) => ({
           date: bucket.date || '',

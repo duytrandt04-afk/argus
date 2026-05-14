@@ -9,7 +9,7 @@ export function useEventFilters(
   setSearchQuery: Dispatch<SetStateAction<string>>
 ) {
   const [searchParams] = useSearchParams()
-  const [sessionFilter] = useState<string>(() => searchParams.get('session') ?? '')
+  const sessionFilter = searchParams.get('session') ?? ''
 
   const [actionFilter, setActionFilter] = useState('all')
   const [agentFilter, setAgentFilter] = useState('all')
@@ -86,13 +86,16 @@ export function useEventFilters(
   const filteredEvents = useMemo(() => {
     return events.filter((e) => {
       const eventTime = new Date(e.time).getTime()
-      if (timeRange === 'custom') {
-        const startMs = parseLocalDateTime(customStart)
-        const endMs = parseLocalDateTime(customEnd)
-        if (!Number.isNaN(startMs) && eventTime < startMs) return false
-        if (!Number.isNaN(endMs) && eventTime > endMs) return false
-      } else {
-        if (rangeStartMs !== null && eventTime < rangeStartMs) return false
+      // When deep-linking by ?session=<id>, prioritize showing all events for that session.
+      if (!sessionFilter) {
+        if (timeRange === 'custom') {
+          const startMs = parseLocalDateTime(customStart)
+          const endMs = parseLocalDateTime(customEnd)
+          if (!Number.isNaN(startMs) && eventTime < startMs) return false
+          if (!Number.isNaN(endMs) && eventTime > endMs) return false
+        } else {
+          if (rangeStartMs !== null && eventTime < rangeStartMs) return false
+        }
       }
 
       if (actionFilter !== 'all' && e.action !== actionFilter) return false

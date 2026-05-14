@@ -72,7 +72,7 @@ export function Dashboard() {
                 <TabsTrigger value="api-usage">API key usage</TabsTrigger>
               </TabsList>
               <TabsContent value="tokens">
-                <TokenUsagePanel stats={stats} />
+                <TokenUsagePanel stats={stats} query={query} />
               </TabsContent>
               <TabsContent value="activity">
                 <ActivityPanel stats={stats} query={query} />

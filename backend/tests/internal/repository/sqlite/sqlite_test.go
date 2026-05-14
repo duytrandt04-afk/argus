@@ -55,6 +55,50 @@ func TestAdd_and_List(t *testing.T) {
 	}
 }
 
+func TestListBySession(t *testing.T) {
+	db := newTestDB(t)
+	now := time.Now().UTC()
+
+	addEvent(t, db, domain.NormalizedEvent{
+		Time:          now.Add(-2 * time.Minute).Format(time.RFC3339),
+		Agent:         "codex",
+		Session:       "sess-a",
+		HookEventName: "PreToolUse",
+		Action:        "READ",
+		Path:          "/tmp/a.txt",
+		RawPayload:    []byte(`{}`),
+	})
+	addEvent(t, db, domain.NormalizedEvent{
+		Time:          now.Add(-1 * time.Minute).Format(time.RFC3339),
+		Agent:         "codex",
+		Session:       "sess-b",
+		HookEventName: "PreToolUse",
+		Action:        "READ",
+		Path:          "/tmp/b.txt",
+		RawPayload:    []byte(`{}`),
+	})
+	addEvent(t, db, domain.NormalizedEvent{
+		Time:          now.Format(time.RFC3339),
+		Agent:         "codex",
+		Session:       "sess-a",
+		HookEventName: "PostToolUse",
+		Action:        "EDIT",
+		Path:          "/tmp/a2.txt",
+		RawPayload:    []byte(`{}`),
+	})
+
+	events, err := db.ListBySession("sess-a", 0)
+	if err != nil {
+		t.Fatalf("ListBySession: %v", err)
+	}
+	if len(events) != 2 {
+		t.Fatalf("got %d events, want 2", len(events))
+	}
+	if events[0].Session != "sess-a" || events[1].Session != "sess-a" {
+		t.Fatalf("unexpected sessions: %+v", events)
+	}
+}
+
 func TestAdd_dedup(t *testing.T) {
 	db := newTestDB(t)
 

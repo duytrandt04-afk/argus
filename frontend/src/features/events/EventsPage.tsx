@@ -81,6 +81,8 @@ export function EventsPage() {
         setCustomStart={setCustomStart}
         customEnd={customEnd}
         setCustomEnd={setCustomEnd}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
         className={mobileFiltersOpen ? 'sm:flex' : 'hidden sm:flex'}
       />
 

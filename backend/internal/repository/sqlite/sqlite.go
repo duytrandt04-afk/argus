@@ -286,12 +286,14 @@ func (d *DB) UpsertSession(sessionID, agent, model, source, cwd, transcriptPath,
 func (d *DB) GetDashboardStats(since, until string) (*domain.DashboardStats, error) {
 	bucketFormat, bucketGranularity := timelineBucketFormat(since, until)
 	stats := &domain.DashboardStats{
-		TimelineGranularity: bucketGranularity,
-		Timeline:            []domain.TimelineBucket{},
-		TimelineByAgent:     []domain.AgentTimelineBucket{},
-		TopActions:          []domain.ActionCount{},
-		AgentUsage:          []domain.AgentModelUsage{},
-		SessionUsage:        []domain.DashboardSessionUsage{},
+		TimelineGranularity:  bucketGranularity,
+		Timeline:             []domain.TimelineBucket{},
+		TimelineByAgent:      []domain.AgentTimelineBucket{},
+		TokenTimeline:        []domain.TokenTimelineBucket{},
+		TokenTimelineByAgent: []domain.TokenTimelineAgentBucket{},
+		TopActions:           []domain.ActionCount{},
+		AgentUsage:           []domain.AgentModelUsage{},
+		SessionUsage:         []domain.DashboardSessionUsage{},
 	}
 
 	var eventClauses []string
@@ -370,13 +372,57 @@ func (d *DB) GetDashboardStats(since, until string) (*domain.DashboardStats, err
 		log.Printf("dashboard: timeline by agent query: %v", err)
 	}
 
+	// Token Timeline
+	if rows, err := d.db.Query(fmt.Sprintf(`
+		SELECT strftime('%s', started_at) as bucket,
+		       SUM(input_tokens), SUM(output_tokens),
+		       SUM(cache_creation_tokens), SUM(cache_read_tokens)
+		FROM sessions
+		WHERE started_at IS NOT NULL`+buildAndClause(sessionClauses)+`
+		GROUP BY bucket
+		ORDER BY bucket ASC
+	`, bucketFormat), sessionArgs...); err == nil {
+		defer rows.Close()
+		for rows.Next() {
+			var b domain.TokenTimelineBucket
+			if err := rows.Scan(&b.Date, &b.Input, &b.Output, &b.CacheCreation, &b.CacheRead); err == nil {
+				stats.TokenTimeline = append(stats.TokenTimeline, b)
+			}
+		}
+		_ = rows.Err()
+	} else if err != nil {
+		log.Printf("dashboard: token timeline query: %v", err)
+	}
+
+	// Token Timeline By Agent
+	if rows, err := d.db.Query(fmt.Sprintf(`
+		SELECT strftime('%s', started_at) as bucket,
+		       COALESCE(NULLIF(agent, ''), 'unknown') as agent_name,
+		       SUM(input_tokens + output_tokens + cache_creation_tokens + cache_read_tokens)
+		FROM sessions
+		WHERE started_at IS NOT NULL`+buildAndClause(sessionClauses)+`
+		GROUP BY bucket, agent_name
+		ORDER BY bucket ASC, agent_name ASC
+	`, bucketFormat), sessionArgs...); err == nil {
+		defer rows.Close()
+		for rows.Next() {
+			var b domain.TokenTimelineAgentBucket
+			if err := rows.Scan(&b.Date, &b.Agent, &b.Total); err == nil {
+				stats.TokenTimelineByAgent = append(stats.TokenTimelineByAgent, b)
+			}
+		}
+		_ = rows.Err()
+	} else if err != nil {
+		log.Printf("dashboard: token timeline by agent query: %v", err)
+	}
+
 	// Top Actions
 	if rows, err := d.db.Query(`
-		SELECT action, COUNT(*) as count 
-		FROM hook_events 
+		SELECT action, COUNT(*) as count
+		FROM hook_events
 		WHERE action IS NOT NULL AND action != ''`+buildAndClause(eventClauses)+`
-		GROUP BY action 
-		ORDER BY count DESC 
+		GROUP BY action
+		ORDER BY count DESC
 		LIMIT 10
 	`, eventArgs...); err == nil {
 		defer rows.Close()

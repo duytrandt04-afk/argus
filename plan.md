@@ -1,12 +1,12 @@
-# emruy Roadmap and Production-Readiness Plan
+# hooker Roadmap and Production-Readiness Plan
 
 ## Purpose
 
-This plan compiles the main improvements, optimizations, and future must-have features for `emruy` as a serious local-first product. The current goal is not multi-tenant cloud deployment. The goal is a reliable, low-friction local tool that public OSS users in the developer community can install from source, run, upgrade, and trust on their own machines.
+This plan compiles the main improvements, optimizations, and future must-have features for `hooker` as a serious local-first product. The current goal is not multi-tenant cloud deployment. The goal is a reliable, low-friction local tool that public OSS users in the developer community can install from source, run, upgrade, and trust on their own machines.
 
 ## Product Position
 
-`emruy` is currently best understood as:
+`hooker` is currently best understood as:
 
 - a local monitoring dashboard for Codex and Claude Code activity
 - a public OSS tool aimed at developers using coding agents
@@ -210,7 +210,7 @@ Work:
   - one root helper script for common setup and verification
 - document the shortest path to first successful run in 5 to 10 minutes
 - minimize backend/frontend split leakage in first-run docs
-- add one root helper script, likely `./scripts/emruy`, with initial subcommands:
+- add one root helper script, likely `./scripts/hooker`, with initial subcommands:
   - `setup`
   - `doctor`
   - optional later `run`
@@ -295,7 +295,7 @@ Work:
 - add `/healthz` endpoint
 - add `/readyz` endpoint with DB-open check
 - add a `doctor` or `self-check` command or script
-- make `./scripts/emruy doctor` the canonical self-check entrypoint
+- make `./scripts/hooker doctor` the canonical self-check entrypoint
 - have `doctor` report required failures separately from optional warnings
 - required checks should include:
   - Go present and supported

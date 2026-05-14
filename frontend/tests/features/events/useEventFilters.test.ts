@@ -51,4 +51,20 @@ describe('useEventFilters — sessionFilter', () => {
 
     expect(result.current.filteredEvents).toHaveLength(2)
   })
+
+  it('shows old events for selected session regardless of time window', () => {
+    const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
+    const events: EventRecord[] = [
+      { time: twoDaysAgo, action: 'EDIT', path: '/a', session: 'target-session', agent: 'claudecode' },
+      { time: new Date().toISOString(), action: 'EDIT', path: '/b', session: 'other-session', agent: 'claudecode' },
+    ]
+
+    const { result } = renderHook(
+      () => useEventFilters(events, '', vi.fn()),
+      { wrapper: makeWrapper('?session=target-session') }
+    )
+
+    expect(result.current.filteredEvents).toHaveLength(1)
+    expect(result.current.filteredEvents[0].session).toBe('target-session')
+  })
 })

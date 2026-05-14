@@ -17,7 +17,7 @@ cd backend
 go run ./cmd/server/main.go
 ```
 
-By default, backend uses `hooker.db` in the current working directory.
+By default, backend auto-detects project layout and uses `backend/hooker.db`.
 
 If you want a custom DB file:
 

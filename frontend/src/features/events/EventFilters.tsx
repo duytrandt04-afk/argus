@@ -1,3 +1,4 @@
+import { Search } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
 import {
@@ -23,6 +24,8 @@ type EventFiltersProps = {
   setCustomStart: (v: string) => void
   customEnd: string
   setCustomEnd: (v: string) => void
+  searchQuery: string
+  setSearchQuery: (v: string) => void
   id?: string
   className?: string
 }
@@ -41,6 +44,8 @@ export function EventFilters({
   setCustomStart,
   customEnd,
   setCustomEnd,
+  searchQuery,
+  setSearchQuery,
   id,
   className,
 }: EventFiltersProps) {
@@ -163,6 +168,16 @@ export function EventFilters({
           </div>
         </>
       )}
+
+      <div className="relative w-full sm:ml-auto sm:w-[220px]">
+        <Search className="absolute left-2.5 top-1/2 size-3 -translate-y-1/2 text-[#444]" />
+        <Input
+          className="h-auto w-full bg-black border-[#333] pl-7 pr-3 py-1 text-[0.8rem] text-[#cccccc] placeholder:text-[#555] focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-[#555] transition-colors"
+          placeholder="Search events..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
     </div>
   )
 }
