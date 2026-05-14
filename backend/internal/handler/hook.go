@@ -9,6 +9,7 @@ import (
 
 	"hooker/internal/agents/claudecode"
 	"hooker/internal/agents/codex"
+	"hooker/internal/agents/geminicli"
 	"hooker/internal/domain"
 	"hooker/internal/fileutil"
 	"hooker/internal/service"
@@ -34,9 +35,12 @@ func Hook(svc *service.EventService) http.Handler {
 		}
 
 		var e domain.NormalizedEvent
-		if claudecode.MatchesTranscript(meta.TranscriptPath) {
+		switch {
+		case claudecode.MatchesTranscript(meta.TranscriptPath):
 			e, err = claudecode.Normalize(raw)
-		} else {
+		case geminicli.MatchesTranscript(meta.TranscriptPath) || meta.Source == "gemini":
+			e, err = geminicli.Normalize(raw)
+		default:
 			e, err = codex.Normalize(raw)
 		}
 		if err != nil {
@@ -51,8 +55,12 @@ func Hook(svc *service.EventService) http.Handler {
 				e.Model = model
 			}
 		}
-		if e.Model == "" && e.TranscriptPath != "" && claudecode.MatchesTranscript(e.TranscriptPath) {
-			e.Model = claudecode.ModelFromTranscript(e.TranscriptPath)
+		if e.Model == "" && e.TranscriptPath != "" {
+			if claudecode.MatchesTranscript(e.TranscriptPath) {
+				e.Model = claudecode.ModelFromTranscript(e.TranscriptPath)
+			} else if geminicli.MatchesTranscript(e.TranscriptPath) {
+				e.Model = geminicli.ModelFromTranscript(e.TranscriptPath)
+			}
 		}
 
 		log.Printf("[hook] agent=%s session=%s tool=%s action=%s path=%s", e.Agent, e.Session, e.Tool, e.Action, e.Path)
@@ -73,15 +81,17 @@ func enrichContext(e domain.NormalizedEvent) domain.NormalizedEvent {
 	}
 
 	searchStr := ""
-	if e.HookEventName == "PreToolUse" && e.OldString != "" {
+	switch {
+	case e.HookEventName == "PreToolUse" && e.OldString != "":
 		searchStr = e.OldString
-	} else if e.HookEventName == "PostToolUse" && e.NewString != "" {
+	case e.HookEventName == "PostToolUse" && e.NewString != "":
 		searchStr = e.NewString
-	} else if e.Action == "EDIT" {
+	case e.Action == "EDIT":
 		// General EDIT action fallback
-		if e.OldString != "" {
+		switch {
+		case e.OldString != "":
 			searchStr = e.OldString
-		} else if e.NewString != "" {
+		case e.NewString != "":
 			searchStr = e.NewString
 		}
 	}

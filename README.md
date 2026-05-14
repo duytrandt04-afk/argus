@@ -1,10 +1,10 @@
 # hooker
 
-`hooker` is a premium, real-time agent monitoring dashboard designed for local development with **Claude Code** and **Codex**. It captures hook events (lifecycle, tool usage, prompts) and visualizes them in a streamlined interface, complete with diff rendering and token usage analytics.
+`hooker` is a premium, real-time agent monitoring dashboard designed for local development with **Claude Code**, **Codex**, and **Gemini CLI**. It captures hook events (lifecycle, tool usage, prompts) and visualizes them in a streamlined interface, complete with diff rendering and token usage analytics.
 
 ## Features
 
-- **Unified Monitoring**: Track Claude Code and Codex sessions side-by-side.
+- **Unified Monitoring**: Track Claude Code, Codex, and Gemini CLI sessions side-by-side.
 - **Diff Visualization**: Render code changes directly in the event stream.
 - **Token Analytics**: Real-time token usage tooltips (input, output, and cache efficiency).
 - **Usage Dashboard**: Administrative view for tracking aggregated OpenAI usage, costs, and model breakdowns.
@@ -41,173 +41,20 @@ DB_PATH=/absolute/path/to/my.db go run ./cmd/server/main.go
 Without `DB_PATH`, backend auto-detects project layout and defaults to `backend/hooker.db`.
 Set `DB_PATH` explicitly if you run from unusual directories or want a custom location.
 
-### 2. Codex setup (recommended)
+### 2. Configure Your Agent
 
-`~/.codex/config.toml`:
-```toml
-[features]
-codex_hooks = true
-```
+Each coding assistant requires its own hook configuration to forward events to the Hooker backend.
 
-`~/.codex/hooks.json`:
-```json
-{
-  "hooks": {
-    "SessionStart": [
-      {
-        "matcher": "startup|resume",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "curl -s -X POST http://127.0.0.1:8765/api/hook -H 'Content-Type: application/json' -d @-",
-            "timeout": 5
-          }
-        ]
-      }
-    ],
-    "PreToolUse": [
-      {
-        "matcher": ".*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "curl -s -X POST http://127.0.0.1:8765/api/hook -H 'Content-Type: application/json' -d @-",
-            "timeout": 5
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": ".*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "curl -s -X POST http://127.0.0.1:8765/api/hook -H 'Content-Type: application/json' -d @-",
-            "timeout": 5
-          }
-        ]
-      }
-    ],
-    "PreCompact": [
-      {
-        "matcher": ".*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "curl -s -X POST http://127.0.0.1:8765/api/hook -H 'Content-Type: application/json' -d @-",
-            "timeout": 5
-          }
-        ]
-      }
-    ],
-    "PostCompact": [
-      {
-        "matcher": ".*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "curl -s -X POST http://127.0.0.1:8765/api/hook -H 'Content-Type: application/json' -d @-",
-            "timeout": 5
-          }
-        ]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "curl -s -X POST http://127.0.0.1:8765/api/hook -H 'Content-Type: application/json' -d @-",
-            "timeout": 5
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "curl -s -X POST http://127.0.0.1:8765/api/hook -H 'Content-Type: application/json' -d @-",
-            "timeout": 5
-          }
-        ]
-      }
-    ]
-  }
-}
-```
+Choose your agent to view the setup instructions:
+- **[Codex Setup Guide](docs/setup/codex.md)** (Recommended)
+- **[Claude Code Setup Guide](docs/setup/claudecode.md)**
+- **[Gemini CLI Setup Guide](docs/setup/geminicli.md)**
 
-After editing `hooks.json`, run `codex` then `/hooks` once and trust updated hook hashes.
-
-### 3. Claude Code setup (optional)
-
-Minimal `~/.claude/settings.json` hook forwarding example:
-```json
-{
-  "hooks": {
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "curl -s -X POST http://127.0.0.1:8765/api/hook -H 'Content-Type: application/json' -d @-"
-          }
-        ]
-      }
-    ],
-    "PreToolUse": [
-      {
-        "matcher": ".*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "curl -s -X POST http://127.0.0.1:8765/api/hook -H 'Content-Type: application/json' -d @-"
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": ".*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "curl -s -X POST http://127.0.0.1:8765/api/hook -H 'Content-Type: application/json' -d @-"
-          }
-        ]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "curl -s -X POST http://127.0.0.1:8765/api/hook -H 'Content-Type: application/json' -d @-"
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "curl -s -X POST http://127.0.0.1:8765/api/hook -H 'Content-Type: application/json' -d @-"
-          }
-        ]
-      }
-    ]
-  }
-}
-```
-
-### 4. Quick verification
+### 3. Quick verification
 
 1. Start backend.
 2. Start frontend.
-3. Start Codex in any repo and run one command.
+3. Start Codex or Gemini CLI in any repo and run one command.
 4. Confirm event appears in dashboard.
 5. Trigger `/compact` in Codex and confirm `PreCompact` / `PostCompact` rows appear.
 

@@ -1,7 +1,4 @@
-import type {
-  AgentModelUsage,
-  DashboardStats,
-} from './hooks/useDashboardStats'
+import type { AgentModelUsage, DashboardStats } from './hooks/useDashboardStats'
 import { displayModel, displayProviderModel } from '@/lib/utils'
 import { AGENTS } from '@/agents'
 
@@ -28,16 +25,16 @@ export const MODEL_COLORS: Record<string, string> = {
   'claude-sonnet-4-6': 'var(--chart-1)',
   'claude-opus-4-7': 'var(--chart-1)',
   'claude-haiku-4-5-20251001': 'var(--chart-1)',
+  'claude-4-6-sonnet': 'var(--chart-1)',
+  'claude-4-7-opus': 'var(--chart-1)',
+  'claude-4-5-haiku': 'var(--chart-1)',
+  'gemini-2.0-flash': 'var(--chart-5)',
+  'gemini-2.0-pro-exp': 'var(--chart-5)',
+  'gemini-3-flash-preview': 'var(--chart-5)',
 }
 
 export function apiRange(value: string) {
   return value === 'all' ? '' : value
-}
-
-export function formatTokenCount(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`
-  return n.toString()
 }
 
 export function getModelColor(model: string, idx: number) {
@@ -128,12 +125,10 @@ export function toTimelineByAgentChartData(stats: DashboardStats | null, query: 
   for (const bucket of stats.timeline_by_agent) {
     const key = bucket.agent || 'unknown'
     series.add(key)
-    const row =
-      byDate.get(bucket.date) ??
-      {
-        date: bucket.date,
-        localLabel: formatTimelineLabel(bucket.date, stats.timeline_granularity),
-      }
+    const row = byDate.get(bucket.date) ?? {
+      date: bucket.date,
+      localLabel: formatTimelineLabel(bucket.date, stats.timeline_granularity),
+    }
     row[key] = Number(bucket.count || 0)
     byDate.set(bucket.date, row)
   }
@@ -219,7 +214,9 @@ function toBucketKey(date: Date, granularity: DashboardStats['timeline_granulari
 }
 
 function agentLabel(agent: string) {
-  return AGENTS.find((item) => item.id === agent)?.label || (agent === 'unknown' ? 'Unknown' : agent)
+  return (
+    AGENTS.find((item) => item.id === agent)?.label || (agent === 'unknown' ? 'Unknown' : agent)
+  )
 }
 
 export function toTokenTimelineByAgentData(stats: DashboardStats | null, query: string = '') {
