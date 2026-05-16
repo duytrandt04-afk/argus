@@ -1,4 +1,3 @@
-import { Zap } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { EventRecord } from '@/types/events'
 import type { TraceSpan } from './hooks/useTraces'
@@ -29,9 +28,15 @@ function eventColor(name = '') {
   }
 }
 
-function eventSpan(event: EventRecord, index: number): TraceSpan {
+function eventSpan(event: EventRecord, index: number, allEvents: EventRecord[]): TraceSpan {
   const startTime = new Date(event.time).getTime()
-  const duration = Math.max(event.duration_ms || 0, 0)
+  let duration = Math.max(event.duration_ms || 0, 0)
+
+  if (duration === 0 && index < allEvents.length - 1) {
+    const nextTime = new Date(allEvents[index + 1].time).getTime()
+    duration = Math.max(nextTime - startTime, 0)
+  }
+
   return {
     id: `${event.session || 'event'}-${event.time}-${index}`,
     name: [event.hook_event_name || 'Event', event.tool].filter(Boolean).join(' / '),
@@ -58,7 +63,7 @@ export function EventTimeline({
   return (
     <div className="flex flex-col min-w-max pb-4">
       {events.map((event, index) => {
-        const span = eventSpan(event, index)
+        const span = eventSpan(event, index, events)
         const selectedRow = selected?.id === span.id
         const rawLeftPx = ((span.startTime - globalStart) / globalDuration) * timelineWidth
         const safeLeftPx = Math.min(
@@ -69,10 +74,6 @@ export function EventTimeline({
         const barWidthPx = Math.min(
           timelineWidth - safeLeftPx,
           Math.max(rawWidthPx, minBarWidth)
-        )
-        const outsideLabelLeftPx = Math.min(
-          safeLeftPx + barWidthPx + 8,
-          Math.max(timelineWidth - 44, 0)
         )
         const color = eventColor(event.hook_event_name)
 
@@ -103,42 +104,28 @@ export function EventTimeline({
                 }}
               />
               <div
-                className="pointer-events-none absolute z-10 flex min-w-0 items-center gap-1.5"
-                style={{ left: `${Math.max(safeLeftPx, 8)}px` }}
+                className="pointer-events-none absolute z-10 flex min-w-0 items-center"
+                style={{ left: `${safeLeftPx}px` }}
               >
-                <div
-                  className={cn(
-                    'flex max-w-[260px] items-center gap-1.5 rounded-md border border-white/10 bg-[#111723]/90 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-white shadow-sm backdrop-blur-sm',
-                    selectedRow ? 'ring-1 ring-sky-400/45' : ''
-                  )}
+                <div 
+                  className="flex max-w-[400px] items-center gap-1.5 px-2 text-[12px] font-medium text-white" 
+                  style={{ textShadow: '0 1px 2px rgba(0,0,0,0.4)' }}
                 >
-                  <Zap className="h-3 w-3 shrink-0 text-white/80" />
-                  <span className="truncate">{event.hook_event_name || 'Event'}</span>
-                  {event.tool && (
-                    <span className="truncate normal-case tracking-normal text-white/72">
-                      {event.tool}
+                  {event.hook_event_name?.includes('Tool') ? (
+                    <span className="flex-shrink-0 text-[10px] opacity-90">🔗</span>
+                  ) : (
+                    <span className="flex-shrink-0 text-[11px] font-bold text-amber-400">A|</span>
+                  )}
+                  <span className="truncate">
+                    {event.tool || event.hook_event_name || 'Event'}
+                  </span>
+                  {span.duration > 0 && (
+                    <span className="flex-shrink-0 whitespace-nowrap opacity-80">
+                      - {(span.duration / 1000).toFixed(2)}s
                     </span>
                   )}
                 </div>
               </div>
-              {barWidthPx > 84 ? (
-                <span
-                  className="pointer-events-none absolute truncate px-2 text-[10px] font-semibold text-white/92"
-                  style={{
-                    left: `${safeLeftPx}px`,
-                    width: `${barWidthPx}px`,
-                  }}
-                >
-                  {span.duration > 0 ? `${span.duration}ms` : 'event'}
-                </span>
-              ) : (
-                <span
-                  className="absolute text-[10px] font-medium text-white/50"
-                  style={{ left: `${outsideLabelLeftPx}px` }}
-                >
-                  {span.duration > 0 ? `${span.duration}ms` : 'event'}
-                </span>
-              )}
             </div>
           </button>
         )

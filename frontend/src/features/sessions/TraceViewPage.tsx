@@ -106,9 +106,13 @@ export function TraceViewPage() {
   const totalDuration = Math.max(maxTime - minTime, 1000)
   const baseTimelineWidth = Math.max(Math.round(viewportWidth), 1)
   const timelineWidth = Math.max(Math.round(baseTimelineWidth * zoom), baseTimelineWidth)
+
+  const extendedTimelineWidth = timelineWidth + 400
+  const extendedTotalDuration = totalDuration * (extendedTimelineWidth / timelineWidth)
+
   const { ticks } = useMemo(
-    () => buildTimelineTicks(totalDuration, timelineWidth),
-    [timelineWidth, totalDuration]
+    () => buildTimelineTicks(extendedTotalDuration, extendedTimelineWidth),
+    [extendedTimelineWidth, extendedTotalDuration]
   )
 
   const setZoomLevel = (nextZoom: number) => {
@@ -146,10 +150,19 @@ export function TraceViewPage() {
           {' › '}
           {sessionId.slice(0, 12)}
         </div>
-        <div className="mt-2 flex flex-wrap items-center gap-2 text-[12px] text-white/60">
+        <div className="mt-2 flex flex-wrap items-center gap-2.5 text-[12px] text-white/60">
           <span>
             Started {session?.started_at ? new Date(session.started_at).toLocaleString() : '-'}
           </span>
+          <span className="text-white/20">•</span>
+          <span>
+            Ended {session?.ended_at 
+              ? new Date(session.ended_at).toLocaleString() 
+              : session?.last_seen_at 
+                ? new Date(session.last_seen_at).toLocaleString() 
+                : '-'}
+          </span>
+          <span className="text-white/20">•</span>
           <span>
             Duration{' '}
             {session
@@ -220,9 +233,9 @@ export function TraceViewPage() {
             </div>
 
             <div ref={containerRef} className="relative flex-1 overflow-auto">
-              <div className="flex min-w-full flex-col" style={{ width: `${timelineWidth}px` }}>
+              <div className="flex min-w-full flex-col" style={{ width: `${extendedTimelineWidth}px` }}>
                 <div className="sticky top-0 z-30 flex h-10 w-full border-b border-white/10 bg-[#0b0c10]/95 backdrop-blur-sm">
-                  <div className="relative mx-5 h-full" style={{ width: `${timelineWidth}px` }}>
+                  <div className="relative mx-5 h-full" style={{ width: `${extendedTimelineWidth}px` }}>
                     {ticks.map((tick, index) => (
                       <div
                         key={`${tick.timeMs}-${index}`}
@@ -262,8 +275,8 @@ export function TraceViewPage() {
                         onSelect={setSelectedSpan}
                         onOpenPanel={openPanel}
                         globalStart={minTime}
-                        globalDuration={totalDuration}
-                        timelineWidth={timelineWidth}
+                        globalDuration={extendedTotalDuration}
+                        timelineWidth={extendedTimelineWidth}
                       />
                     ))}
                   </div>
@@ -274,8 +287,8 @@ export function TraceViewPage() {
                     onSelect={setSelectedSpan}
                     onOpenPanel={openPanel}
                     globalStart={minTime}
-                    globalDuration={totalDuration}
-                    timelineWidth={timelineWidth}
+                    globalDuration={extendedTotalDuration}
+                    timelineWidth={extendedTimelineWidth}
                   />
                 )}
               </div>
