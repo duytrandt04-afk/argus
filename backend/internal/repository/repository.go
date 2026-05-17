@@ -18,4 +18,6 @@ type EventRepository interface {
 	GetTraces(sessionID, since string) ([]domain.NormalizedEvent, error)
 	ListSessionsByCWDPage(cwd, since string, page, size int) ([]domain.Session, int, error)
 	GetTracesPage(sessionID, since string, page, size int) ([]domain.NormalizedEvent, int, error)
+	GetFileChanges(sessionID string) ([]domain.FileChangeGroup, error)
+	GetSessionFileChangeCounts(ids []string) (map[string]int, error)
 }

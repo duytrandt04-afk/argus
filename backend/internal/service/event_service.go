@@ -372,7 +372,26 @@ func (s *EventService) GetTraces(sessionID, since string) ([]domain.NormalizedEv
 }
 
 func (s *EventService) ListSessionsByCWDPage(cwd, since string, page, size int) ([]domain.Session, int, error) {
-	return s.repo.ListSessionsByCWDPage(cwd, since, page, size)
+	sessions, total, err := s.repo.ListSessionsByCWDPage(cwd, since, page, size)
+	if err != nil {
+		return nil, 0, err
+	}
+	if len(sessions) > 0 {
+		ids := make([]string, len(sessions))
+		for i, sess := range sessions {
+			ids[i] = sess.SessionID
+		}
+		if counts, err := s.repo.GetSessionFileChangeCounts(ids); err == nil {
+			for i, sess := range sessions {
+				sessions[i].FileChangeCount = counts[sess.SessionID]
+			}
+		}
+	}
+	return sessions, total, nil
+}
+
+func (s *EventService) GetFileChanges(sessionID string) ([]domain.FileChangeGroup, error) {
+	return s.repo.GetFileChanges(sessionID)
 }
 
 func (s *EventService) GetTracesPage(sessionID, since string, page, size int) ([]domain.NormalizedEvent, int, error) {

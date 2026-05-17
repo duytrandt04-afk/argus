@@ -259,6 +259,10 @@ describe('trace rendering', () => {
         })
       }
 
+      if (url.startsWith('/api/file-changes?session_id=')) {
+        return Promise.resolve({ ok: true, json: async () => [] })
+      }
+
       throw new Error(`Unexpected fetch URL: ${url}`)
     })
     vi.stubGlobal('fetch', fetchMock)
@@ -374,6 +378,10 @@ describe('trace rendering', () => {
           ok: true,
           json: async () => ({ traces: [traceEvent] }),
         })
+      }
+
+      if (url.startsWith('/api/file-changes?session_id=')) {
+        return Promise.resolve({ ok: true, json: async () => [] })
       }
 
       throw new Error(`Unexpected fetch URL: ${url}`)

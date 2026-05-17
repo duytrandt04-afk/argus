@@ -17,6 +17,22 @@ export interface Session {
   last_seen_at: string
   ended_at?: string
   usage: SessionUsageType
+  file_change_count?: number
+}
+
+export interface FileChangeEvent {
+  time: string
+  tool: string
+  action?: string
+  old_string?: string
+  new_string?: string
+  start_line?: number
+}
+
+export interface FileChangeGroup {
+  path: string
+  count: number
+  changes: FileChangeEvent[]
 }
 
 export interface Project {

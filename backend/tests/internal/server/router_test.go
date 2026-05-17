@@ -41,6 +41,12 @@ func (noopRepo) GetTracesPage(string, string, int, int) ([]domain.NormalizedEven
 	return nil, 0, nil
 }
 
+func (noopRepo) GetFileChanges(string) ([]domain.FileChangeGroup, error) { return nil, nil }
+
+func (noopRepo) GetSessionFileChangeCounts([]string) (map[string]int, error) {
+	return map[string]int{}, nil
+}
+
 func (noopRepo) UpsertSession(string, string, string, string, string, string, string, string, domain.SessionUsage) error {
 	return nil
 }

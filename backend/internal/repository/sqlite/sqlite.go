@@ -892,3 +892,94 @@ func (d *DB) GetTraces(sessionID, since string) ([]domain.NormalizedEvent, error
 	}
 	return d.listWithWhere(where, args, 0, 0)
 }
+
+const fileChangeCondition = `(
+	LOWER(tool_name) IN ('write','edit','multiedit','str_replace','create_file','notebook_edit',
+	                      'str_replace_based_edit_tool','str_replace_based_edit','new_file','create')
+	OR COALESCE(old_string,'') != ''
+	OR COALESCE(new_string,'') != ''
+)`
+
+func (d *DB) GetFileChanges(sessionID string) ([]domain.FileChangeGroup, error) {
+	rows, err := d.db.Query(`
+		SELECT path, COALESCE(tool_name,''), created_at, COALESCE(action,''),
+		       COALESCE(old_string,''), COALESCE(new_string,''), COALESCE(start_line,0)
+		FROM hook_events
+		WHERE session_id = ?
+		  AND path != '' AND path IS NOT NULL
+		  AND `+fileChangeCondition+`
+		ORDER BY path, id ASC
+	`, sessionID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	type entry = domain.FileChangeGroup
+	groups := map[string]*entry{}
+	order := []string{}
+	for rows.Next() {
+		var path, tool, createdAt, action, oldStr, newStr string
+		var startLine int
+		if err := rows.Scan(&path, &tool, &createdAt, &action, &oldStr, &newStr, &startLine); err != nil {
+			return nil, err
+		}
+		if _, ok := groups[path]; !ok {
+			groups[path] = &entry{Path: path}
+			order = append(order, path)
+		}
+		g := groups[path]
+		g.Count++
+		ev := domain.FileChangeEvent{Time: createdAt, Tool: tool, Action: action, StartLine: startLine}
+		if oldStr != "" {
+			ev.OldString = oldStr
+		}
+		if newStr != "" {
+			ev.NewString = newStr
+		}
+		g.Changes = append(g.Changes, ev)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	result := make([]domain.FileChangeGroup, 0, len(order))
+	for _, p := range order {
+		result = append(result, *groups[p])
+	}
+	return result, nil
+}
+
+func (d *DB) GetSessionFileChangeCounts(ids []string) (map[string]int, error) {
+	if len(ids) == 0 {
+		return map[string]int{}, nil
+	}
+	placeholders := strings.Repeat("?,", len(ids))
+	placeholders = placeholders[:len(placeholders)-1]
+	args := make([]any, len(ids))
+	for i, id := range ids {
+		args[i] = id
+	}
+	rows, err := d.db.Query(`
+		SELECT session_id, COUNT(DISTINCT path) AS cnt
+		FROM hook_events
+		WHERE session_id IN (`+placeholders+`)
+		  AND path != '' AND path IS NOT NULL
+		  AND `+fileChangeCondition+`
+		GROUP BY session_id
+	`, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	result := map[string]int{}
+	for rows.Next() {
+		var sid string
+		var cnt int
+		if err := rows.Scan(&sid, &cnt); err != nil {
+			return nil, err
+		}
+		result[sid] = cnt
+	}
+	return result, rows.Err()
+}

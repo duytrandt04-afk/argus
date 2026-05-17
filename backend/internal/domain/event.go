@@ -63,16 +63,32 @@ type SessionUsage struct {
 }
 
 type Session struct {
-	SessionID      string       `json:"session_id"`
-	Agent          string       `json:"agent"`
-	Model          string       `json:"model"`
-	Source         string       `json:"source"`
-	CWD            string       `json:"cwd"`
-	TranscriptPath string       `json:"transcript_path"`
-	StartedAt      string       `json:"started_at"`
-	LastSeenAt     string       `json:"last_seen_at"`
-	EndedAt        string       `json:"ended_at,omitempty"`
-	Usage          SessionUsage `json:"usage"`
+	SessionID       string       `json:"session_id"`
+	Agent           string       `json:"agent"`
+	Model           string       `json:"model"`
+	Source          string       `json:"source"`
+	CWD             string       `json:"cwd"`
+	TranscriptPath  string       `json:"transcript_path"`
+	StartedAt       string       `json:"started_at"`
+	LastSeenAt      string       `json:"last_seen_at"`
+	EndedAt         string       `json:"ended_at,omitempty"`
+	Usage           SessionUsage `json:"usage"`
+	FileChangeCount int          `json:"file_change_count,omitempty"`
+}
+
+type FileChangeEvent struct {
+	Time      string `json:"time"`
+	Tool      string `json:"tool"`
+	Action    string `json:"action,omitempty"`
+	OldString string `json:"old_string,omitempty"`
+	NewString string `json:"new_string,omitempty"`
+	StartLine int    `json:"start_line,omitempty"`
+}
+
+type FileChangeGroup struct {
+	Path    string            `json:"path"`
+	Count   int               `json:"count"`
+	Changes []FileChangeEvent `json:"changes"`
 }
 
 type Project struct {

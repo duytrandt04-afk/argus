@@ -78,6 +78,20 @@ export function buildTimelineTicks(durationMs: number, contentWidthPx: number) {
   }
 
   if (ticks[ticks.length - 1]?.timeMs !== safeDuration) {
+    const lastTick = ticks[ticks.length - 1]
+    const leftPx = safeWidth
+    const timeMs = safeDuration
+
+    // If the last regular tick is too close to the final duration tick,
+    // remove it (except for the 0s mark) to prevent text overlap.
+    if (
+      lastTick &&
+      lastTick.timeMs > 0 &&
+      (leftPx - lastTick.leftPx < 75 || timeMs - lastTick.timeMs < stepMs * 0.65)
+    ) {
+      ticks.pop()
+    }
+
     ticks.push({
       timeMs: safeDuration,
       label: formatElapsed(safeDuration),

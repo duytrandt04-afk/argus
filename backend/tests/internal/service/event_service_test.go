@@ -127,6 +127,12 @@ func (m *mockRepo) GetTracesPage(sessionID, since string, page, size int) ([]dom
 	return nil, 0, nil
 }
 
+func (m *mockRepo) GetFileChanges(string) ([]domain.FileChangeGroup, error) { return nil, nil }
+
+func (m *mockRepo) GetSessionFileChangeCounts([]string) (map[string]int, error) {
+	return map[string]int{}, nil
+}
+
 func (m *mockRepo) UpsertSession(sessionID, _, model, _, _, _, _, endedAt string, usage domain.SessionUsage) error {
 	if m.upsertErr != nil {
 		return m.upsertErr

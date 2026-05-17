@@ -1,16 +1,20 @@
 import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { PanelImperativeHandle } from 'react-resizable-panels'
 import { Link, useParams } from 'react-router-dom'
-import { Minus, PanelLeft, Plus } from 'lucide-react'
+import { Files, Minus, PanelLeft, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable'
 import type { Session } from '@/types/sessions'
 import { EventTimeline } from './EventTimeline'
+import { FileChangesDrawer } from './FileChangesDrawer'
 import { TraceInspectionPanel } from './TraceInspectionPanel'
 import { TraceTreeNode } from './TraceTreeNode'
+import { useFileChanges } from './hooks/useFileChanges'
 import { useTraces, type TraceSpan } from './hooks/useTraces'
 import { buildTimelineTicks } from './timelineScale'
 import { formatDuration, sessionDurationMs } from './utils'
+
+type PanelMode = 'inspect' | 'files'
 
 function initialIsMobile() {
   return typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches
@@ -36,11 +40,14 @@ export function TraceViewPage() {
   const [zoom, setZoom] = useState(1)
   const [selectedSpan, setSelectedSpan] = useState<TraceSpan | null>(null)
   const [panelOpen, setPanelOpen] = useState(true)
+  const [panelMode, setPanelMode] = useState<PanelMode>('inspect')
   const inspectionPanelRef = useRef<PanelImperativeHandle>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const [isMobile, setIsMobile] = useState(initialIsMobile)
   const [viewportWidth, setViewportWidth] = useState(0)
   const isNarrowLayout = isMobile
+
+  const { groups: fileGroups } = useFileChanges(sessionId)
 
   useEffect(() => {
     const mql = window.matchMedia('(max-width: 768px)')
@@ -142,6 +149,7 @@ export function TraceViewPage() {
   const handleSelectSpan = useCallback(
     (span: TraceSpan) => {
       setSelectedSpan(span)
+      setPanelMode('inspect')
       if (isNarrowLayout) {
         setPanelOpen(true)
       } else {
@@ -151,6 +159,18 @@ export function TraceViewPage() {
     },
     [isNarrowLayout]
   )
+
+  const handleOpenFiles = useCallback(() => {
+    setPanelMode('files')
+    if (isNarrowLayout) {
+      setPanelOpen(true)
+    } else {
+      setPanelOpen(true)
+      inspectionPanelRef.current?.expand()
+    }
+  }, [isNarrowLayout])
+
+  const showMobileOverlay = isNarrowLayout && panelOpen && (selectedSpan || panelMode === 'files')
 
   return (
     <div className="flex h-full flex-col bg-[#0a0a0a] text-white">
@@ -230,6 +250,35 @@ export function TraceViewPage() {
                   >
                     <Plus />
                   </Button>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleOpenFiles}
+                    aria-label="View file changes"
+                    title="View file changes"
+                    className={
+                      panelOpen && panelMode === 'files'
+                        ? 'border-sky-400/40 bg-sky-400/15 text-sky-300 hover:bg-sky-400/20'
+                        : ''
+                    }
+                  >
+                    <Files className="h-3.5 w-3.5" />
+                    Files
+                    {fileGroups.length > 0 && (
+                      <span
+                        className={`ml-1 rounded px-1 py-0.5 text-[10px] font-semibold ${
+                          panelOpen && panelMode === 'files'
+                            ? 'bg-sky-400/25 text-sky-200'
+                            : 'bg-white/10 text-white/55'
+                        }`}
+                      >
+                        {fileGroups.length}
+                      </span>
+                    )}
+                  </Button>
+
                   {!isNarrowLayout && (
                     <Button
                       type="button"
@@ -325,13 +374,17 @@ export function TraceViewPage() {
                 onExpand={() => setPanelOpen(true)}
                 className="z-10 flex min-w-0 flex-col border-l border-white/10 bg-[#111216] shadow-[-4px_0_24px_-8px_rgba(0,0,0,0.5)]"
               >
-                <TraceInspectionPanel span={selectedSpan} />
+                {panelMode === 'files' ? (
+                  <FileChangesDrawer sessionId={sessionId} onClose={closePanel} />
+                ) : (
+                  <TraceInspectionPanel span={selectedSpan} />
+                )}
               </ResizablePanel>
             </>
           )}
         </ResizablePanelGroup>
 
-        {isNarrowLayout && panelOpen && selectedSpan && (
+        {showMobileOverlay && (
           <>
             <button
               type="button"
@@ -340,7 +393,11 @@ export function TraceViewPage() {
               onClick={closePanel}
             />
             <aside className="absolute inset-y-0 right-0 z-50 flex w-[min(92vw,44rem)] min-w-0 flex-col border-l border-white/10 bg-[#111216] shadow-[-12px_0_40px_rgba(0,0,0,0.45)]">
-              <TraceInspectionPanel span={selectedSpan} onClose={closePanel} />
+              {panelMode === 'files' ? (
+                <FileChangesDrawer sessionId={sessionId} onClose={closePanel} />
+              ) : (
+                <TraceInspectionPanel span={selectedSpan} onClose={closePanel} />
+              )}
             </aside>
           </>
         )}
