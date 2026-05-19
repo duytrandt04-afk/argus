@@ -63,16 +63,42 @@ type SessionUsage struct {
 }
 
 type Session struct {
-	SessionID      string       `json:"session_id"`
-	Agent          string       `json:"agent"`
-	Model          string       `json:"model"`
-	Source         string       `json:"source"`
-	CWD            string       `json:"cwd"`
-	TranscriptPath string       `json:"transcript_path"`
-	StartedAt      string       `json:"started_at"`
-	LastSeenAt     string       `json:"last_seen_at"`
-	EndedAt        string       `json:"ended_at,omitempty"`
-	Usage          SessionUsage `json:"usage"`
+	SessionID       string       `json:"session_id"`
+	Agent           string       `json:"agent"`
+	Model           string       `json:"model"`
+	Source          string       `json:"source"`
+	CWD             string       `json:"cwd"`
+	TranscriptPath  string       `json:"transcript_path"`
+	StartedAt       string       `json:"started_at"`
+	LastSeenAt      string       `json:"last_seen_at"`
+	EndedAt         string       `json:"ended_at,omitempty"`
+	Usage           SessionUsage `json:"usage"`
+	FileChangeCount int          `json:"file_change_count,omitempty"`
+}
+
+type FileChangeEvent struct {
+	Time      string `json:"time"`
+	Tool      string `json:"tool"`
+	Action    string `json:"action,omitempty"`
+	OldString string `json:"old_string,omitempty"`
+	NewString string `json:"new_string,omitempty"`
+	StartLine int    `json:"start_line,omitempty"`
+}
+
+type FileChangeGroup struct {
+	Path    string            `json:"path"`
+	Count   int               `json:"count"`
+	Changes []FileChangeEvent `json:"changes"`
+}
+
+type Project struct {
+	CWD          string   `json:"cwd"`
+	Name         string   `json:"name"`
+	SessionCount int      `json:"session_count"`
+	LastActivity string   `json:"last_activity"`
+	TotalTokens  int      `json:"total_tokens"`
+	Agents       []string `json:"agents"`
+	LiveCount    int      `json:"live_count"`
 }
 
 type SessionTreeNode struct {
@@ -82,18 +108,18 @@ type SessionTreeNode struct {
 }
 
 type DashboardStats struct {
-	TotalSessions       int                     `json:"total_sessions"`
-	TotalEvents         int                     `json:"total_events"`
-	TotalInputTokens    int                     `json:"total_input_tokens"`
-	TotalOutputTokens   int                     `json:"total_output_tokens"`
-	TimelineGranularity string                  `json:"timeline_granularity"`
-	Timeline            []TimelineBucket        `json:"timeline"`
-	TimelineByAgent     []AgentTimelineBucket   `json:"timeline_by_agent"`
+	TotalSessions        int                        `json:"total_sessions"`
+	TotalEvents          int                        `json:"total_events"`
+	TotalInputTokens     int                        `json:"total_input_tokens"`
+	TotalOutputTokens    int                        `json:"total_output_tokens"`
+	TimelineGranularity  string                     `json:"timeline_granularity"`
+	Timeline             []TimelineBucket           `json:"timeline"`
+	TimelineByAgent      []AgentTimelineBucket      `json:"timeline_by_agent"`
 	TokenTimeline        []TokenTimelineBucket      `json:"token_timeline"`
 	TokenTimelineByAgent []TokenTimelineAgentBucket `json:"token_timeline_by_agent"`
-	TopActions          []ActionCount           `json:"top_actions"`
-	AgentUsage          []AgentModelUsage       `json:"agent_usage"`
-	SessionUsage        []DashboardSessionUsage `json:"session_usage"`
+	TopActions           []ActionCount              `json:"top_actions"`
+	AgentUsage           []AgentModelUsage          `json:"agent_usage"`
+	SessionUsage         []DashboardSessionUsage    `json:"session_usage"`
 }
 
 type TokenTimelineBucket struct {

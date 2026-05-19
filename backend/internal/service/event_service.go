@@ -1,6 +1,7 @@
 package service
 
 import (
+	"log"
 	"slices"
 	"strings"
 	"sync"
@@ -69,8 +70,23 @@ func (s *EventService) SessionModel(sessionID string) (string, error) {
 	return s.repo.SessionModel(sessionID)
 }
 
+func (s *EventService) ListProjects() ([]domain.Project, error) {
+	return s.repo.ListProjects()
+}
+
 func (s *EventService) ListSessions() ([]domain.Session, error) {
 	sessions, err := s.repo.ListSessions()
+	if err != nil {
+		return nil, err
+	}
+	if err := s.backfillSessionUsage(sessions); err != nil {
+		return nil, err
+	}
+	return sessions, nil
+}
+
+func (s *EventService) ListSessionsByCWD(cwd, since string) ([]domain.Session, error) {
+	sessions, err := s.repo.ListSessionsByCWD(cwd, since)
 	if err != nil {
 		return nil, err
 	}
@@ -196,21 +212,21 @@ func enrichDashboardStats(stats *domain.DashboardStats, sessions []domain.Sessio
 			Models:     sessionModels,
 		})
 
-			for _, model := range sessionModels {
-				key := strings.Join([]string{model.Provider, model.Agent, model.Model}, "|")
-				if agentUsage[key] == nil {
+		for _, model := range sessionModels {
+			key := strings.Join([]string{model.Provider, model.Agent, model.Model}, "|")
+			if agentUsage[key] == nil {
 				agentUsage[key] = &domain.AgentModelUsage{
 					Provider: model.Provider,
 					Agent:    model.Agent,
 					Model:    model.Model,
 				}
-				}
-				agentUsage[key].Input += model.Input
-				agentUsage[key].Output += model.Output
-				agentUsage[key].CacheCreation += model.CacheCreation
-				agentUsage[key].CacheRead += model.CacheRead
 			}
+			agentUsage[key].Input += model.Input
+			agentUsage[key].Output += model.Output
+			agentUsage[key].CacheCreation += model.CacheCreation
+			agentUsage[key].CacheRead += model.CacheRead
 		}
+	}
 
 	for _, usage := range agentUsage {
 		stats.AgentUsage = append(stats.AgentUsage, *usage)
@@ -235,13 +251,35 @@ func sessionOutsideRange(session domain.Session, since, until string) bool {
 	if session.StartedAt == "" {
 		return false
 	}
-	if since == "" {
+	startedAt, err := time.Parse(time.RFC3339, session.StartedAt)
+	if err != nil {
+		if since == "" {
+			return until != "" && session.StartedAt > until
+		}
+		if session.StartedAt < since {
+			return true
+		}
 		return until != "" && session.StartedAt > until
 	}
-	if session.StartedAt < since {
-		return true
+
+	if since != "" {
+		sinceAt, err := time.Parse(time.RFC3339, since)
+		if err != nil {
+			if session.StartedAt < since {
+				return true
+			}
+		} else if startedAt.Before(sinceAt) {
+			return true
+		}
 	}
-	return until != "" && session.StartedAt > until
+	if until != "" {
+		untilAt, err := time.Parse(time.RFC3339, until)
+		if err != nil {
+			return session.StartedAt > until
+		}
+		return startedAt.After(untilAt)
+	}
+	return false
 }
 
 func dashboardModels(session domain.Session, breakdown domain.UsageBreakdown) []domain.DashboardModelUsage {
@@ -330,6 +368,36 @@ func (s *EventService) GetSessionTree(since string) ([]domain.SessionTreeNode, e
 	return s.repo.GetSessionTree(since)
 }
 
-func (s *EventService) GetTraces() ([]domain.NormalizedEvent, error) {
-	return s.repo.GetTraces()
+func (s *EventService) GetTraces(sessionID, since string) ([]domain.NormalizedEvent, error) {
+	return s.repo.GetTraces(sessionID, since)
+}
+
+func (s *EventService) ListSessionsByCWDPage(cwd, since string, page, size int) ([]domain.Session, int, error) {
+	sessions, total, err := s.repo.ListSessionsByCWDPage(cwd, since, page, size)
+	if err != nil {
+		return nil, 0, err
+	}
+	if len(sessions) > 0 {
+		ids := make([]string, len(sessions))
+		for i, sess := range sessions {
+			ids[i] = sess.SessionID
+		}
+		counts, countErr := s.repo.GetSessionFileChangeCounts(ids)
+		if countErr != nil {
+			log.Printf("[service] GetSessionFileChangeCounts: %v", countErr)
+		} else {
+			for i, sess := range sessions {
+				sessions[i].FileChangeCount = counts[sess.SessionID]
+			}
+		}
+	}
+	return sessions, total, nil
+}
+
+func (s *EventService) GetFileChanges(sessionID string) ([]domain.FileChangeGroup, error) {
+	return s.repo.GetFileChanges(sessionID)
+}
+
+func (s *EventService) GetTracesPage(sessionID, since string, page, size int) ([]domain.NormalizedEvent, int, error) {
+	return s.repo.GetTracesPage(sessionID, since, page, size)
 }
