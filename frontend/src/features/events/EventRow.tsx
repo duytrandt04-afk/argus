@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { cn, displayModel } from '@/lib/utils'
 import { highlight } from '@/lib/format'
 import type { EventRecord } from '@/types/events'
+import { buildEventKey } from './eventKey'
 import { DiffBlock } from './renderers/DiffBlock'
 import { PatchBlock } from './renderers/PatchBlock'
 import { CommandBlock } from './renderers/CommandBlock'
@@ -21,6 +22,7 @@ type EventRowProps = {
   highlighted?: boolean
   isPendingTarget?: boolean
   onTargetVisible?: () => void
+  isDraggable?: boolean
 }
 
 export function EventRow({
@@ -29,6 +31,7 @@ export function EventRow({
   highlighted = false,
   isPendingTarget = false,
   onTargetVisible,
+  isDraggable = false,
 }: EventRowProps) {
   const isPatchCommand =
     (e.action === 'EDIT' && String(e.prompt).includes('*** Begin Patch')) ||
@@ -47,9 +50,19 @@ export function EventRow({
   return (
     <div
       ref={rowRef}
+      draggable={isDraggable}
+      onDragStart={
+        isDraggable
+          ? (ev) => {
+              ev.dataTransfer.setData('text/plain', buildEventKey(e))
+              ev.dataTransfer.effectAllowed = 'move'
+            }
+          : undefined
+      }
       className={cn(
         'border-b border-white/[0.03] py-2 text-[0.82rem] leading-[1.4] hover:bg-white/[0.02]',
-        highlighted ? 'rounded-md bg-sky-500/8 ring-1 ring-sky-400/35' : ''
+        highlighted ? 'rounded-md bg-sky-500/8 ring-1 ring-sky-400/35' : '',
+        isDraggable && 'cursor-grab active:cursor-grabbing select-none'
       )}
     >
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-3">

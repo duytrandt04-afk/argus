@@ -1,0 +1,1 @@
+ALTER TABLE pending_jobs ADD COLUMN attempts INTEGER NOT NULL DEFAULT 0;

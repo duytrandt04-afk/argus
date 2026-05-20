@@ -16,6 +16,7 @@ type SessionListProps = {
   targetEventKey: string | null
   highlightedEventKey: string | null
   onTargetVisible: () => void
+  isEventDraggable?: boolean
 }
 
 export function SessionList({
@@ -30,6 +31,7 @@ export function SessionList({
   targetEventKey,
   highlightedEventKey,
   onTargetVisible,
+  isEventDraggable = false,
 }: SessionListProps) {
   const sessionList = useMemo(() => {
     const grouped = new Map<string, SessionGroup>()
@@ -106,6 +108,7 @@ export function SessionList({
           targetEventKey={targetEventKey}
           highlightedEventKey={highlightedEventKey}
           onTargetVisible={onTargetVisible}
+          isEventDraggable={isEventDraggable}
         />
       ))}
     </>

@@ -2,6 +2,7 @@ import { Fragment, useEffect, type RefObject } from 'react'
 import {
   FishingHook,
   GitFork,
+  BrainCircuit,
   LayoutDashboard,
   PanelLeft,
   TerminalSquare,
@@ -54,6 +55,13 @@ const NAV_ITEMS: NavItem[] = [
     label: 'Projects',
     ariaLabel: 'Projects',
     icon: GitFork,
+    end: false,
+  },
+  {
+    to: '/ai-insights',
+    label: 'AI Insights',
+    ariaLabel: 'AI Insights',
+    icon: BrainCircuit,
     end: false,
   },
 ]

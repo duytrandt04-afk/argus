@@ -1,5 +1,6 @@
-import { Search } from 'lucide-react'
+import { Columns2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
   Select,
@@ -16,6 +17,9 @@ type EventFiltersProps = {
   agentFilter: string
   setAgentFilter: (v: string) => void
   availableAgents: string[]
+  projectFilter: string
+  setProjectFilter: (v: string) => void
+  availableProjects: string[]
   sortOrder: string
   setSortOrder: (v: string) => void
   timeRange: string
@@ -24,8 +28,8 @@ type EventFiltersProps = {
   setCustomStart: (v: string) => void
   customEnd: string
   setCustomEnd: (v: string) => void
-  searchQuery: string
-  setSearchQuery: (v: string) => void
+  splitView?: boolean
+  onToggleSplit?: () => void
   id?: string
   className?: string
 }
@@ -36,6 +40,9 @@ export function EventFilters({
   agentFilter,
   setAgentFilter,
   availableAgents,
+  projectFilter,
+  setProjectFilter,
+  availableProjects,
   sortOrder,
   setSortOrder,
   timeRange,
@@ -44,8 +51,8 @@ export function EventFilters({
   setCustomStart,
   customEnd,
   setCustomEnd,
-  searchQuery,
-  setSearchQuery,
+  splitView = false,
+  onToggleSplit,
   id,
   className,
 }: EventFiltersProps) {
@@ -58,14 +65,14 @@ export function EventFilters({
       )}
     >
       <div className="flex w-full items-center gap-2 sm:w-auto">
-        <span className="text-[0.7rem] uppercase text-[#666]">Action</span>
+        <span className="text-[0.7rem] text-[#666]">Action</span>
         <Select value={actionFilter} onValueChange={setActionFilter}>
           <SelectTrigger className="h-auto w-full px-2 py-1 text-[0.8rem] bg-black border-[#333] text-[#cccccc] sm:w-[100px] focus:ring-0 focus:ring-offset-0">
             <SelectValue />
           </SelectTrigger>
           <SelectContent className="bg-[#111] border-[#333] text-[#cccccc]">
             <SelectGroup>
-              <SelectItem value="all">ALL</SelectItem>
+              <SelectItem value="all">All</SelectItem>
               <SelectItem value="EDIT">EDIT</SelectItem>
               <SelectItem value="READ">READ</SelectItem>
               <SelectItem value="BASH">BASH</SelectItem>
@@ -91,17 +98,38 @@ export function EventFilters({
 
       {availableAgents.length > 0 && (
         <div className="flex w-full items-center gap-2 sm:w-auto">
-          <span className="text-[0.7rem] uppercase text-[#666]">Agent</span>
+          <span className="text-[0.7rem] text-[#666]">Agent</span>
           <Select value={agentFilter} onValueChange={setAgentFilter}>
             <SelectTrigger className="h-auto w-full px-2 py-1 text-[0.8rem] bg-black border-[#333] text-[#cccccc] sm:w-[120px] focus:ring-0 focus:ring-offset-0">
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="bg-[#111] border-[#333] text-[#cccccc]">
               <SelectGroup>
-                <SelectItem value="all">ALL</SelectItem>
+                <SelectItem value="all">All</SelectItem>
                 {availableAgents.map((agent) => (
                   <SelectItem key={agent} value={agent}>
-                    {agent.toUpperCase()}
+                    {agent}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      {availableProjects.length > 0 && (
+        <div className="flex w-full items-center gap-2 sm:w-auto">
+          <span className="text-[0.7rem] text-[#666]">Project</span>
+          <Select value={projectFilter} onValueChange={setProjectFilter}>
+            <SelectTrigger className="h-auto w-full px-2 py-1 text-[0.8rem] bg-black border-[#333] text-[#cccccc] sm:w-[140px] focus:ring-0 focus:ring-offset-0">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-[#111] border-[#333] text-[#cccccc]">
+              <SelectGroup>
+                <SelectItem value="all">All</SelectItem>
+                {availableProjects.map((cwd) => (
+                  <SelectItem key={cwd} value={cwd} title={cwd}>
+                    {cwd.split('/').filter(Boolean).pop() ?? cwd}
                   </SelectItem>
                 ))}
               </SelectGroup>
@@ -111,22 +139,22 @@ export function EventFilters({
       )}
 
       <div className="flex w-full items-center gap-2 sm:w-auto">
-        <span className="text-[0.7rem] uppercase text-[#666]">Sort</span>
+        <span className="text-[0.7rem] text-[#666]">Sort</span>
         <Select value={sortOrder} onValueChange={setSortOrder}>
           <SelectTrigger className="h-auto w-full px-2 py-1 text-[0.8rem] bg-black border-[#333] text-[#cccccc] sm:w-[110px] focus:ring-0 focus:ring-offset-0">
             <SelectValue />
           </SelectTrigger>
           <SelectContent className="bg-[#111] border-[#333] text-[#cccccc]">
             <SelectGroup>
-              <SelectItem value="newest">NEWEST</SelectItem>
-              <SelectItem value="oldest">OLDEST</SelectItem>
+              <SelectItem value="newest">Newest</SelectItem>
+              <SelectItem value="oldest">Oldest</SelectItem>
             </SelectGroup>
           </SelectContent>
         </Select>
       </div>
 
       <div className="flex w-full items-center gap-2 sm:w-auto">
-        <span className="text-[0.7rem] uppercase text-[#666]">Time</span>
+        <span className="text-[0.7rem] text-[#666]">Time</span>
         <Select value={timeRange} onValueChange={setTimeRange}>
           <SelectTrigger className="h-auto w-full px-2 py-1 text-[0.8rem] bg-black border-[#333] text-[#cccccc] sm:w-[160px] focus:ring-0 focus:ring-offset-0">
             <SelectValue />
@@ -169,15 +197,21 @@ export function EventFilters({
         </>
       )}
 
-      <div className="relative w-full sm:ml-auto sm:w-[220px]">
-        <Search className="absolute left-2.5 top-1/2 size-3 -translate-y-1/2 text-[#444]" />
-        <Input
-          className="h-auto w-full bg-black border-[#333] pl-7 pr-3 py-1 text-[0.8rem] text-[#cccccc] placeholder:text-[#555] focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-[#555] transition-colors"
-          placeholder="Search events..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-      </div>
+      {onToggleSplit && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onToggleSplit}
+          className={cn(
+            'hidden sm:ml-auto sm:inline-flex h-auto shrink-0 gap-1.5 px-2 py-1 text-[0.8rem] border-[#333] bg-black text-[#666] hover:bg-white/[0.03] hover:text-[#cccccc]',
+            splitView && 'border-[#555] text-[#cccccc]'
+          )}
+          title={splitView ? 'Close split view' : 'Open split view'}
+          aria-label={splitView ? 'Close split view' : 'Open split view'}
+        >
+          <Columns2 />
+        </Button>
+      )}
     </div>
   )
 }

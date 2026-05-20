@@ -38,15 +38,30 @@ var schema006 string
 //go:embed migrations/007_session_ended_at.sql
 var schema007 string
 
+//go:embed migrations/008_pending_jobs.sql
+var schema008 string
+
+//go:embed migrations/009_observation_dedup.sql
+var schema009 string
+
+//go:embed migrations/010_pending_job_attempts.sql
+var schema010 string
+
 type DB struct {
 	db *sql.DB
 }
 
+// RawDB exposes the underlying *sql.DB for packages that need direct access
+// (e.g. the job queue and worker).
+func (d *DB) RawDB() *sql.DB { return d.db }
+
 func New(path string) (*DB, error) {
-	db, err := sql.Open("sqlite", path)
+	// modernc.org/sqlite uses _pragma=name(value) format for connection parameters.
+	db, err := sql.Open("sqlite", path+"?_pragma=busy_timeout(5000)&_pragma=journal_mode(wal)&_pragma=synchronous(normal)")
 	if err != nil {
 		return nil, fmt.Errorf("open sqlite: %w", err)
 	}
+	db.SetMaxOpenConns(1)
 	d := &DB{db: db}
 	if err := d.migrate(); err != nil {
 		return nil, err
@@ -69,6 +84,9 @@ func (d *DB) migrate() error {
 		{5, schema005},
 		{6, schema006},
 		{7, schema007},
+		{8, schema008},
+		{9, schema009},
+		{10, schema010},
 	}
 	for _, m := range migrations {
 		var count int
@@ -244,7 +262,57 @@ func (d *DB) ListProjects() ([]domain.Project, error) {
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
-	return projects, nil
+	return mergeChildProjects(projects), nil
+}
+
+// mergeChildProjects collapses sessions from subdirectory CWDs into their
+// nearest parent project so e.g. /foo/bar doesn't show alongside /foo.
+func mergeChildProjects(projects []domain.Project) []domain.Project {
+	slices.SortStableFunc(projects, func(a, b domain.Project) int {
+		return len(a.CWD) - len(b.CWD)
+	})
+
+	merged := make([]domain.Project, 0, len(projects))
+	for _, p := range projects {
+		parentIdx := -1
+		for i := range merged {
+			if merged[i].CWD != "" && strings.HasPrefix(p.CWD, merged[i].CWD+"/") {
+				parentIdx = i // keep updating to get deepest match
+			}
+		}
+		if parentIdx >= 0 {
+			par := &merged[parentIdx]
+			par.SessionCount += p.SessionCount
+			par.TotalTokens += p.TotalTokens
+			par.LiveCount += p.LiveCount
+			if p.LastActivity > par.LastActivity {
+				par.LastActivity = p.LastActivity
+			}
+			seen := make(map[string]struct{}, len(par.Agents))
+			for _, a := range par.Agents {
+				seen[a] = struct{}{}
+			}
+			for _, a := range p.Agents {
+				if _, ok := seen[a]; !ok {
+					par.Agents = append(par.Agents, a)
+				}
+			}
+		} else {
+			merged = append(merged, p)
+		}
+	}
+
+	slices.SortStableFunc(merged, func(a, b domain.Project) int {
+		switch {
+		case a.LastActivity > b.LastActivity:
+			return -1
+		case a.LastActivity < b.LastActivity:
+			return 1
+		default:
+			return 0
+		}
+	})
+	return merged
 }
 
 func (d *DB) ListSessions() ([]domain.Session, error) {
@@ -535,7 +603,7 @@ func (d *DB) GetDashboardStats(since, until string) (*domain.DashboardStats, err
 			}
 		}
 		_ = rows.Err()
-	} else if err != nil {
+	} else {
 		log.Printf("dashboard: timeline query: %v", err)
 	}
 
@@ -555,7 +623,7 @@ func (d *DB) GetDashboardStats(since, until string) (*domain.DashboardStats, err
 			}
 		}
 		_ = rows.Err()
-	} else if err != nil {
+	} else {
 		log.Printf("dashboard: timeline by agent query: %v", err)
 	}
 
@@ -577,7 +645,7 @@ func (d *DB) GetDashboardStats(since, until string) (*domain.DashboardStats, err
 			}
 		}
 		_ = rows.Err()
-	} else if err != nil {
+	} else {
 		log.Printf("dashboard: token timeline query: %v", err)
 	}
 
@@ -599,7 +667,7 @@ func (d *DB) GetDashboardStats(since, until string) (*domain.DashboardStats, err
 			}
 		}
 		_ = rows.Err()
-	} else if err != nil {
+	} else {
 		log.Printf("dashboard: token timeline by agent query: %v", err)
 	}
 
@@ -620,7 +688,7 @@ func (d *DB) GetDashboardStats(since, until string) (*domain.DashboardStats, err
 			}
 		}
 		_ = rows.Err()
-	} else if err != nil {
+	} else {
 		log.Printf("dashboard: top actions query: %v", err)
 	}
 
@@ -638,7 +706,7 @@ func (d *DB) GetDashboardStats(since, until string) (*domain.DashboardStats, err
 			}
 		}
 		_ = rows.Err()
-	} else if err != nil {
+	} else {
 		log.Printf("dashboard: agent usage query: %v", err)
 	}
 
@@ -982,4 +1050,135 @@ func (d *DB) GetSessionFileChangeCounts(ids []string) (map[string]int, error) {
 		result[sid] = cnt
 	}
 	return result, rows.Err()
+}
+
+func (d *DB) UpsertSummary(sessionID, summary, model string) error {
+	_, err := d.db.Exec(`
+		INSERT INTO ai_summaries (session_id, summary, model)
+		VALUES (?, ?, ?)
+		ON CONFLICT (session_id) DO UPDATE SET
+			summary    = excluded.summary,
+			model      = excluded.model,
+			updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+	`, sessionID, summary, model)
+	return err
+}
+
+func (d *DB) GetSummary(sessionID string) (string, error) {
+	var summary string
+	err := d.db.QueryRow(`SELECT summary FROM ai_summaries WHERE session_id = ?`, sessionID).Scan(&summary)
+	if err == sql.ErrNoRows {
+		return "", nil
+	}
+	return summary, err
+}
+
+func (d *DB) UpsertObservation(sessionID, toolUseID, toolName, observation, model string) error {
+	_, err := d.db.Exec(`
+		INSERT INTO ai_observations (session_id, tool_use_id, tool_name, observation, model)
+		VALUES (?, ?, ?, ?, ?)
+		ON CONFLICT (tool_use_id) DO UPDATE SET
+			observation = excluded.observation,
+			model       = excluded.model
+	`, sessionID, toolUseID, toolName, observation, model)
+	return err
+}
+
+func (d *DB) ListAIInsights() (*domain.AIInsights, error) {
+	summaries, err := d.listAIInsightSummaries()
+	if err != nil {
+		return nil, err
+	}
+	observations, err := d.listAIInsightObservations()
+	if err != nil {
+		return nil, err
+	}
+	return &domain.AIInsights{Summaries: summaries, Observations: observations}, nil
+}
+
+func (d *DB) listAIInsightSummaries() ([]domain.AIInsightSummary, error) {
+	rows, err := d.db.Query(`
+		SELECT s.session_id,
+		       COALESCE(sess.agent, ''),
+		       COALESCE(sess.cwd, ''),
+		       COALESCE(sess.transcript_path, ''),
+		       s.summary,
+		       COALESCE(s.model, ''),
+		       COALESCE(s.created_at, ''),
+		       COALESCE(s.updated_at, ''),
+		       COALESCE(sess.last_seen_at, '')
+		FROM ai_summaries s
+		LEFT JOIN sessions sess ON sess.session_id = s.session_id
+		ORDER BY s.updated_at DESC, s.id DESC
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	summaries := []domain.AIInsightSummary{}
+	for rows.Next() {
+		var item domain.AIInsightSummary
+		if err := rows.Scan(
+			&item.SessionID,
+			&item.Agent,
+			&item.CWD,
+			&item.TranscriptPath,
+			&item.Summary,
+			&item.Model,
+			&item.CreatedAt,
+			&item.UpdatedAt,
+			&item.LastSeenAt,
+		); err != nil {
+			return nil, err
+		}
+		summaries = append(summaries, item)
+	}
+	return summaries, rows.Err()
+}
+
+func (d *DB) listAIInsightObservations() ([]domain.AIInsightObservation, error) {
+	rows, err := d.db.Query(`
+		SELECT o.session_id,
+		       o.tool_use_id,
+		       COALESCE(NULLIF(o.tool_name, ''), he.tool_name, ''),
+		       o.observation,
+		       COALESCE(o.model, ''),
+		       COALESCE(o.created_at, ''),
+		       COALESCE(sess.agent, he.agent, ''),
+		       COALESCE(sess.cwd, he.cwd, ''),
+		       COALESCE(he.created_at, ''),
+		       COALESCE(he.action, ''),
+		       COALESCE(he.path, '')
+		FROM ai_observations o
+		LEFT JOIN sessions sess ON sess.session_id = o.session_id
+		LEFT JOIN hook_events he ON he.tool_use_id = o.tool_use_id
+		ORDER BY o.created_at DESC, o.id DESC
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	observations := []domain.AIInsightObservation{}
+	for rows.Next() {
+		var item domain.AIInsightObservation
+		if err := rows.Scan(
+			&item.SessionID,
+			&item.ToolUseID,
+			&item.ToolName,
+			&item.Observation,
+			&item.Model,
+			&item.CreatedAt,
+			&item.Agent,
+			&item.CWD,
+			&item.EventTime,
+			&item.Action,
+			&item.Path,
+		); err != nil {
+			return nil, err
+		}
+		observations = append(observations, item)
+	}
+	return observations, rows.Err()
 }

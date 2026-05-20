@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import type { Dispatch, SetStateAction } from 'react'
 import type { EventRecord } from '@/types/events'
+import type { Project } from '@/types/sessions'
 
 export function useEventFilters(
   events: EventRecord[],
@@ -76,6 +77,8 @@ export function useEventFilters(
     }
   }, [nowMs, timeRange])
 
+  const [projectFilter, setProjectFilter] = useState('all')
+
   const availableAgents = useMemo(() => {
     const agents = new Set<string>()
     for (const e of events) {
@@ -83,6 +86,28 @@ export function useEventFilters(
     }
     return Array.from(agents).sort()
   }, [events])
+
+  const [availableProjects, setAvailableProjects] = useState<string[]>([])
+
+  useEffect(() => {
+    let mounted = true
+    const fetchProjects = async () => {
+      try {
+        const res = await fetch('/api/projects')
+        if (!res.ok || !mounted) return
+        const data = (await res.json()) as { projects?: Project[] }
+        if (mounted) setAvailableProjects((data.projects ?? []).map((p) => p.cwd).filter(Boolean))
+      } catch {
+        // non-fatal — dropdown stays with last known list
+      }
+    }
+    fetchProjects()
+    const interval = window.setInterval(fetchProjects, 15_000)
+    return () => {
+      mounted = false
+      window.clearInterval(interval)
+    }
+  }, [])
 
   const filteredEvents = useMemo(() => {
     return events.filter((e) => {
@@ -102,6 +127,13 @@ export function useEventFilters(
       if (actionFilter !== 'all' && e.action !== actionFilter) return false
 
       if (agentFilter !== 'all' && e.agent !== agentFilter) return false
+
+      if (
+        projectFilter !== 'all' &&
+        e.cwd !== projectFilter &&
+        !e.cwd?.startsWith(projectFilter + '/')
+      )
+        return false
 
       if (sessionFilter && e.session !== sessionFilter) return false
 
@@ -129,6 +161,7 @@ export function useEventFilters(
     events,
     actionFilter,
     agentFilter,
+    projectFilter,
     searchQuery,
     timeRange,
     customStart,
@@ -143,6 +176,9 @@ export function useEventFilters(
     agentFilter,
     setAgentFilter,
     availableAgents,
+    projectFilter,
+    setProjectFilter,
+    availableProjects,
     searchQuery,
     setSearchQuery,
     sortOrder,

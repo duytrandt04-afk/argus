@@ -217,6 +217,59 @@ func TestSessionModel_missing(t *testing.T) {
 	}
 }
 
+func TestListAIInsightsIncludesSessionAndEventContext(t *testing.T) {
+	db := newTestDB(t)
+	eventTime := "2026-05-20T10:00:00Z"
+
+	if err := db.UpsertSession("sess-ai", "codex", "gpt-5.5", "startup", "/repo/hooker", "/tmp/transcript.jsonl", eventTime, "", domain.SessionUsage{}); err != nil {
+		t.Fatalf("UpsertSession: %v", err)
+	}
+	addEvent(t, db, domain.NormalizedEvent{
+		Time:          eventTime,
+		Agent:         "codex",
+		Session:       "sess-ai",
+		HookEventName: "PostToolUse",
+		ToolUseID:     "tool-1",
+		Tool:          "Edit",
+		Action:        "EDIT",
+		Path:          "/repo/hooker/main.go",
+		CWD:           "/repo/hooker",
+		RawPayload:    []byte(`{}`),
+	})
+	if err := db.UpsertSummary("sess-ai", "Implemented queue retry handling.", "claude-sonnet-4-6"); err != nil {
+		t.Fatalf("UpsertSummary: %v", err)
+	}
+	if err := db.UpsertObservation("sess-ai", "tool-1", "Edit", "Updated main.go with retry behavior.", "claude-sonnet-4-6"); err != nil {
+		t.Fatalf("UpsertObservation: %v", err)
+	}
+
+	insights, err := db.ListAIInsights()
+	if err != nil {
+		t.Fatalf("ListAIInsights: %v", err)
+	}
+	if len(insights.Summaries) != 1 {
+		t.Fatalf("summaries len = %d, want 1", len(insights.Summaries))
+	}
+	summary := insights.Summaries[0]
+	if summary.SessionID != "sess-ai" || summary.Agent != "codex" || summary.CWD != "/repo/hooker" {
+		t.Fatalf("summary context = %+v", summary)
+	}
+	if summary.Summary != "Implemented queue retry handling." || summary.Model != "claude-sonnet-4-6" {
+		t.Fatalf("summary content = %+v", summary)
+	}
+
+	if len(insights.Observations) != 1 {
+		t.Fatalf("observations len = %d, want 1", len(insights.Observations))
+	}
+	observation := insights.Observations[0]
+	if observation.SessionID != "sess-ai" || observation.ToolUseID != "tool-1" || observation.ToolName != "Edit" {
+		t.Fatalf("observation identity = %+v", observation)
+	}
+	if observation.EventTime != eventTime || observation.Path != "/repo/hooker/main.go" || observation.Action != "EDIT" {
+		t.Fatalf("observation event context = %+v", observation)
+	}
+}
+
 func TestUpsertSession_lastSeenAtUsesChronologicalComparison(t *testing.T) {
 	db := newTestDB(t)
 	first := "2026-05-10T10:00:00Z"

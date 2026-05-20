@@ -53,6 +53,7 @@ describe('Sidebar desktop toggle placement', () => {
     )
     expect(screen.queryByText('Monitor')).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: /overview dashboard/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /ai insights/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /expand sidebar/i })).toBeInTheDocument()
   })
 

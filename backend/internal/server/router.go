@@ -8,7 +8,12 @@ import (
 	"hooker/internal/ui"
 )
 
-func NewRouter(svc *service.EventService) http.Handler {
+type AIRepository interface {
+	handler.SummaryGetter
+	handler.AIInsightsGetter
+}
+
+func NewRouter(svc *service.EventService, db AIRepository) http.Handler {
 	mux := http.NewServeMux()
 
 	mux.Handle("POST /api/hook", handler.Hook(svc))
@@ -22,6 +27,8 @@ func NewRouter(svc *service.EventService) http.Handler {
 	mux.Handle("GET /api/traces", handler.Traces(svc))
 	mux.Handle("GET /api/file-changes", handler.FileChanges(svc))
 	mux.Handle("GET /api/dashboard/stats", handler.DashboardStats(svc))
+	mux.Handle("GET /api/sessions/{id}/summary", handler.SessionSummary(db))
+	mux.Handle("GET /api/ai-insights", handler.AIInsights(db))
 	mux.Handle("GET /api/openai/", handler.OpenAIProxy())
 	mux.Handle("GET /api/anthropic/", handler.AnthropicProxy())
 	mux.Handle("GET /", ui.Handler())

@@ -23,6 +23,7 @@ type AgentSessionProps = {
   targetEventKey: string | null
   highlightedEventKey: string | null
   onTargetVisible: () => void
+  isEventDraggable?: boolean
 }
 
 export function AgentSession({
@@ -37,6 +38,7 @@ export function AgentSession({
   targetEventKey,
   highlightedEventKey,
   onTargetVisible,
+  isEventDraggable = false,
 }: AgentSessionProps) {
   const { sessionId, transcriptPath, events } = session
   const firstEvent = events[0]
@@ -74,8 +76,13 @@ export function AgentSession({
     >
       <CollapsibleTrigger asChild>
         <div
+          draggable
+          onDragStart={(ev) => {
+            ev.dataTransfer.setData('text/plain', `session:${sessionId}`)
+            ev.dataTransfer.effectAllowed = 'move'
+          }}
           className={cn(
-            'flex flex-col items-start justify-between gap-3 px-3 py-[10px] cursor-pointer sm:flex-row sm:items-center',
+            'flex flex-col items-start justify-between gap-3 px-3 py-[10px] cursor-grab active:cursor-grabbing sm:flex-row sm:items-center',
             'bg-white/[0.03] border-b border-white/[0.06]',
             isCollapsed && 'border-b-0'
           )}
@@ -137,14 +144,15 @@ export function AgentSession({
           />
         )}
         <div className="px-[10px] py-[6px]">
-          {visibleEvents.map((e, i) => (
+          {visibleEvents.map((e) => (
             <EventRow
-              key={i}
+              key={buildEventKey(e)}
               event={e}
               searchQuery={searchQuery}
               highlighted={highlightedEventKey === buildEventKey(e)}
               isPendingTarget={targetEventKey === buildEventKey(e)}
               onTargetVisible={onTargetVisible}
+              isDraggable={isEventDraggable}
             />
           ))}
         </div>

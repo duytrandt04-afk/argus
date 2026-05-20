@@ -51,8 +51,22 @@ func (noopRepo) UpsertSession(string, string, string, string, string, string, st
 	return nil
 }
 
+func (noopRepo) GetSummary(string) (string, error) { return "", nil }
+
+func (noopRepo) ListAIInsights() (*domain.AIInsights, error) {
+	return &domain.AIInsights{
+		Summaries: []domain.AIInsightSummary{
+			{SessionID: "sess-ai", Summary: "Implemented summaries.", Model: "claude-sonnet-4-6"},
+		},
+		Observations: []domain.AIInsightObservation{
+			{SessionID: "sess-ai", ToolUseID: "tool-1", ToolName: "Edit", Observation: "Updated a file."},
+		},
+	}, nil
+}
+
 func newTestRouter() http.Handler {
-	return server.NewRouter(service.New(noopRepo{}))
+	repo := noopRepo{}
+	return server.NewRouter(service.New(repo), repo)
 }
 
 func TestNewRouterOptionsReturnsCORSHeaders(t *testing.T) {
@@ -109,5 +123,27 @@ func TestNewRouterVersionReturnsAppVersion(t *testing.T) {
 	}
 	if payload.Version != "0.0.0-dev" {
 		t.Fatalf("version = %q, want 0.0.0-dev", payload.Version)
+	}
+}
+
+func TestNewRouterAIInsightsReturnsSummariesAndObservations(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/api/ai-insights", nil)
+	rec := httptest.NewRecorder()
+
+	newTestRouter().ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", rec.Code)
+	}
+
+	var payload domain.AIInsights
+	if err := json.NewDecoder(rec.Body).Decode(&payload); err != nil {
+		t.Fatalf("decode ai insights response: %v", err)
+	}
+	if len(payload.Summaries) != 1 || payload.Summaries[0].SessionID != "sess-ai" {
+		t.Fatalf("summaries = %+v", payload.Summaries)
+	}
+	if len(payload.Observations) != 1 || payload.Observations[0].ToolUseID != "tool-1" {
+		t.Fatalf("observations = %+v", payload.Observations)
 	}
 }
