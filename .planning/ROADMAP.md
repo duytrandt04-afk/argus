@@ -22,7 +22,14 @@ hooker is a working prototype that needs hardening into a trustworthy daily-use 
   3. App version, Git commit, and build date are visible in startup logs, `/api/version` response, and the frontend UI
   4. `GET /healthz` returns 200 immediately; `GET /readyz` returns 200 only after DB is open and migrations complete; startup emits actionable fatal errors for port-in-use, DB-not-writable, and migration failures
   5. Every push/PR passes backend lint/vet/test and frontend typecheck/vitest/build in CI; GoReleaser produces versioned binaries with `checksums.txt` on `v*` tags
-**Plans**: TBD
+**Plans**: 6 plans
+Plans:
+- [ ] 01-01-PLAN.md — SEC-01 host header middleware + DIAG-01/02 health endpoints + DB ready flag
+- [ ] 01-02-PLAN.md — Version package extension + /api/version commit+date + main.go startup diagnostics
+- [ ] 01-03-PLAN.md — CI workflows + GoReleaser config + pnpm enforcement
+- [ ] 01-04-PLAN.md — scripts/hooker setup (binary build + hook patching) + doctor (required/optional split)
+- [ ] 01-05-PLAN.md — Docs: quickstart go build + install.md data lifecycle + releases.md runbook
+- [ ] 01-06-PLAN.md — Frontend VersionBadge component + runtime version fetch + Sidebar wiring
 **UI hint**: yes
 
 ### Phase 2: Reliable Daily Use
@@ -52,6 +59,6 @@ hooker is a working prototype that needs hardening into a trustworthy daily-use 
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Local Adoption Baseline | 0/TBD | Not started | - |
+| 1. Local Adoption Baseline | 0/6 | Not started | - |
 | 2. Reliable Daily Use | 0/TBD | Not started | - |
 | 3. Mature Local Product | 0/TBD | Not started | - |
