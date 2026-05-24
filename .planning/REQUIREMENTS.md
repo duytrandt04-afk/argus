@@ -26,7 +26,7 @@
 - [x] **DIAG-01**: `GET /healthz` returns 200 when process is running
 - [x] **DIAG-02**: `GET /readyz` returns 200 only when DB is open and migrations are complete
 - [ ] **DIAG-03**: `GET /api/version` returns app version, Git commit, and build date
-- [ ] **DIAG-04**: App version visible in frontend UI
+- [x] **DIAG-04**: App version visible in frontend UI
 - [ ] **DIAG-05**: Startup emits actionable fatal error messages for: port already in use, DB path not writable, migration failure, invalid config
 - [x] **DIAG-06**: `doctor` warns on non-loopback bind address
 
@@ -162,7 +162,7 @@
 | DIAG-01 | Phase 1 | Complete |
 | DIAG-02 | Phase 1 | Complete |
 | DIAG-03 | Phase 1 | Pending |
-| DIAG-04 | Phase 1 | Pending |
+| DIAG-04 | Phase 1 | Complete |
 | DIAG-05 | Phase 1 | Pending |
 | DIAG-06 | Phase 1 | Complete |
 | DATA-01 | Phase 1 | Complete |

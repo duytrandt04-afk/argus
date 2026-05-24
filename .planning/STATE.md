@@ -4,14 +4,14 @@ milestone: v1.0
 milestone_name: milestone
 status: executing
 stopped_at: Completed 01-local-adoption-baseline-03-PLAN.md
-last_updated: "2026-05-24T11:37:04.499Z"
+last_updated: "2026-05-24T11:43:23.581Z"
 last_activity: 2026-05-24
 progress:
   total_phases: 3
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 6
-  completed_plans: 5
-  percent: 0
+  completed_plans: 6
+  percent: 33
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-05-24)
 ## Current Position
 
 Phase: 1 of 3 (Local Adoption Baseline)
-Plan: 4 of 6 in current phase
+Plan: 5 of 6 in current phase
 Status: Ready to execute
 Last activity: 2026-05-24
 
-Progress: [████████░░] 83%
+Progress: [██████████] 100%
 
 ## Wave Structure
 
@@ -62,6 +62,7 @@ Progress: [████████░░] 83%
 | Phase 01-local-adoption-baseline P03 | 6min | 2 tasks | 5 files |
 | Phase 01-local-adoption-baseline P04 | 25min | 2 tasks | 1 files |
 | Phase 01-local-adoption-baseline P05 | 2min | 3 tasks | 4 files |
+| Phase 01-local-adoption-baseline P06 | 7min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -81,6 +82,8 @@ Recent decisions affecting current work:
 - [Phase 01-local-adoption-baseline]: Doctor is report-only with required-fail and optional-warn split
 - [Phase 01-local-adoption-baseline]: Docs now use go build-first quickstart flow with setup-script path.
 - [Phase 01-local-adoption-baseline]: Install and releases docs now include data lifecycle/privacy and squash-merge release prerequisites.
+- [Phase 01-local-adoption-baseline]: Version badge now fetches /api/version at runtime and renders null for loading/error states.
+- [Phase 01-local-adoption-baseline]: Sidebar version display moved to footer and hidden when collapsed; static APP_VERSION path removed.
 
 ### Pending Todos
 
@@ -101,6 +104,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-05-24T11:36:24.370Z
+Last session: 2026-05-24T11:42:42.541Z
 Stopped at: Completed 01-local-adoption-baseline-03-PLAN.md
 Resume file: None

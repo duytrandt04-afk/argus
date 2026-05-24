@@ -6,7 +6,7 @@ hooker is a working prototype that needs hardening into a trustworthy daily-use 
 
 ## Phases
 
-- [ ] **Phase 1: Local Adoption Baseline** - CI gates + security fix + install/doctor/health/version/release pipeline
+- [x] **Phase 1: Local Adoption Baseline** - CI gates + security fix + install/doctor/health/version/release pipeline (completed 2026-05-24)
 - [ ] **Phase 2: Reliable Daily Use** - Migration safety + backend hardening + data model + testing + export
 - [ ] **Phase 3: Mature Local Product** - Privacy controls + security posture + contributor infrastructure
 
@@ -29,7 +29,7 @@ Plans:
 - [x] 01-03-PLAN.md — CI workflows + GoReleaser config + pnpm enforcement
 - [x] 01-04-PLAN.md — scripts/hooker setup (binary build + hook patching) + doctor (required/optional split)
 - [x] 01-05-PLAN.md — Docs: quickstart go build + install.md data lifecycle + releases.md runbook
-- [ ] 01-06-PLAN.md — Frontend VersionBadge component + runtime version fetch + Sidebar wiring
+- [x] 01-06-PLAN.md — Frontend VersionBadge component + runtime version fetch + Sidebar wiring
 **UI hint**: yes
 
 ### Phase 2: Reliable Daily Use
@@ -59,6 +59,6 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Local Adoption Baseline | 5/6 | In Progress|  |
+| 1. Local Adoption Baseline | 6/6 | Complete   | 2026-05-24 |
 | 2. Reliable Daily Use | 0/TBD | Not started | - |
 | 3. Mature Local Product | 0/TBD | Not started | - |
