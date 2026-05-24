@@ -24,7 +24,7 @@ hooker is a working prototype that needs hardening into a trustworthy daily-use 
   5. Every push/PR passes backend lint/vet/test and frontend typecheck/vitest/build in CI; GoReleaser produces versioned binaries with `checksums.txt` on `v*` tags
 **Plans**: 6 plans
 Plans:
-- [ ] 01-01-PLAN.md — SEC-01 host header middleware + DIAG-01/02 health endpoints + DB ready flag
+- [x] 01-01-PLAN.md — SEC-01 host header middleware + DIAG-01/02 health endpoints + DB ready flag
 - [ ] 01-02-PLAN.md — Version package extension + /api/version commit+date + main.go startup diagnostics
 - [ ] 01-03-PLAN.md — CI workflows + GoReleaser config + pnpm enforcement
 - [ ] 01-04-PLAN.md — scripts/hooker setup (binary build + hook patching) + doctor (required/optional split)
@@ -59,6 +59,6 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Local Adoption Baseline | 0/6 | Not started | - |
+| 1. Local Adoption Baseline | 1/6 | In Progress|  |
 | 2. Reliable Daily Use | 0/TBD | Not started | - |
 | 3. Mature Local Product | 0/TBD | Not started | - |

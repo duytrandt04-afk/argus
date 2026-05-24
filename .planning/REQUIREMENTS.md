@@ -23,8 +23,8 @@
 
 ### Diagnostics & Health (DIAG)
 
-- [ ] **DIAG-01**: `GET /healthz` returns 200 when process is running
-- [ ] **DIAG-02**: `GET /readyz` returns 200 only when DB is open and migrations are complete
+- [x] **DIAG-01**: `GET /healthz` returns 200 when process is running
+- [x] **DIAG-02**: `GET /readyz` returns 200 only when DB is open and migrations are complete
 - [ ] **DIAG-03**: `GET /api/version` returns app version, Git commit, and build date
 - [ ] **DIAG-04**: App version visible in frontend UI
 - [ ] **DIAG-05**: Startup emits actionable fatal error messages for: port already in use, DB path not writable, migration failure, invalid config
@@ -59,7 +59,7 @@
 
 ### Security (SEC)
 
-- [ ] **SEC-01**: Host header validation middleware rejects requests where Host is not `localhost`, `127.0.0.1`, or `[::1]` (prevents DNS rebinding attack on wildcard CORS)
+- [x] **SEC-01**: Host header validation middleware rejects requests where Host is not `localhost`, `127.0.0.1`, or `[::1]` (prevents DNS rebinding attack on wildcard CORS)
 - [ ] **SEC-02**: CORS origin restricted to explicit allowlist (not `*`) — at minimum `http://localhost` + configured port
 - [ ] **SEC-03**: Loopback-only bind (`127.0.0.1`) is enforced default; remote bind requires explicit env var opt-in with startup warning
 - [ ] **SEC-04**: Threat model documented: localhost-use only, single-user trust model, no auth for loopback use, remote sharing via ngrok is unofficial/unsupported
@@ -159,8 +159,8 @@
 | CI-04 | Phase 1 | Pending |
 | CI-05 | Phase 1 | Pending |
 | CI-06 | Phase 1 | Pending |
-| DIAG-01 | Phase 1 | Pending |
-| DIAG-02 | Phase 1 | Pending |
+| DIAG-01 | Phase 1 | Complete |
+| DIAG-02 | Phase 1 | Complete |
 | DIAG-03 | Phase 1 | Pending |
 | DIAG-04 | Phase 1 | Pending |
 | DIAG-05 | Phase 1 | Pending |
@@ -170,7 +170,7 @@
 | DATA-03 | Phase 1 | Pending |
 | DATA-06 | Phase 1 | Pending |
 | DATA-07 | Phase 1 | Pending |
-| SEC-01 | Phase 1 | Pending |
+| SEC-01 | Phase 1 | Complete |
 | REL-01 | Phase 1 | Pending |
 | REL-02 | Phase 1 | Pending |
 | REL-03 | Phase 1 | Pending |
