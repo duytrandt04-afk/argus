@@ -15,15 +15,26 @@ installs frontend dependencies from `pnpm-lock.yaml`.
 
 ## 2. Start backend
 
+Build and run the server binary:
+
 ```bash
 cd backend
-go run ./cmd/server/main.go
+go build -o hooker ./cmd/server
+./hooker
+```
+
+Or use the setup script which builds the binary automatically:
+
+```bash
+./scripts/hooker setup
+cd backend
+./hooker
 ```
 
 Expected startup output includes:
 
 ```text
-hooker version -> 0.0.0-dev
+hooker version -> 0.0.0-dev (none)
 hook endpoint -> POST http://127.0.0.1:8765/api/hook
 events SSE -> GET http://127.0.0.1:8765/api/events/stream
 db -> .../backend/hooker.db
@@ -44,7 +55,13 @@ Open <http://localhost:5173>.
 
 ## 4. Configure agent hooks
 
-Use the hook guide for your agent:
+The setup script patches Claude Code and Codex hook configs automatically:
+
+```bash
+./scripts/hooker setup
+```
+
+Or configure manually using the hook guide for your agent:
 
 - [Codex](hooks.md#codex)
 - [Claude Code](hooks.md#claude-code)
