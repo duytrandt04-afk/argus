@@ -1,10 +1,11 @@
 ---
 phase: 1
 slug: local-adoption-baseline
-status: draft
+status: approved
 shadcn_initialized: true
 preset: radix-nova
 created: 2026-05-24
+reviewed_at: 2026-05-24
 ---
 
 # Phase 1 — UI Design Contract
