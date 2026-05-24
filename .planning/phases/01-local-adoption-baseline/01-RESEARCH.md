@@ -694,22 +694,25 @@ PYEOF
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Host header restriction vs non-loopback ADDR**
    - What we know: SEC-01 says reject non-localhost Host headers. D-09 says no macOS runner needed (Linux cross-compiles). CONFIG says ADDR can be overridden.
    - What's unclear: If a user sets `ADDR=0.0.0.0:8765` for LAN use, can they reach the server via its LAN IP? Currently the Host header middleware would block `Host: 192.168.1.5:8765`.
    - Recommendation: Ship the strict allowlist per SEC-01. Document in startup warning that Host header restriction is intentional. Let Phase 3 address configurable allowlist if needed.
+   - **RESOLVED:** Ship strict allowlist; non-loopback LAN use deferred to Phase 3 (no requirement in Phase 1).
 
 2. **Vitest run flag in CI**
    - What we know: `pnpm run test` launches Vitest in watch mode. CI needs `--run` flag.
    - What's unclear: Whether the `test` script in `package.json` should be changed to default to `--run`, or if CI should pass `-- --run`.
    - Recommendation: CI passes `-- --run`. Do not change package.json default for local dev ergonomics.
+   - **RESOLVED:** CI uses `pnpm run test -- --run`; package.json script unchanged.
 
 3. **REL-03 manual step documentation**
    - What we know: Squash-merge enforcement is a GitHub repo settings change (not code).
    - What's unclear: Where to document this — README, CONTRIBUTING.md, or a release runbook.
    - Recommendation: Add a `docs/releasing.md` with the manual steps checklist (squash-merge setting, tag format, release notes).
+   - **RESOLVED:** Documented in `docs/releases.md` (Plan 05 Task 2).
 
 ---
 
