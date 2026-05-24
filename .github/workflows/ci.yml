@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+
+      - name: Setup pnpm via corepack
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.23.0 --activate
+
+      - name: Build frontend (required for go:embed)
+        working-directory: frontend
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm run build
+
+      - name: Build backend (verifies embed compiles)
+        working-directory: backend
+        run: go build ./...
+
+      - name: Test
+        working-directory: backend
+        run: go test ./...
+
+      - name: Vet
+        working-directory: backend
+        run: go vet ./...
+
+      - name: govulncheck
+        working-directory: backend
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
+        continue-on-error: true
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          working-directory: backend
+          version: v1.64
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm via corepack
+        run: corepack enable && corepack prepare pnpm@10.23.0 --activate
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        working-directory: frontend
+        run: pnpm run typecheck
+
+      - name: Test
+        working-directory: frontend
+        run: pnpm run test -- --run
+
+      - name: Build
+        working-directory: frontend
+        run: pnpm run build
