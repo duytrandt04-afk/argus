@@ -144,11 +144,68 @@
 
 ## Traceability
 
-*Filled by roadmapper.*
-
-| REQ-ID | Phase |
-|--------|-------|
-| | |
+| REQ-ID | Phase | Status |
+|--------|-------|--------|
+| INSTALL-01 | Phase 1 | Pending |
+| INSTALL-02 | Phase 1 | Pending |
+| INSTALL-03 | Phase 1 | Pending |
+| INSTALL-04 | Phase 1 | Pending |
+| INSTALL-05 | Phase 1 | Pending |
+| INSTALL-06 | Phase 1 | Pending |
+| INSTALL-07 | Phase 1 | Pending |
+| CI-01 | Phase 1 | Pending |
+| CI-02 | Phase 1 | Pending |
+| CI-03 | Phase 1 | Pending |
+| CI-04 | Phase 1 | Pending |
+| CI-05 | Phase 1 | Pending |
+| CI-06 | Phase 1 | Pending |
+| DIAG-01 | Phase 1 | Pending |
+| DIAG-02 | Phase 1 | Pending |
+| DIAG-03 | Phase 1 | Pending |
+| DIAG-04 | Phase 1 | Pending |
+| DIAG-05 | Phase 1 | Pending |
+| DIAG-06 | Phase 1 | Pending |
+| DATA-01 | Phase 1 | Pending |
+| DATA-02 | Phase 1 | Pending |
+| DATA-03 | Phase 1 | Pending |
+| DATA-06 | Phase 1 | Pending |
+| DATA-07 | Phase 1 | Pending |
+| SEC-01 | Phase 1 | Pending |
+| REL-01 | Phase 1 | Pending |
+| REL-02 | Phase 1 | Pending |
+| REL-03 | Phase 1 | Pending |
+| REL-04 | Phase 1 | Pending |
+| REL-05 | Phase 1 | Pending |
+| DATA-04 | Phase 2 | Pending |
+| DATA-05 | Phase 2 | Pending |
+| MODEL-01 | Phase 2 | Pending |
+| MODEL-02 | Phase 2 | Pending |
+| MODEL-03 | Phase 2 | Pending |
+| MODEL-04 | Phase 2 | Pending |
+| MODEL-05 | Phase 2 | Pending |
+| HARD-01 | Phase 2 | Pending |
+| HARD-02 | Phase 2 | Pending |
+| HARD-03 | Phase 2 | Pending |
+| HARD-04 | Phase 2 | Pending |
+| HARD-05 | Phase 2 | Pending |
+| HARD-06 | Phase 2 | Pending |
+| TEST-01 | Phase 2 | Pending |
+| TEST-02 | Phase 2 | Pending |
+| TEST-03 | Phase 2 | Pending |
+| TEST-04 | Phase 2 | Pending |
+| TEST-05 | Phase 2 | Pending |
+| TEST-06 | Phase 2 | Pending |
+| TEST-07 | Phase 2 | Pending |
+| SEC-05 | Phase 2 | Pending |
+| SEC-02 | Phase 3 | Pending |
+| SEC-03 | Phase 3 | Pending |
+| SEC-04 | Phase 3 | Pending |
+| PRIV-01 | Phase 3 | Pending |
+| PRIV-02 | Phase 3 | Pending |
+| PRIV-03 | Phase 3 | Pending |
+| CONTRIB-01 | Phase 3 | Pending |
+| CONTRIB-02 | Phase 3 | Pending |
+| CONTRIB-03 | Phase 3 | Pending |
 
 ---
 
