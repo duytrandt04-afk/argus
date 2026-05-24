@@ -1,0 +1,49 @@
+# GoReleaser OSS v2 configuration
+# Docs: https://goreleaser.com
+version: 2
+
+before:
+  hooks:
+    # Build frontend first — the Go binary embeds frontend/dist/* via //go:embed in
+    # backend/internal/ui/ui.go. GoReleaser's own dist/ output is a different directory.
+    - bash -c "cd frontend && pnpm install --frozen-lockfile && pnpm run build"
+
+builds:
+  - id: hooker
+    main: ./cmd/server
+    dir: backend
+    binary: hooker
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+      # Package path matches module: hooker/internal/version (NOT main.version)
+      - -X hooker/internal/version.Version={{.Version}}
+      - -X hooker/internal/version.Commit={{.Commit}}
+      - -X hooker/internal/version.BuildDate={{.Date}}
+
+archives:
+  - id: default
+    name_template: "hooker_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    format: tar.gz
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  use: github
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^ci:"
+      - "Merge pull request"
