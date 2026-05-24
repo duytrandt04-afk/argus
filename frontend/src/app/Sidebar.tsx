@@ -2,7 +2,6 @@ import { Fragment, useEffect, type RefObject } from 'react'
 import {
   FishingHook,
   GitFork,
-  BrainCircuit,
   LayoutDashboard,
   PanelLeft,
   TerminalSquare,
@@ -12,8 +11,8 @@ import {
 import { NavLink, useLocation } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { VersionBadge } from '@/features/version/VersionBadge'
 import { cn } from '@/lib/utils'
-import { APP_VERSION } from '@/version'
 
 interface SidebarProps {
   id?: string
@@ -55,13 +54,6 @@ const NAV_ITEMS: NavItem[] = [
     label: 'Projects',
     ariaLabel: 'Projects',
     icon: GitFork,
-    end: false,
-  },
-  {
-    to: '/ai-insights',
-    label: 'AI Insights',
-    ariaLabel: 'AI Insights',
-    icon: BrainCircuit,
     end: false,
   },
 ]
@@ -203,9 +195,6 @@ export function Sidebar({
             <span className="sidebar-label-motion sidebar-label-open whitespace-nowrap text-[0.78rem] font-semibold tracking-[0.04em] text-[#ccc]">
               hooker
             </span>
-            <span className="sidebar-label-motion sidebar-label-open whitespace-nowrap text-[0.66rem] font-medium text-[#555]">
-              v{APP_VERSION}
-            </span>
           </div>
 
           {/* Toggle button */}
@@ -241,9 +230,14 @@ export function Sidebar({
         </nav>
       </TooltipProvider>
 
-      {/* Bottom divider line */}
+      {/* Bottom divider line + version badge */}
       <div className="mt-auto">
         <div className="sidebar-bottom-divider" />
+        {!collapsed && (
+          <div className="flex items-center px-2 pt-2 pb-1">
+            <VersionBadge />
+          </div>
+        )}
       </div>
     </aside>
   )

@@ -53,18 +53,18 @@ describe('Sidebar desktop toggle placement', () => {
     )
     expect(screen.queryByText('Monitor')).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: /overview dashboard/i })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /ai insights/i })).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /ai insights/i })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: /expand sidebar/i })).toBeInTheDocument()
   })
 
-  it('renders the app version in the expanded desktop sidebar', () => {
+  it('does not render version text before runtime version fetch resolves', () => {
     renderSidebar({
       collapsed: false,
       mode: 'desktop',
       onToggleCollapse: vi.fn(),
     })
 
-    expect(screen.getByText('v0.0.0-dev')).toBeInTheDocument()
+    expect(screen.queryByLabelText(/application version:/i)).not.toBeInTheDocument()
   })
 
   it('keeps the mobile close control separate and does not render the desktop collapse button', () => {
