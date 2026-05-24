@@ -119,7 +119,9 @@ func TestHookHandlerAcknowledgesWhenStoreIsTemporarilyLocked(t *testing.T) {
 	if _, err := conn.ExecContext(context.Background(), `BEGIN IMMEDIATE`); err != nil {
 		t.Fatalf("begin lock: %v", err)
 	}
-	defer conn.ExecContext(context.Background(), `ROLLBACK`)
+	defer func() {
+		_, _ = conn.ExecContext(context.Background(), `ROLLBACK`)
+	}()
 
 	h := handler.Hook(service.New(db))
 	body := []byte(`{

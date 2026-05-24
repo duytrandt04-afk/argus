@@ -119,11 +119,11 @@ func (m *mockRepo) GetTraces(sessionID, since string) ([]domain.NormalizedEvent,
 	return filtered, nil
 }
 
-func (m *mockRepo) ListSessionsByCWDPage(cwd, since string, page, size int) ([]domain.Session, int, error) {
+func (m *mockRepo) ListSessionsByCWDPage(_ string, _ string, _ int, _ int) ([]domain.Session, int, error) {
 	return nil, 0, nil
 }
 
-func (m *mockRepo) GetTracesPage(sessionID, since string, page, size int) ([]domain.NormalizedEvent, int, error) {
+func (m *mockRepo) GetTracesPage(_ string, _ string, _ int, _ int) ([]domain.NormalizedEvent, int, error) {
 	return nil, 0, nil
 }
 

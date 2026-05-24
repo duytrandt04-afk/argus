@@ -50,7 +50,6 @@ func main() {
 	log.Printf("db             -> %s", cfg.DBPath)
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
 
 	srv := &http.Server{Addr: cfg.Addr, Handler: h}
 	go func() {
@@ -60,10 +59,13 @@ func main() {
 
 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		if isAddrInUse(err) {
+			stop()
 			log.Fatalf("port %s already in use: stop the existing hooker process or change ADDR — %v", cfg.Addr, err)
 		}
+		stop()
 		log.Fatalf("listen: %v", err)
 	}
+	stop()
 }
 
 // isAddrInUse reports whether err indicates the port is already bound.

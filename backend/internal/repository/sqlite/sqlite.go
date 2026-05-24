@@ -14,6 +14,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	// Register SQLite driver for database/sql.
 	_ "modernc.org/sqlite"
 
 	"hooker/internal/domain"
@@ -604,6 +605,7 @@ func (d *DB) GetDashboardStats(since, until string) (*domain.DashboardStats, err
 		GROUP BY bucket 
 		ORDER BY bucket ASC
 	`, bucketFormat), eventArgs...); err == nil {
+		defer func() { _ = rows.Close() }()
 		for rows.Next() {
 			var b domain.TimelineBucket
 			if err := rows.Scan(&b.Date, &b.Count); err == nil {
@@ -611,7 +613,6 @@ func (d *DB) GetDashboardStats(since, until string) (*domain.DashboardStats, err
 			}
 		}
 		_ = rows.Err()
-		_ = rows.Close()
 	} else {
 		log.Printf("dashboard: timeline query: %v", err)
 	}
@@ -624,6 +625,7 @@ func (d *DB) GetDashboardStats(since, until string) (*domain.DashboardStats, err
 		GROUP BY bucket, agent_name
 		ORDER BY bucket ASC, agent_name ASC
 	`, bucketFormat), eventArgs...); err == nil {
+		defer func() { _ = rows.Close() }()
 		for rows.Next() {
 			var b domain.AgentTimelineBucket
 			if err := rows.Scan(&b.Date, &b.Agent, &b.Count); err == nil {
@@ -631,7 +633,6 @@ func (d *DB) GetDashboardStats(since, until string) (*domain.DashboardStats, err
 			}
 		}
 		_ = rows.Err()
-		_ = rows.Close()
 	} else {
 		log.Printf("dashboard: timeline by agent query: %v", err)
 	}
@@ -646,6 +647,7 @@ func (d *DB) GetDashboardStats(since, until string) (*domain.DashboardStats, err
 		GROUP BY bucket
 		ORDER BY bucket ASC
 	`, bucketFormat), sessionArgs...); err == nil {
+		defer func() { _ = rows.Close() }()
 		for rows.Next() {
 			var b domain.TokenTimelineBucket
 			if err := rows.Scan(&b.Date, &b.Input, &b.Output, &b.CacheCreation, &b.CacheRead); err == nil {
@@ -653,7 +655,6 @@ func (d *DB) GetDashboardStats(since, until string) (*domain.DashboardStats, err
 			}
 		}
 		_ = rows.Err()
-		_ = rows.Close()
 	} else {
 		log.Printf("dashboard: token timeline query: %v", err)
 	}
@@ -668,6 +669,7 @@ func (d *DB) GetDashboardStats(since, until string) (*domain.DashboardStats, err
 		GROUP BY bucket, agent_name
 		ORDER BY bucket ASC, agent_name ASC
 	`, bucketFormat), sessionArgs...); err == nil {
+		defer func() { _ = rows.Close() }()
 		for rows.Next() {
 			var b domain.TokenTimelineAgentBucket
 			if err := rows.Scan(&b.Date, &b.Agent, &b.Total); err == nil {
@@ -675,7 +677,6 @@ func (d *DB) GetDashboardStats(since, until string) (*domain.DashboardStats, err
 			}
 		}
 		_ = rows.Err()
-		_ = rows.Close()
 	} else {
 		log.Printf("dashboard: token timeline by agent query: %v", err)
 	}
@@ -689,6 +690,7 @@ func (d *DB) GetDashboardStats(since, until string) (*domain.DashboardStats, err
 		ORDER BY count DESC
 		LIMIT 10
 	`, eventArgs...); err == nil {
+		defer func() { _ = rows.Close() }()
 		for rows.Next() {
 			var a domain.ActionCount
 			if err := rows.Scan(&a.Name, &a.Value); err == nil {
@@ -696,7 +698,6 @@ func (d *DB) GetDashboardStats(since, until string) (*domain.DashboardStats, err
 			}
 		}
 		_ = rows.Err()
-		_ = rows.Close()
 	} else {
 		log.Printf("dashboard: top actions query: %v", err)
 	}
@@ -707,6 +708,7 @@ func (d *DB) GetDashboardStats(since, until string) (*domain.DashboardStats, err
 		FROM sessions`+sessionWhere+`
 		GROUP BY agent, model
 	`, sessionArgs...); err == nil {
+		defer func() { _ = rows.Close() }()
 		for rows.Next() {
 			var u domain.AgentModelUsage
 			if err := rows.Scan(&u.Agent, &u.Model, &u.Input, &u.Output, &u.CacheCreation, &u.CacheRead); err == nil {
@@ -714,7 +716,6 @@ func (d *DB) GetDashboardStats(since, until string) (*domain.DashboardStats, err
 			}
 		}
 		_ = rows.Err()
-		_ = rows.Close()
 	} else {
 		log.Printf("dashboard: agent usage query: %v", err)
 	}
