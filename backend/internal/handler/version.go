@@ -11,9 +11,13 @@ func Version() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(struct {
-			Version string `json:"version"`
+			Version   string `json:"version"`
+			Commit    string `json:"commit"`
+			BuildDate string `json:"buildDate"`
 		}{
-			Version: version.Version,
+			Version:   version.Version,
+			Commit:    version.Commit,
+			BuildDate: version.BuildDate,
 		})
 	})
 }
