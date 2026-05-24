@@ -10,16 +10,16 @@
 - [ ] **INSTALL-04**: App emits resolved DB path on startup so user can verify which database file is in use
 - [ ] **INSTALL-05**: README is short and action-oriented; detailed content lives in `docs/install.md`, `docs/quickstart.md`, `docs/hooks.md`
 - [ ] **INSTALL-06**: Explicit support matrix documented (macOS/Linux/WSL first-class; Go and Node minimum versions; pnpm required for frontend)
-- [ ] **INSTALL-07**: pnpm enforced via `packageManager` field + `engine-strict=true` in `.npmrc`; `npm`/`yarn` not usable accidentally
+- [x] **INSTALL-07**: pnpm enforced via `packageManager` field + `engine-strict=true` in `.npmrc`; `npm`/`yarn` not usable accidentally
 
 ### CI & Verification (CI)
 
-- [ ] **CI-01**: Every push/PR runs backend `go test ./...`, `go vet ./...`, `golangci-lint run ./...`
-- [ ] **CI-02**: Every push/PR runs frontend typecheck, Vitest test suite, and Vite build
-- [ ] **CI-03**: `govulncheck` runs in CI (initially `continue-on-error: true` until existing findings triaged)
-- [ ] **CI-04**: Go module cache keyed on `go.sum` (not just `go.mod`)
-- [ ] **CI-05**: pnpm version pinned via `packageManager` field; CI uses corepack, not `npm install -g pnpm`
-- [ ] **CI-06**: Frontend build is a declared dependency of Go binary build step in release workflow (embed directive cannot build without dist/)
+- [x] **CI-01**: Every push/PR runs backend `go test ./...`, `go vet ./...`, `golangci-lint run ./...`
+- [x] **CI-02**: Every push/PR runs frontend typecheck, Vitest test suite, and Vite build
+- [x] **CI-03**: `govulncheck` runs in CI (initially `continue-on-error: true` until existing findings triaged)
+- [x] **CI-04**: Go module cache keyed on `go.sum` (not just `go.mod`)
+- [x] **CI-05**: pnpm version pinned via `packageManager` field; CI uses corepack, not `npm install -g pnpm`
+- [x] **CI-06**: Frontend build is a declared dependency of Go binary build step in release workflow (embed directive cannot build without dist/)
 
 ### Diagnostics & Health (DIAG)
 
@@ -77,10 +77,10 @@
 
 ### Release & Versioning (REL)
 
-- [ ] **REL-01**: GoReleaser OSS v2 configured; produces linux/darwin/windows × amd64/arm64 binaries with `checksums.txt`
-- [ ] **REL-02**: Release workflow triggers on `v*` tags only; CI workflow runs on every push/PR
+- [x] **REL-01**: GoReleaser OSS v2 configured; produces linux/darwin/windows × amd64/arm64 binaries with `checksums.txt`
+- [x] **REL-02**: Release workflow triggers on `v*` tags only; CI workflow runs on every push/PR
 - [ ] **REL-03**: Squash-merge enforced in GitHub repo settings (required for GoReleaser changelog automation)
-- [ ] **REL-04**: Conventional commits recommended on PR titles; changelog generated automatically by GoReleaser
+- [x] **REL-04**: Conventional commits recommended on PR titles; changelog generated automatically by GoReleaser
 - [ ] **REL-05**: App version injected at build time via ldflags (`git describe --tags --always`)
 
 ### Privacy & Data Controls (PRIV)
@@ -152,13 +152,13 @@
 | INSTALL-04 | Phase 1 | Pending |
 | INSTALL-05 | Phase 1 | Pending |
 | INSTALL-06 | Phase 1 | Pending |
-| INSTALL-07 | Phase 1 | Pending |
-| CI-01 | Phase 1 | Pending |
-| CI-02 | Phase 1 | Pending |
-| CI-03 | Phase 1 | Pending |
-| CI-04 | Phase 1 | Pending |
-| CI-05 | Phase 1 | Pending |
-| CI-06 | Phase 1 | Pending |
+| INSTALL-07 | Phase 1 | Complete |
+| CI-01 | Phase 1 | Complete |
+| CI-02 | Phase 1 | Complete |
+| CI-03 | Phase 1 | Complete |
+| CI-04 | Phase 1 | Complete |
+| CI-05 | Phase 1 | Complete |
+| CI-06 | Phase 1 | Complete |
 | DIAG-01 | Phase 1 | Complete |
 | DIAG-02 | Phase 1 | Complete |
 | DIAG-03 | Phase 1 | Pending |
@@ -171,10 +171,10 @@
 | DATA-06 | Phase 1 | Pending |
 | DATA-07 | Phase 1 | Pending |
 | SEC-01 | Phase 1 | Complete |
-| REL-01 | Phase 1 | Pending |
-| REL-02 | Phase 1 | Pending |
+| REL-01 | Phase 1 | Complete |
+| REL-02 | Phase 1 | Complete |
 | REL-03 | Phase 1 | Pending |
-| REL-04 | Phase 1 | Pending |
+| REL-04 | Phase 1 | Complete |
 | REL-05 | Phase 1 | Pending |
 | DATA-04 | Phase 2 | Pending |
 | DATA-05 | Phase 2 | Pending |

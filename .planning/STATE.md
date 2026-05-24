@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 1 plans complete — 6 plans created in 2 waves
-last_updated: "2026-05-24T10:30:09.207Z"
+stopped_at: Completed 01-local-adoption-baseline-03-PLAN.md
+last_updated: "2026-05-24T11:27:17.576Z"
 last_activity: 2026-05-24
 progress:
   total_phases: 3
   completed_phases: 0
   total_plans: 6
-  completed_plans: 1
+  completed_plans: 3
   percent: 0
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-05-24)
 ## Current Position
 
 Phase: 1 of 3 (Local Adoption Baseline)
-Plan: 1 of 6 in current phase
+Plan: 2 of 6 in current phase
 Status: Ready to execute
 Last activity: 2026-05-24
 
-Progress: [██░░░░░░░░] 17%
+Progress: [█████░░░░░] 50%
 
 ## Wave Structure
 
@@ -59,6 +59,7 @@ Progress: [██░░░░░░░░] 17%
 - Trend: —
 
 *Updated after each plan completion*
+| Phase 01-local-adoption-baseline P03 | 6min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -72,6 +73,8 @@ Recent decisions affecting current work:
 - [Init]: HARD-05 (migration transaction wrapping) placed in Phase 2 — prerequisite for all new schema work
 - [Init]: DATA-04/05 (export endpoints) placed in Phase 2 with SEC-05 (Sec-Fetch-Site check) — export ships before access control docs
 - [Phase 1 Plan]: Plans 01-01 and 01-02 are interdependent — router won't compile until both land (01-01 references handler.Healthz/Readyz from 01-02; 01-02 references NewRouter signature change from 01-01)
+- [Phase 01-local-adoption-baseline]: Established push/PR CI with corepack-based pnpm, backend quality gates, and advisory govulncheck. — Implements locked decisions D-08, D-10, D-11 and CI requirements CI-01..CI-06.
+- [Phase 01-local-adoption-baseline]: Established v* tag-only GoReleaser v2 releases with checksums and limited token scope. — Implements REL-01/REL-02/REL-04 and locked decisions D-12, D-13, D-14.
 
 ### Pending Todos
 
@@ -92,6 +95,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-05-24T10:30:09.203Z
-Stopped at: Phase 1 plans complete — 6 plans created in 2 waves
+Last session: 2026-05-24T11:27:17.573Z
+Stopped at: Completed 01-local-adoption-baseline-03-PLAN.md
 Resume file: None

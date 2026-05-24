@@ -25,8 +25,8 @@ hooker is a working prototype that needs hardening into a trustworthy daily-use 
 **Plans**: 6 plans
 Plans:
 - [x] 01-01-PLAN.md — SEC-01 host header middleware + DIAG-01/02 health endpoints + DB ready flag
-- [ ] 01-02-PLAN.md — Version package extension + /api/version commit+date + main.go startup diagnostics
-- [ ] 01-03-PLAN.md — CI workflows + GoReleaser config + pnpm enforcement
+- [x] 01-02-PLAN.md — Version package extension + /api/version commit+date + main.go startup diagnostics
+- [x] 01-03-PLAN.md — CI workflows + GoReleaser config + pnpm enforcement
 - [ ] 01-04-PLAN.md — scripts/hooker setup (binary build + hook patching) + doctor (required/optional split)
 - [ ] 01-05-PLAN.md — Docs: quickstart go build + install.md data lifecycle + releases.md runbook
 - [ ] 01-06-PLAN.md — Frontend VersionBadge component + runtime version fetch + Sidebar wiring
@@ -59,6 +59,6 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Local Adoption Baseline | 1/6 | In Progress|  |
+| 1. Local Adoption Baseline | 3/6 | In Progress|  |
 | 2. Reliable Daily Use | 0/TBD | Not started | - |
 | 3. Mature Local Product | 0/TBD | Not started | - |
