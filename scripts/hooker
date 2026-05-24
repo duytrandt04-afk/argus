@@ -40,6 +40,60 @@ ensure_tools() {
   require_cmd pnpm 'Install pnpm, or run: corepack enable && corepack prepare pnpm@latest --activate'
 }
 
+HOOKER_HOOK_CMD="curl -s --max-time 2 -X POST http://127.0.0.1:8765/api/hook -H 'Content-Type: application/json' -d @- || true"
+
+patch_claudecode_hooks() {
+  local settings="$HOME/.claude/settings.json"
+  if [ ! -f "$settings" ]; then
+    printf '[skip] Claude Code settings.json not found at %s\n' "$settings"
+    return 0
+  fi
+  if grep -q "8765/api/hook" "$settings"; then
+    printf '[ok]   Claude Code hooks already configured — skipping\n'
+    return 0
+  fi
+  cp "$settings" "${settings}.bak.pre-hooker"
+  python3 - "$settings" "$HOOKER_HOOK_CMD" <<'PYEOF'
+import sys, json
+path, cmd = sys.argv[1], sys.argv[2]
+with open(path) as f:
+    d = json.load(f)
+hooks = d.setdefault('hooks', {})
+entry = {'hooks': [{'type': 'command', 'command': cmd}]}
+for event in ['PreToolUse', 'PostToolUse', 'SessionStart', 'SessionEnd', 'Stop']:
+    hooks.setdefault(event, []).append(entry)
+with open(path, 'w') as f:
+    json.dump(d, f, indent=2)
+PYEOF
+  printf '[ok]   Claude Code hooks configured (backup: %s.bak.pre-hooker)\n' "$settings"
+}
+
+patch_codex_hooks() {
+  local settings="$HOME/.codex/hooks.json"
+  if [ ! -f "$settings" ]; then
+    printf '[skip] Codex hooks.json not found at %s\n' "$settings"
+    return 0
+  fi
+  if grep -q "8765/api/hook" "$settings"; then
+    printf '[ok]   Codex hooks already configured — skipping\n'
+    return 0
+  fi
+  cp "$settings" "${settings}.bak.pre-hooker"
+  python3 - "$settings" "$HOOKER_HOOK_CMD" <<'PYEOF'
+import sys, json
+path, cmd = sys.argv[1], sys.argv[2]
+with open(path) as f:
+    d = json.load(f)
+hooks = d.setdefault('hooks', {})
+entry = {'hooks': [{'type': 'command', 'command': cmd}]}
+for event in ['SessionStart', 'PreToolUse']:
+    hooks.setdefault(event, []).append(entry)
+with open(path, 'w') as f:
+    json.dump(d, f, indent=2)
+PYEOF
+  printf '[ok]   Codex hooks configured (backup: %s.bak.pre-hooker)\n' "$settings"
+}
+
 setup() {
   ensure_tools
   show_versions
@@ -50,9 +104,17 @@ setup() {
   printf '\nfrontend: installing pnpm dependencies\n'
   (cd "$FRONTEND" && pnpm install --frozen-lockfile)
 
+  printf '\nbuilding hooker binary\n'
+  (cd "$BACKEND" && go build -o "$ROOT/hooker" ./cmd/server)
+  printf 'binary: %s/hooker\n' "$ROOT"
+
+  printf '\npatching agent hook configs\n'
+  patch_claudecode_hooks
+  patch_codex_hooks
+
   printf '\nsetup complete\n'
-  printf 'next: start backend with cd backend && go run ./cmd/server/main.go\n'
-  printf 'next: start frontend with cd frontend && pnpm run dev\n'
+  printf 'start: cd backend && ./hooker\n'
+  printf 'verify: ./scripts/hooker doctor\n'
 }
 
 doctor() {
