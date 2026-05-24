@@ -6,10 +6,10 @@
 
 - [x] **INSTALL-01**: User can run `./scripts/hooker setup` to install dependencies and patch Claude Code/Codex/Gemini CLI hook config automatically
 - [x] **INSTALL-02**: User can run `./scripts/hooker doctor` to check Go version, Node version, DB writability, port availability, and hook config presence — with required failures vs optional warnings clearly separated
-- [ ] **INSTALL-03**: User can follow `docs/quickstart.md` and reach first successful hook event capture in under 10 minutes using `go build` (not `go run`)
-- [ ] **INSTALL-04**: App emits resolved DB path on startup so user can verify which database file is in use
-- [ ] **INSTALL-05**: README is short and action-oriented; detailed content lives in `docs/install.md`, `docs/quickstart.md`, `docs/hooks.md`
-- [ ] **INSTALL-06**: Explicit support matrix documented (macOS/Linux/WSL first-class; Go and Node minimum versions; pnpm required for frontend)
+- [x] **INSTALL-03**: User can follow `docs/quickstart.md` and reach first successful hook event capture in under 10 minutes using `go build` (not `go run`)
+- [x] **INSTALL-04**: App emits resolved DB path on startup so user can verify which database file is in use
+- [x] **INSTALL-05**: README is short and action-oriented; detailed content lives in `docs/install.md`, `docs/quickstart.md`, `docs/hooks.md`
+- [x] **INSTALL-06**: Explicit support matrix documented (macOS/Linux/WSL first-class; Go and Node minimum versions; pnpm required for frontend)
 - [x] **INSTALL-07**: pnpm enforced via `packageManager` field + `engine-strict=true` in `.npmrc`; `npm`/`yarn` not usable accidentally
 
 ### CI & Verification (CI)
@@ -32,13 +32,13 @@
 
 ### Data Lifecycle (DATA)
 
-- [ ] **DATA-01**: DB file location and override behavior documented; WAL file behavior explained
-- [ ] **DATA-02**: Backup instructions documented (copy `.db` + `.db-wal` + `.db-shm`)
-- [ ] **DATA-03**: Reset/cleanup instructions documented (delete DB file, restart to re-run migrations)
+- [x] **DATA-01**: DB file location and override behavior documented; WAL file behavior explained
+- [x] **DATA-02**: Backup instructions documented (copy `.db` + `.db-wal` + `.db-shm`)
+- [x] **DATA-03**: Reset/cleanup instructions documented (delete DB file, restart to re-run migrations)
 - [ ] **DATA-04**: User can export all events as streaming NDJSON via `GET /api/export/events`
 - [ ] **DATA-05**: User can export a full-fidelity SQLite snapshot via `GET /api/export/snapshot` (uses `VACUUM INTO`)
-- [ ] **DATA-06**: Manual prune/cleanup command or script documented
-- [ ] **DATA-07**: Privacy warning documented: prompts, diffs, file paths, tool outputs are stored locally
+- [x] **DATA-06**: Manual prune/cleanup command or script documented
+- [x] **DATA-07**: Privacy warning documented: prompts, diffs, file paths, tool outputs are stored locally
 
 ### Event Data Model (MODEL)
 
@@ -79,7 +79,7 @@
 
 - [x] **REL-01**: GoReleaser OSS v2 configured; produces linux/darwin/windows × amd64/arm64 binaries with `checksums.txt`
 - [x] **REL-02**: Release workflow triggers on `v*` tags only; CI workflow runs on every push/PR
-- [ ] **REL-03**: Squash-merge enforced in GitHub repo settings (required for GoReleaser changelog automation)
+- [x] **REL-03**: Squash-merge enforced in GitHub repo settings (required for GoReleaser changelog automation)
 - [x] **REL-04**: Conventional commits recommended on PR titles; changelog generated automatically by GoReleaser
 - [ ] **REL-05**: App version injected at build time via ldflags (`git describe --tags --always`)
 
@@ -148,10 +148,10 @@
 |--------|-------|--------|
 | INSTALL-01 | Phase 1 | Complete |
 | INSTALL-02 | Phase 1 | Complete |
-| INSTALL-03 | Phase 1 | Pending |
-| INSTALL-04 | Phase 1 | Pending |
-| INSTALL-05 | Phase 1 | Pending |
-| INSTALL-06 | Phase 1 | Pending |
+| INSTALL-03 | Phase 1 | Complete |
+| INSTALL-04 | Phase 1 | Complete |
+| INSTALL-05 | Phase 1 | Complete |
+| INSTALL-06 | Phase 1 | Complete |
 | INSTALL-07 | Phase 1 | Complete |
 | CI-01 | Phase 1 | Complete |
 | CI-02 | Phase 1 | Complete |
@@ -165,15 +165,15 @@
 | DIAG-04 | Phase 1 | Pending |
 | DIAG-05 | Phase 1 | Pending |
 | DIAG-06 | Phase 1 | Complete |
-| DATA-01 | Phase 1 | Pending |
-| DATA-02 | Phase 1 | Pending |
-| DATA-03 | Phase 1 | Pending |
-| DATA-06 | Phase 1 | Pending |
-| DATA-07 | Phase 1 | Pending |
+| DATA-01 | Phase 1 | Complete |
+| DATA-02 | Phase 1 | Complete |
+| DATA-03 | Phase 1 | Complete |
+| DATA-06 | Phase 1 | Complete |
+| DATA-07 | Phase 1 | Complete |
 | SEC-01 | Phase 1 | Complete |
 | REL-01 | Phase 1 | Complete |
 | REL-02 | Phase 1 | Complete |
-| REL-03 | Phase 1 | Pending |
+| REL-03 | Phase 1 | Complete |
 | REL-04 | Phase 1 | Complete |
 | REL-05 | Phase 1 | Pending |
 | DATA-04 | Phase 2 | Pending |
