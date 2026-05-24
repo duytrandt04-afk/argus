@@ -20,5 +20,5 @@ type EventRepository interface {
 	GetTracesPage(sessionID, since string, page, size int) ([]domain.NormalizedEvent, int, error)
 	GetFileChanges(sessionID string) ([]domain.FileChangeGroup, error)
 	GetSessionFileChangeCounts(ids []string) (map[string]int, error)
-	ListAIInsights() (*domain.AIInsights, error)
+	Ready() bool
 }

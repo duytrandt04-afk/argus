@@ -133,9 +133,7 @@ func (m *mockRepo) GetSessionFileChangeCounts([]string) (map[string]int, error) 
 	return map[string]int{}, nil
 }
 
-func (m *mockRepo) ListAIInsights() (*domain.AIInsights, error) {
-	return &domain.AIInsights{}, nil
-}
+func (m *mockRepo) Ready() bool { return true }
 
 func (m *mockRepo) UpsertSession(sessionID, _, model, _, _, _, _, endedAt string, usage domain.SessionUsage) error {
 	if m.upsertErr != nil {
