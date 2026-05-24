@@ -77,17 +77,26 @@ Exceptions: none for this phase.
 
 ## Typography
 
-Existing app type scale (reference only — no new sizes introduced in this phase):
+### Existing app scale — reference only, not changed in this phase
+
+These rows document the pre-existing type scale for context. They are NOT a contract
+declaration for this phase and must not be modified as part of this work.
 
 | Role | Size | Weight | Line Height | Font |
 |------|------|--------|-------------|------|
 | Body | 13px (0.8rem) | 400 | 1.5 | Geist Variable |
 | Label / nav | 12.8px (0.8rem) | 400 | 1.4 | Geist Variable |
 | App name | 12.48px (0.78rem) | 600 | 1.2 | Geist Variable |
-| Version text | 10.56px (0.66rem) | 500 | 1.0 | Geist Variable |
 
-**Version text spec (new component — prescriptive):**
+### New component — VersionBadge (prescriptive)
 
+This is the only typographic declaration introduced by this phase.
+
+| Role | Size | Weight | Line Height | Font |
+|------|------|--------|-------------|------|
+| Version text | 10.56px (0.66rem) | 500 (`font-medium`) | 1.0 (`leading-none`) | Geist Variable |
+
+Implementation details:
 - Font size: `text-[0.66rem]` (10.56px) — matches existing `v{APP_VERSION}` span and badge typography in app.css
 - Font weight: `font-medium` (500)
 - Line height: `leading-none` (1.0) — single-line label, no wrap needed
