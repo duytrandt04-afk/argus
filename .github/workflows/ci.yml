@@ -26,6 +26,12 @@ jobs:
           pnpm install --frozen-lockfile
           pnpm run build
 
+      - name: Sync frontend dist into backend embed path
+        run: |
+          rm -rf backend/internal/ui/dist
+          mkdir -p backend/internal/ui
+          cp -R frontend/dist backend/internal/ui/dist
+
       - name: Build backend (verifies embed compiles)
         working-directory: backend
         run: go build ./...

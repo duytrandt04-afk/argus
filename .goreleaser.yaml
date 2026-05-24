@@ -7,6 +7,7 @@ before:
     # Build frontend first — the Go binary embeds frontend/dist/* via //go:embed in
     # backend/internal/ui/ui.go. GoReleaser's own dist/ output is a different directory.
     - bash -c "cd frontend && pnpm install --frozen-lockfile && pnpm run build"
+    - bash -c "rm -rf backend/internal/ui/dist && mkdir -p backend/internal/ui && cp -R frontend/dist backend/internal/ui/dist"
 
 builds:
   - id: hooker
