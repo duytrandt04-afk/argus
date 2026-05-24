@@ -20,7 +20,10 @@ export function ToolResultBlock({
   return (
     <>
       {stdout && (
-        <div className="group/eblock mt-2 text-[0.75rem] bg-black/40 border border-white/[0.05] rounded-[6px] overflow-hidden">
+        <div
+          className="group/eblock mt-2 overflow-hidden rounded-[6px] border border-white/[0.05] bg-black/40 text-[0.75rem] select-text"
+          data-event-drag-ignore
+        >
           <div className="flex items-center justify-between px-3 py-1 border-b border-white/[0.05]">
             <div className="flex items-center gap-3">
               <strong className="text-[#aaa] text-[0.7rem]">stdout</strong>
@@ -40,7 +43,10 @@ export function ToolResultBlock({
         </div>
       )}
       {stderr && (
-        <div className="group/eblock mt-1 text-[0.75rem] bg-red-950/20 border border-red-900/30 rounded-[6px] overflow-hidden">
+        <div
+          className="group/eblock mt-1 overflow-hidden rounded-[6px] border border-red-900/30 bg-red-950/20 text-[0.75rem] select-text"
+          data-event-drag-ignore
+        >
           <div className="flex items-center justify-between px-3 py-1 border-b border-red-900/20">
             <strong className="text-[#ff9999] text-[0.7rem]">stderr</strong>
             <CopyIconButton

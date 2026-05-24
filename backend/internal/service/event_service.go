@@ -1,7 +1,6 @@
 package service
 
 import (
-	"encoding/json"
 	"log"
 	"slices"
 	"strings"
@@ -12,23 +11,16 @@ import (
 	"hooker/internal/agents/codex"
 	"hooker/internal/agents/geminicli"
 	"hooker/internal/domain"
-	"hooker/internal/queue"
 	"hooker/internal/repository"
 )
 
 type EventService struct {
 	repo        repository.EventRepository
 	subscribers sync.Map
-	jobs        *queue.Store // nil = AI summarization disabled
 }
 
 func New(repo repository.EventRepository) *EventService {
 	return &EventService{repo: repo}
-}
-
-// WithQueue attaches a job queue so Stop hook events trigger AI summarization.
-func (s *EventService) WithQueue(q *queue.Store) {
-	s.jobs = q
 }
 
 func (s *EventService) AddEvent(e domain.NormalizedEvent) error {
@@ -63,45 +55,7 @@ func (s *EventService) AddEvent(e domain.NormalizedEvent) error {
 		}
 	}
 	s.broadcast(e)
-	s.maybeEnqueueSummarize(e)
 	return nil
-}
-
-func (s *EventService) maybeEnqueueSummarize(e domain.NormalizedEvent) {
-	if s.jobs == nil || e.Session == "" {
-		return
-	}
-	switch e.HookEventName {
-	case "Stop":
-		payload := e.Response
-		if payload == "" {
-			payload = e.Prompt
-		}
-		if err := s.jobs.Enqueue(e.Session, queue.JobTypeSummarize, e.Session, payload); err != nil {
-			log.Printf("[queue] enqueue summarize session=%s: %v", e.Session, err)
-		}
-	case "PostToolUse":
-		if e.ToolUseID == "" {
-			return
-		}
-		payload := buildObservationPayload(e)
-		if err := s.jobs.Enqueue(e.Session, queue.JobTypeObservation, e.ToolUseID, payload); err != nil {
-			log.Printf("[queue] enqueue observation tool_use_id=%s: %v", e.ToolUseID, err)
-		}
-	}
-}
-
-func buildObservationPayload(e domain.NormalizedEvent) string {
-	b, _ := json.Marshal(map[string]string{
-		"tool":        e.Tool,
-		"action":      e.Action,
-		"path":        e.Path,
-		"command":     e.Command,
-		"description": e.Description,
-		"response":    e.Response,
-		"tool_use_id": e.ToolUseID,
-	})
-	return string(b)
 }
 
 func (s *EventService) ListEvents(limit int) ([]domain.NormalizedEvent, error) {

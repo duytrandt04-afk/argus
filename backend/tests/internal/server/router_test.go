@@ -51,26 +51,21 @@ func (noopRepo) UpsertSession(string, string, string, string, string, string, st
 	return nil
 }
 
-func (noopRepo) GetSummary(string) (string, error) { return "", nil }
-
-func (noopRepo) ListAIInsights() (*domain.AIInsights, error) {
-	return &domain.AIInsights{
-		Summaries: []domain.AIInsightSummary{
-			{SessionID: "sess-ai", Summary: "Implemented summaries.", Model: "claude-sonnet-4-6"},
-		},
-		Observations: []domain.AIInsightObservation{
-			{SessionID: "sess-ai", ToolUseID: "tool-1", ToolName: "Edit", Observation: "Updated a file."},
-		},
-	}, nil
-}
+func (noopRepo) Ready() bool { return true }
 
 func newTestRouter() http.Handler {
 	repo := noopRepo{}
-	return server.NewRouter(service.New(repo), repo)
+	return server.NewRouter(service.New(repo), repo.Ready)
+}
+
+func localRequest(method, target string) *http.Request {
+	req := httptest.NewRequest(method, target, nil)
+	req.Host = "127.0.0.1:8765"
+	return req
 }
 
 func TestNewRouterOptionsReturnsCORSHeaders(t *testing.T) {
-	req := httptest.NewRequest(http.MethodOptions, "/api/hook", nil)
+	req := localRequest(http.MethodOptions, "/api/hook")
 	rec := httptest.NewRecorder()
 
 	newTestRouter().ServeHTTP(rec, req)
@@ -84,7 +79,7 @@ func TestNewRouterOptionsReturnsCORSHeaders(t *testing.T) {
 }
 
 func TestNewRouterOpenAIRouteIsGETOnly(t *testing.T) {
-	req := httptest.NewRequest(http.MethodPost, "/api/openai/models", nil)
+	req := localRequest(http.MethodPost, "/api/openai/models")
 	rec := httptest.NewRecorder()
 
 	newTestRouter().ServeHTTP(rec, req)
@@ -95,7 +90,7 @@ func TestNewRouterOpenAIRouteIsGETOnly(t *testing.T) {
 }
 
 func TestNewRouterAnthropicRouteIsGETOnly(t *testing.T) {
-	req := httptest.NewRequest(http.MethodPost, "/api/anthropic/organizations/usage_report/messages", nil)
+	req := localRequest(http.MethodPost, "/api/anthropic/organizations/usage_report/messages")
 	rec := httptest.NewRecorder()
 
 	newTestRouter().ServeHTTP(rec, req)
@@ -106,7 +101,7 @@ func TestNewRouterAnthropicRouteIsGETOnly(t *testing.T) {
 }
 
 func TestNewRouterVersionReturnsAppVersion(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/api/version", nil)
+	req := localRequest(http.MethodGet, "/api/version")
 	rec := httptest.NewRecorder()
 
 	newTestRouter().ServeHTTP(rec, req)
@@ -116,7 +111,9 @@ func TestNewRouterVersionReturnsAppVersion(t *testing.T) {
 	}
 
 	var payload struct {
-		Version string `json:"version"`
+		Version   string `json:"version"`
+		Commit    string `json:"commit"`
+		BuildDate string `json:"buildDate"`
 	}
 	if err := json.NewDecoder(rec.Body).Decode(&payload); err != nil {
 		t.Fatalf("decode version response: %v", err)
@@ -124,26 +121,10 @@ func TestNewRouterVersionReturnsAppVersion(t *testing.T) {
 	if payload.Version != "0.0.0-dev" {
 		t.Fatalf("version = %q, want 0.0.0-dev", payload.Version)
 	}
-}
-
-func TestNewRouterAIInsightsReturnsSummariesAndObservations(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/api/ai-insights", nil)
-	rec := httptest.NewRecorder()
-
-	newTestRouter().ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusOK {
-		t.Fatalf("status = %d, want 200", rec.Code)
+	if payload.Commit != "none" {
+		t.Fatalf("commit = %q, want none", payload.Commit)
 	}
-
-	var payload domain.AIInsights
-	if err := json.NewDecoder(rec.Body).Decode(&payload); err != nil {
-		t.Fatalf("decode ai insights response: %v", err)
-	}
-	if len(payload.Summaries) != 1 || payload.Summaries[0].SessionID != "sess-ai" {
-		t.Fatalf("summaries = %+v", payload.Summaries)
-	}
-	if len(payload.Observations) != 1 || payload.Observations[0].ToolUseID != "tool-1" {
-		t.Fatalf("observations = %+v", payload.Observations)
+	if payload.BuildDate != "unknown" {
+		t.Fatalf("buildDate = %q, want unknown", payload.BuildDate)
 	}
 }

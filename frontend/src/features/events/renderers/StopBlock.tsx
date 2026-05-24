@@ -11,7 +11,10 @@ export function StopBlock({ response, searchQuery = '' }: StopBlockProps) {
   if (!response) return null
 
   return (
-    <div className="group/eblock mt-2 bg-black/30 border border-white/[0.05] px-3 py-2 rounded-[6px]">
+    <div
+      className="group/eblock mt-2 select-text rounded-[6px] border border-white/[0.05] bg-black/30 px-3 py-2"
+      data-event-drag-ignore
+    >
       <div className="flex items-center justify-between gap-3">
         <strong className="text-[#aaa] text-[0.7rem]">Response</strong>
         <CopyIconButton

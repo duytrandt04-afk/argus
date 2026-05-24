@@ -18,5 +18,3 @@ export type {
   UsageDailyPoint,
   UsageStats,
 } from './usage'
-
-export type { AIInsightSummary, AIInsightObservation, AIInsightsResponse } from './ai-insights'

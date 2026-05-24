@@ -66,7 +66,10 @@ func Hook(svc *service.EventService) http.Handler {
 		log.Printf("[hook] agent=%s session=%s tool=%s action=%s path=%s", e.Agent, e.Session, e.Tool, e.Action, e.Path)
 
 		if err := svc.AddEvent(e); err != nil {
-			http.Error(w, "store event", http.StatusInternalServerError)
+			log.Printf("[hook] store event: %v", err)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusAccepted)
+			_, _ = w.Write([]byte(`{}`))
 			return
 		}
 

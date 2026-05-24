@@ -101,37 +101,6 @@ type Project struct {
 	LiveCount    int      `json:"live_count"`
 }
 
-type AIInsights struct {
-	Summaries    []AIInsightSummary     `json:"summaries"`
-	Observations []AIInsightObservation `json:"observations"`
-}
-
-type AIInsightSummary struct {
-	SessionID      string `json:"session_id"`
-	Agent          string `json:"agent"`
-	CWD            string `json:"cwd"`
-	TranscriptPath string `json:"transcript_path"`
-	Summary        string `json:"summary"`
-	Model          string `json:"model"`
-	CreatedAt      string `json:"created_at"`
-	UpdatedAt      string `json:"updated_at"`
-	LastSeenAt     string `json:"last_seen_at"`
-}
-
-type AIInsightObservation struct {
-	SessionID   string `json:"session_id"`
-	ToolUseID   string `json:"tool_use_id"`
-	ToolName    string `json:"tool_name"`
-	Observation string `json:"observation"`
-	Model       string `json:"model"`
-	CreatedAt   string `json:"created_at"`
-	Agent       string `json:"agent"`
-	CWD         string `json:"cwd"`
-	EventTime   string `json:"event_time"`
-	Action      string `json:"action"`
-	Path        string `json:"path"`
-}
-
 type SessionTreeNode struct {
 	Session  Session           `json:"session"`
 	AgentID  string            `json:"agent_id,omitempty"`

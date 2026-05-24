@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import type { ReactNode } from 'react'
+import type { DragEvent, ReactNode } from 'react'
 import { cn, displayModel } from '@/lib/utils'
 import { highlight } from '@/lib/format'
 import type { EventRecord } from '@/types/events'
@@ -38,6 +38,27 @@ export function EventRow({
     String(e.command).includes('*** Begin Patch')
   const rowRef = useRef<HTMLDivElement>(null)
   const targetHandledRef = useRef(false)
+  const suppressDragRef = useRef(false)
+
+  const handleDragStart = (ev: DragEvent<HTMLDivElement>) => {
+    if (suppressDragRef.current) {
+      ev.preventDefault()
+      return
+    }
+
+    const target = ev.target as HTMLElement | null
+    if (
+      target?.closest(
+        '[data-event-drag-ignore], pre, code, button, a, [role="button"], [contenteditable="true"]'
+      )
+    ) {
+      ev.preventDefault()
+      return
+    }
+
+    ev.dataTransfer.setData('text/plain', buildEventKey(e))
+    ev.dataTransfer.effectAllowed = 'move'
+  }
 
   useEffect(() => {
     if (!isPendingTarget || !rowRef.current || targetHandledRef.current) return
@@ -51,18 +72,25 @@ export function EventRow({
     <div
       ref={rowRef}
       draggable={isDraggable}
-      onDragStart={
-        isDraggable
-          ? (ev) => {
-              ev.dataTransfer.setData('text/plain', buildEventKey(e))
-              ev.dataTransfer.effectAllowed = 'move'
-            }
-          : undefined
-      }
+      onDragStart={isDraggable ? handleDragStart : undefined}
+      onMouseDownCapture={(ev) => {
+        if (!isDraggable) return
+        suppressDragRef.current = Boolean(
+          (ev.target as HTMLElement | null)?.closest(
+            '[data-event-drag-ignore], pre, code, button, a, [role="button"], [contenteditable="true"]'
+          )
+        )
+      }}
+      onMouseUpCapture={() => {
+        suppressDragRef.current = false
+      }}
+      onDragEnd={() => {
+        suppressDragRef.current = false
+      }}
       className={cn(
         'border-b border-white/[0.03] py-2 text-[0.82rem] leading-[1.4] hover:bg-white/[0.02]',
         highlighted ? 'rounded-md bg-sky-500/8 ring-1 ring-sky-400/35' : '',
-        isDraggable && 'cursor-grab active:cursor-grabbing select-none'
+        isDraggable && 'cursor-grab active:cursor-grabbing'
       )}
     >
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-3">
@@ -100,7 +128,7 @@ export function EventRow({
 
           {/* Standard string replacement diff */}
           {e.action === 'EDIT' && (e.old_string || e.new_string) && (
-            <div className="eblock eblock-diff mt-2">
+            <div className="eblock eblock-diff mt-2 select-text" data-event-drag-ignore>
               <strong>{e.path || 'Changes'}</strong>
               <DiffBlock
                 oldStr={e.old_string || ''}
@@ -115,7 +143,7 @@ export function EventRow({
 
           {/* Patch application diff */}
           {isPatchCommand && !e.old_string && !e.new_string && (
-            <div className="eblock eblock-diff mt-2">
+            <div className="eblock eblock-diff mt-2 select-text" data-event-drag-ignore>
               <strong>{e.path || 'Changes'}</strong>
               <PatchBlock text={e.prompt || e.command || ''} startLine={e.start_line} />
             </div>

@@ -20,9 +20,6 @@ const SessionList = lazy(() =>
 const TraceView = lazy(() =>
   import('./features/sessions/TraceViewPage').then((m) => ({ default: m.TraceViewPage }))
 )
-const AIInsightsPage = lazy(() =>
-  import('./features/ai-insights/AIInsightsPage').then((m) => ({ default: m.AIInsightsPage }))
-)
 
 export default function App() {
   return (
@@ -58,14 +55,6 @@ export default function App() {
             element={
               <Suspense fallback={null}>
                 <ProjectsPage />
-              </Suspense>
-            }
-          />
-          <Route
-            path="ai-insights"
-            element={
-              <Suspense fallback={null}>
-                <AIInsightsPage />
               </Suspense>
             }
           />

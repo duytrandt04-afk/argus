@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { Copy } from 'lucide-react'
 import type { EventRecord } from '@/types/events'
 import type { Session } from '@/types/sessions'
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll'
@@ -105,17 +104,7 @@ export function SessionListPage() {
                         }
                       >
                         <td className="px-4 py-3 font-mono text-[12px] text-white/75">
-                          <button
-                            type="button"
-                            className="inline-flex items-center gap-2 hover:text-white"
-                            onClick={(event) => {
-                              event.stopPropagation()
-                              void navigator.clipboard?.writeText(session.session_id)
-                            }}
-                          >
-                            {session.session_id.slice(0, 12)}
-                            <Copy className="h-3 w-3 text-white/35" />
-                          </button>
+                          {session.session_id.slice(0, 12)}
                         </td>
                         <td className="px-4 py-3">
                           <span className="rounded border border-white/10 bg-white/[0.04] px-2 py-1 text-[12px]">

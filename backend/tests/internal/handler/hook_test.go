@@ -2,9 +2,12 @@ package handler_test
 
 import (
 	"bytes"
+	"context"
 	"net/http"
 	"net/http/httptest"
+	"path/filepath"
 	"testing"
+	"time"
 
 	"hooker/internal/handler"
 	"hooker/internal/repository/sqlite"
@@ -99,5 +102,43 @@ func TestHookHandlerStoresEventWithoutPath(t *testing.T) {
 	}
 	if events[0].HookEventName != "SessionStart" {
 		t.Fatalf("hook_event_name = %q, want SessionStart", events[0].HookEventName)
+	}
+}
+
+func TestHookHandlerAcknowledgesWhenStoreIsTemporarilyLocked(t *testing.T) {
+	dbPath := filepath.Join(t.TempDir(), "hooker-test.db")
+	db, err := sqlite.New(dbPath)
+	if err != nil {
+		t.Fatalf("sqlite.New: %v", err)
+	}
+	conn, err := db.RawDB().Conn(context.Background())
+	if err != nil {
+		t.Fatalf("conn: %v", err)
+	}
+	defer conn.Close()
+	if _, err := conn.ExecContext(context.Background(), `BEGIN IMMEDIATE`); err != nil {
+		t.Fatalf("begin lock: %v", err)
+	}
+	defer conn.ExecContext(context.Background(), `ROLLBACK`)
+
+	h := handler.Hook(service.New(db))
+	body := []byte(`{
+		"session_id": "s-locked",
+		"hook_event_name": "PreToolUse",
+		"tool_name": "Bash",
+		"tool_input": {"command": "true"}
+	}`)
+	req := httptest.NewRequest(http.MethodPost, "/api/hook", bytes.NewReader(body))
+	rec := httptest.NewRecorder()
+
+	start := time.Now()
+	h.ServeHTTP(rec, req)
+	elapsed := time.Since(start)
+
+	if rec.Code != http.StatusAccepted {
+		t.Fatalf("status = %d, want 202; body: %s", rec.Code, rec.Body.String())
+	}
+	if elapsed >= 2*time.Second {
+		t.Fatalf("handler returned after %s, want before hook timeout", elapsed)
 	}
 }

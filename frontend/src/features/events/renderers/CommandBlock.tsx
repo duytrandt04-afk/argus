@@ -14,7 +14,10 @@ export function CommandBlock({ prompt, command, path, searchQuery = '' }: Comman
   const textToCopy = prompt || command || path || ''
 
   return (
-    <div className="group/eblock mt-2 text-[0.75rem] text-[#ccc] bg-black/30 border border-white/[0.05] px-3 py-2 rounded-[6px]">
+    <div
+      className="group/eblock mt-2 select-text rounded-[6px] border border-white/[0.05] bg-black/30 px-3 py-2 text-[0.75rem] text-[#ccc]"
+      data-event-drag-ignore
+    >
       <div className="flex items-center justify-between gap-3">
         <strong className="text-[#aaa] text-[0.7rem]">{label}</strong>
         <CopyIconButton

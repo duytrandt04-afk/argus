@@ -1,6 +1,8 @@
 package sqlite_test
 
 import (
+	"context"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -52,6 +54,94 @@ func TestAdd_and_List(t *testing.T) {
 	}
 	if events[0].Trigger != "manual" {
 		t.Errorf("Trigger = %q, want manual", events[0].Trigger)
+	}
+}
+
+func TestAddDoesNotWaitForUnrelatedOpenReadRows(t *testing.T) {
+	dbPath := filepath.Join(t.TempDir(), "hooker-test.db")
+	db, err := sqlite.New(dbPath)
+	if err != nil {
+		t.Fatalf("sqlite.New: %v", err)
+	}
+
+	rows, err := db.RawDB().Query(`SELECT 1`)
+	if err != nil {
+		t.Fatalf("hold read rows: %v", err)
+	}
+	defer rows.Close()
+
+	done := make(chan error, 1)
+	go func() {
+		done <- db.Add(domain.NormalizedEvent{
+			Time:          time.Now().Format(time.RFC3339),
+			Agent:         "codex",
+			Session:       "sess-pool",
+			HookEventName: "PreToolUse",
+			Tool:          "Bash",
+			Action:        "BASH",
+			Path:          "cmd: true",
+			RawPayload:    []byte(`{}`),
+		})
+	}()
+
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Fatalf("Add: %v", err)
+		}
+	case <-time.After(200 * time.Millisecond):
+		t.Fatal("Add blocked behind an unrelated open read cursor")
+	}
+}
+
+func TestAddReturnsBeforeHookTimeoutWhenDatabaseIsWriteLocked(t *testing.T) {
+	dbPath := filepath.Join(t.TempDir(), "hooker-test.db")
+	db, err := sqlite.New(dbPath)
+	if err != nil {
+		t.Fatalf("sqlite.New: %v", err)
+	}
+
+	poisonedConn, err := db.RawDB().Conn(context.Background())
+	if err != nil {
+		t.Fatalf("poison conn: %v", err)
+	}
+	if _, err := poisonedConn.ExecContext(context.Background(), `PRAGMA busy_timeout = 5000`); err != nil {
+		t.Fatalf("raise busy timeout: %v", err)
+	}
+	if err := poisonedConn.Close(); err != nil {
+		t.Fatalf("close poisoned conn: %v", err)
+	}
+
+	conn, err := db.RawDB().Conn(context.Background())
+	if err != nil {
+		t.Fatalf("conn: %v", err)
+	}
+	defer conn.Close()
+	if _, err := conn.ExecContext(context.Background(), `BEGIN IMMEDIATE`); err != nil {
+		t.Fatalf("begin lock: %v", err)
+	}
+
+	start := time.Now()
+	err = db.Add(domain.NormalizedEvent{
+		Time:          time.Now().Format(time.RFC3339),
+		Agent:         "codex",
+		Session:       "sess-locked",
+		HookEventName: "PreToolUse",
+		Tool:          "Bash",
+		Action:        "BASH",
+		Path:          "cmd: true",
+		RawPayload:    []byte(`{}`),
+	})
+	elapsed := time.Since(start)
+
+	if _, rollbackErr := conn.ExecContext(context.Background(), `ROLLBACK`); rollbackErr != nil {
+		t.Fatalf("rollback lock: %v", rollbackErr)
+	}
+	if err == nil {
+		t.Fatal("Add succeeded while a write lock was held, want lock error")
+	}
+	if elapsed >= 2*time.Second {
+		t.Fatalf("Add returned after %s, want it to fail before the 5s hook timeout", elapsed)
 	}
 }
 
@@ -214,59 +304,6 @@ func TestSessionModel_missing(t *testing.T) {
 	}
 	if model != "" {
 		t.Errorf("model = %q, want empty", model)
-	}
-}
-
-func TestListAIInsightsIncludesSessionAndEventContext(t *testing.T) {
-	db := newTestDB(t)
-	eventTime := "2026-05-20T10:00:00Z"
-
-	if err := db.UpsertSession("sess-ai", "codex", "gpt-5.5", "startup", "/repo/hooker", "/tmp/transcript.jsonl", eventTime, "", domain.SessionUsage{}); err != nil {
-		t.Fatalf("UpsertSession: %v", err)
-	}
-	addEvent(t, db, domain.NormalizedEvent{
-		Time:          eventTime,
-		Agent:         "codex",
-		Session:       "sess-ai",
-		HookEventName: "PostToolUse",
-		ToolUseID:     "tool-1",
-		Tool:          "Edit",
-		Action:        "EDIT",
-		Path:          "/repo/hooker/main.go",
-		CWD:           "/repo/hooker",
-		RawPayload:    []byte(`{}`),
-	})
-	if err := db.UpsertSummary("sess-ai", "Implemented queue retry handling.", "claude-sonnet-4-6"); err != nil {
-		t.Fatalf("UpsertSummary: %v", err)
-	}
-	if err := db.UpsertObservation("sess-ai", "tool-1", "Edit", "Updated main.go with retry behavior.", "claude-sonnet-4-6"); err != nil {
-		t.Fatalf("UpsertObservation: %v", err)
-	}
-
-	insights, err := db.ListAIInsights()
-	if err != nil {
-		t.Fatalf("ListAIInsights: %v", err)
-	}
-	if len(insights.Summaries) != 1 {
-		t.Fatalf("summaries len = %d, want 1", len(insights.Summaries))
-	}
-	summary := insights.Summaries[0]
-	if summary.SessionID != "sess-ai" || summary.Agent != "codex" || summary.CWD != "/repo/hooker" {
-		t.Fatalf("summary context = %+v", summary)
-	}
-	if summary.Summary != "Implemented queue retry handling." || summary.Model != "claude-sonnet-4-6" {
-		t.Fatalf("summary content = %+v", summary)
-	}
-
-	if len(insights.Observations) != 1 {
-		t.Fatalf("observations len = %d, want 1", len(insights.Observations))
-	}
-	observation := insights.Observations[0]
-	if observation.SessionID != "sess-ai" || observation.ToolUseID != "tool-1" || observation.ToolName != "Edit" {
-		t.Fatalf("observation identity = %+v", observation)
-	}
-	if observation.EventTime != eventTime || observation.Path != "/repo/hooker/main.go" || observation.Action != "EDIT" {
-		t.Fatalf("observation event context = %+v", observation)
 	}
 }
 
@@ -571,6 +608,25 @@ func TestList_respectsLimit(t *testing.T) {
 	events, _ := db.List(3)
 	if len(events) != 3 {
 		t.Errorf("got %d events, want 3", len(events))
+	}
+}
+
+func TestGetDashboardStatsDoesNotDeadlockWithSingleConnection(t *testing.T) {
+	db := newTestDB(t)
+
+	done := make(chan error, 1)
+	go func() {
+		_, err := db.GetDashboardStats("", "")
+		done <- err
+	}()
+
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Fatalf("GetDashboardStats: %v", err)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("GetDashboardStats deadlocked waiting for its own SQLite connection")
 	}
 }
 

@@ -8,13 +8,17 @@ export function useFileChanges(sessionId: string | null) {
 
   useEffect(() => {
     if (!sessionId) {
-      setGroups([])
       return
     }
     let cancelled = false
-    setLoading(true)
-    setError(null)
-    fetch(`/api/file-changes?session_id=${encodeURIComponent(sessionId)}`)
+    Promise.resolve()
+      .then(() => {
+        if (!cancelled) {
+          setLoading(true)
+          setError(null)
+        }
+        return fetch(`/api/file-changes?session_id=${encodeURIComponent(sessionId)}`)
+      })
       .then((res) => {
         if (!res.ok) throw new Error(`${res.status}`)
         return res.json() as Promise<FileChangeGroup[]>
@@ -33,5 +37,9 @@ export function useFileChanges(sessionId: string | null) {
     }
   }, [sessionId])
 
-  return { groups, loading, error }
+  return {
+    groups: sessionId ? groups : [],
+    loading: sessionId ? loading : false,
+    error: sessionId ? error : null,
+  }
 }
