@@ -1,7 +1,7 @@
 package service
 
 import (
-	"log"
+	"log/slog"
 	"slices"
 	"strings"
 	"sync"
@@ -384,7 +384,7 @@ func (s *EventService) ListSessionsByCWDPage(cwd, since string, page, size int) 
 		}
 		counts, countErr := s.repo.GetSessionFileChangeCounts(ids)
 		if countErr != nil {
-			log.Printf("[service] GetSessionFileChangeCounts: %v", countErr)
+			slog.Warn("GetSessionFileChangeCounts", "err", countErr)
 		} else {
 			for i, sess := range sessions {
 				sessions[i].FileChangeCount = counts[sess.SessionID]
