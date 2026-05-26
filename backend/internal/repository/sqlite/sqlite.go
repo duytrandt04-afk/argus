@@ -7,7 +7,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -76,6 +76,7 @@ func New(path string) (*DB, error) {
 		return nil, err
 	}
 	d.ready.Store(true)
+	startWALCheckpoint(context.Background(), db, 5*time.Minute)
 	return d, nil
 }
 
@@ -631,7 +632,7 @@ func (d *DB) GetDashboardStats(since, until string) (*domain.DashboardStats, err
 		}
 		_ = rows.Err()
 	} else {
-		log.Printf("dashboard: timeline query: %v", err)
+		slog.Warn("dashboard: timeline query", "err", err)
 	}
 
 	// Timeline By Agent
@@ -651,7 +652,7 @@ func (d *DB) GetDashboardStats(since, until string) (*domain.DashboardStats, err
 		}
 		_ = rows.Err()
 	} else {
-		log.Printf("dashboard: timeline by agent query: %v", err)
+		slog.Warn("dashboard: timeline by agent query", "err", err)
 	}
 
 	// Token Timeline
@@ -673,7 +674,7 @@ func (d *DB) GetDashboardStats(since, until string) (*domain.DashboardStats, err
 		}
 		_ = rows.Err()
 	} else {
-		log.Printf("dashboard: token timeline query: %v", err)
+		slog.Warn("dashboard: token timeline query", "err", err)
 	}
 
 	// Token Timeline By Agent
@@ -695,7 +696,7 @@ func (d *DB) GetDashboardStats(since, until string) (*domain.DashboardStats, err
 		}
 		_ = rows.Err()
 	} else {
-		log.Printf("dashboard: token timeline by agent query: %v", err)
+		slog.Warn("dashboard: token timeline by agent query", "err", err)
 	}
 
 	// Top Actions
@@ -716,7 +717,7 @@ func (d *DB) GetDashboardStats(since, until string) (*domain.DashboardStats, err
 		}
 		_ = rows.Err()
 	} else {
-		log.Printf("dashboard: top actions query: %v", err)
+		slog.Warn("dashboard: top actions query", "err", err)
 	}
 
 	// Agent Usage
@@ -734,7 +735,7 @@ func (d *DB) GetDashboardStats(since, until string) (*domain.DashboardStats, err
 		}
 		_ = rows.Err()
 	} else {
-		log.Printf("dashboard: agent usage query: %v", err)
+		slog.Warn("dashboard: agent usage query", "err", err)
 	}
 
 	return stats, nil
@@ -1053,6 +1054,26 @@ func (d *DB) GetFileChanges(sessionID string) ([]domain.FileChangeGroup, error) 
 		result = append(result, *groups[p])
 	}
 	return result, nil
+}
+
+// startWALCheckpoint runs PRAGMA wal_checkpoint(PASSIVE) on the given interval.
+// PASSIVE mode checkpoints without blocking writers. This prevents WAL file growth
+// from long-lived SSE read connections that hold read transactions open.
+func startWALCheckpoint(ctx context.Context, db *sql.DB, interval time.Duration) {
+	go func() {
+		t := time.NewTicker(interval)
+		defer t.Stop()
+		for {
+			select {
+			case <-t.C:
+				if _, err := db.ExecContext(ctx, `PRAGMA wal_checkpoint(PASSIVE)`); err != nil {
+					slog.Warn("wal checkpoint", "err", err)
+				}
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
 }
 
 func (d *DB) GetSessionFileChangeCounts(ids []string) (map[string]int, error) {
