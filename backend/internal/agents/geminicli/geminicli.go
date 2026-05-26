@@ -79,6 +79,7 @@ func Normalize(raw []byte) (domain.NormalizedEvent, error) {
 		DurationMS:          p.DurationMS,
 		Trigger:             p.Trigger,
 		NormalizerVersion:   geminicliNormalizerVersion,
+		NormalizationStatus: "ok",
 	}, nil
 }
 

@@ -401,6 +401,7 @@ func Normalize(raw []byte) (domain.NormalizedEvent, error) {
 		DurationMS:          p.DurationMS,
 		Trigger:             p.Trigger,
 		NormalizerVersion:   codexNormalizerVersion,
+		NormalizationStatus: "ok",
 	}, nil
 }
 

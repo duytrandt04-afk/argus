@@ -182,5 +182,6 @@ func Normalize(raw []byte) (domain.NormalizedEvent, error) {
 		DurationMS:          p.DurationMS,
 		Trigger:             p.Trigger,
 		NormalizerVersion:   claudecodeNormalizerVersion,
+		NormalizationStatus: "ok",
 	}, nil
 }

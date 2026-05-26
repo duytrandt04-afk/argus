@@ -87,3 +87,55 @@ func TestNormalizeClaudecodeNormalizerVersion(t *testing.T) {
 		t.Fatalf("NormalizerVersion = %q, want claudecode/1", got.NormalizerVersion)
 	}
 }
+
+// TestNormalizeSetsMeta asserts that a valid Claude Code PreToolUse payload
+// produces NormalizationStatus="ok" and NormalizerVersion="claudecode/1".
+func TestNormalizeSetsMeta(t *testing.T) {
+	payload := []byte(`{
+		"session_id": "sess-meta-01",
+		"transcript_path": "/home/user/.claude/projects/test/transcript.jsonl",
+		"hook_event_name": "PreToolUse",
+		"turn_id": "turn-01",
+		"tool_use_id": "tuse-01",
+		"cwd": "/tmp",
+		"tool_name": "Bash",
+		"tool_input": {"command": "true"}
+	}`)
+
+	e, err := claudecode.Normalize(payload)
+	if err != nil {
+		t.Fatalf("Normalize: %v", err)
+	}
+	if e.NormalizationStatus != "ok" {
+		t.Errorf("NormalizationStatus: want 'ok', got %q", e.NormalizationStatus)
+	}
+	if e.NormalizerVersion != "claudecode/1" {
+		t.Errorf("NormalizerVersion: want 'claudecode/1', got %q", e.NormalizerVersion)
+	}
+}
+
+// TestNormalizePostToolUseSetsMeta asserts that a valid PostToolUse payload
+// produces NormalizationStatus="ok" and NormalizerVersion="claudecode/1".
+func TestNormalizePostToolUseSetsMeta(t *testing.T) {
+	payload := []byte(`{
+		"session_id": "sess-post-01",
+		"transcript_path": "/home/user/.claude/projects/test/transcript.jsonl",
+		"hook_event_name": "PostToolUse",
+		"turn_id": "turn-02",
+		"tool_use_id": "tuse-02",
+		"cwd": "/tmp",
+		"tool_name": "Edit",
+		"tool_input": {"file_path": "main.go", "old_string": "a", "new_string": "b"}
+	}`)
+
+	e, err := claudecode.Normalize(payload)
+	if err != nil {
+		t.Fatalf("Normalize: %v", err)
+	}
+	if e.NormalizationStatus != "ok" {
+		t.Errorf("NormalizationStatus: want 'ok', got %q", e.NormalizationStatus)
+	}
+	if e.NormalizerVersion != "claudecode/1" {
+		t.Errorf("NormalizerVersion: want 'claudecode/1', got %q", e.NormalizerVersion)
+	}
+}
