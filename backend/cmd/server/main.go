@@ -3,12 +3,13 @@ package main
 import (
 	"context"
 	"errors"
-	"log"
+	"log/slog"
 	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"hooker/internal/config"
 	"hooker/internal/repository/sqlite"
@@ -25,45 +26,61 @@ func main() {
 	if cfg.DBPath != ":memory:" {
 		f, err := os.OpenFile(cfg.DBPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
 		if err != nil {
-			log.Fatalf("db not writable at %s: check path exists and permissions — %v", cfg.DBPath, err)
+			slog.Error("db not writable", "path", cfg.DBPath, "err", err)
+			os.Exit(1)
 		}
 		_ = f.Close()
 	}
 
 	// Validate ADDR format — net.Listen returns an opaque error for bad formats.
 	if _, _, err := net.SplitHostPort(cfg.Addr); err != nil {
-		log.Fatalf("invalid ADDR %q: must be host:port — %v", cfg.Addr, err)
+		slog.Error("invalid ADDR", "addr", cfg.Addr, "err", err)
+		os.Exit(1)
 	}
 
 	repo, err := sqlite.New(cfg.DBPath)
 	if err != nil {
-		log.Fatalf("open db (check DB_PATH, permissions, or migration state): %v", err)
+		slog.Error("open db", "err", err)
+		os.Exit(1)
 	}
 
 	svc := service.New(repo)
 
 	h := server.NewRouter(svc, repo.Ready)
 
-	log.Printf("hooker version -> %s (%s)", version.Version, version.Commit)
-	log.Printf("hook endpoint  -> POST http://%s/api/hook", cfg.Addr)
-	log.Printf("events SSE     -> GET  http://%s/api/events/stream", cfg.Addr)
-	log.Printf("db             -> %s", cfg.DBPath)
+	slog.Info("hooker", "version", version.Version, "commit", version.Commit)
+	slog.Info("hook endpoint", "url", "POST http://"+cfg.Addr+"/api/hook")
+	slog.Info("events SSE", "url", "GET http://"+cfg.Addr+"/api/events/stream")
+	slog.Info("db", "path", cfg.DBPath)
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 
-	srv := &http.Server{Addr: cfg.Addr, Handler: h}
+	srv := &http.Server{
+		Addr:              cfg.Addr,
+		Handler:           h,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       30 * time.Second,
+		IdleTimeout:       120 * time.Second,
+		// WriteTimeout: 0 — intentionally omitted; SSE streams have no write deadline
+	}
 	go func() {
 		<-ctx.Done()
-		_ = srv.Shutdown(context.Background())
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		defer cancel()
+		if err := srv.Shutdown(shutdownCtx); err != nil {
+			slog.Error("graceful shutdown", "err", err)
+		}
 	}()
 
 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		if isAddrInUse(err) {
 			stop()
-			log.Fatalf("port %s already in use: stop the existing hooker process or change ADDR — %v", cfg.Addr, err)
+			slog.Error("port already in use", "addr", cfg.Addr, "err", err)
+			os.Exit(1)
 		}
 		stop()
-		log.Fatalf("listen: %v", err)
+		slog.Error("listen", "err", err)
+		os.Exit(1)
 	}
 	stop()
 }
