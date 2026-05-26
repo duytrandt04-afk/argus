@@ -1,5 +1,5 @@
 import { renderHook, waitFor } from '@testing-library/react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useTraces } from '@/features/sessions/hooks/useTraces'
 
 let latestES: MockES
@@ -19,6 +19,10 @@ class MockES {
 beforeEach(() => {
   vi.clearAllMocks()
   vi.stubGlobal('EventSource', MockES)
+})
+
+afterEach(() => {
+  vi.clearAllMocks()
 })
 
 describe('useTraces', () => {
@@ -53,5 +57,31 @@ describe('useTraces', () => {
 
     latestES.onmessage?.({ data: JSON.stringify({ session: 'sess-1' }) } as MessageEvent)
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2))
+  })
+
+  it('exposes error state when fetch returns ok:false', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 500,
+      })
+    )
+
+    const { result } = renderHook(() => useTraces('sess-error'))
+
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    expect(result.current.error).toBe('Failed to load traces')
+    expect(result.current.traces).toEqual([])
+  })
+
+  it('exposes error state when fetch rejects', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network failure')))
+
+    const { result } = renderHook(() => useTraces('sess-reject'))
+
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    expect(result.current.error).toBe('Failed to load traces')
+    expect(result.current.traces).toEqual([])
   })
 })
