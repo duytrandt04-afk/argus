@@ -42,9 +42,9 @@
 
 ### Event Data Model (MODEL)
 
-- [ ] **MODEL-01**: Raw payload bytes stored on every ingested event (wire `e.RawPayload = raw` in handler; confirm `repository.Add` SQL includes column)
-- [ ] **MODEL-02**: `normalizer_version` field added to stored events so future re-processing can identify which adapter version produced a record
-- [ ] **MODEL-03**: `agent_version` field captured when available in hook payload
+- [x] **MODEL-01**: Raw payload bytes stored on every ingested event (wire `e.RawPayload = raw` in handler; confirm `repository.Add` SQL includes column)
+- [x] **MODEL-02**: `normalizer_version` field added to stored events so future re-processing can identify which adapter version produced a record
+- [x] **MODEL-03**: `agent_version` field captured when available in hook payload
 - [ ] **MODEL-04**: Unknown or partially-supported payloads ingested in degraded mode (store raw, extract whatever canonical fields are available, mark normalization status as partial)
 - [ ] **MODEL-05**: `dedupKey()` locked by a snapshot regression test asserting a known payload always produces the same key
 
@@ -54,7 +54,7 @@
 - [ ] **HARD-02**: Graceful shutdown drains with a finite context timeout (not `context.Background()` which can hang forever on open SSE tabs)
 - [ ] **HARD-03**: Panic recovery middleware logs stack trace and returns 500 instead of crashing process
 - [ ] **HARD-04**: `log.Printf` replaced with `log/slog` structured logging (zero new deps)
-- [ ] **HARD-05**: Migration runner wraps each migration in `BEGIN`/`COMMIT` with version record inside the same transaction (prevents partial-apply stuck state)
+- [x] **HARD-05**: Migration runner wraps each migration in `BEGIN`/`COMMIT` with version record inside the same transaction (prevents partial-apply stuck state)
 - [ ] **HARD-06**: Background goroutine runs `PRAGMA wal_checkpoint(PASSIVE)` periodically to prevent unbounded WAL growth from long-lived SSE connections
 
 ### Security (SEC)
@@ -178,16 +178,16 @@
 | REL-05 | Phase 1 | Pending |
 | DATA-04 | Phase 2 | Pending |
 | DATA-05 | Phase 2 | Pending |
-| MODEL-01 | Phase 2 | Pending |
-| MODEL-02 | Phase 2 | Pending |
-| MODEL-03 | Phase 2 | Pending |
+| MODEL-01 | Phase 2 | Complete |
+| MODEL-02 | Phase 2 | Complete |
+| MODEL-03 | Phase 2 | Complete |
 | MODEL-04 | Phase 2 | Pending |
 | MODEL-05 | Phase 2 | Pending |
 | HARD-01 | Phase 2 | Pending |
 | HARD-02 | Phase 2 | Pending |
 | HARD-03 | Phase 2 | Pending |
 | HARD-04 | Phase 2 | Pending |
-| HARD-05 | Phase 2 | Pending |
+| HARD-05 | Phase 2 | Complete |
 | HARD-06 | Phase 2 | Pending |
 | TEST-01 | Phase 2 | Pending |
 | TEST-02 | Phase 2 | Pending |

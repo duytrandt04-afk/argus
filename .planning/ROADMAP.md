@@ -54,7 +54,7 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 02-01-PLAN.md — Migration 008 (3 new columns) + transactional runner (HARD-05) + domain model fields
+- [x] 02-01-PLAN.md — Migration 008 (3 new columns) + transactional runner (HARD-05) + domain model fields
 - [ ] 02-03-PLAN.md — HTTP timeouts + graceful shutdown + slog migration + WAL checkpoint goroutine
 
 **Wave 2** *(blocked on Wave 1 completion)*
@@ -88,5 +88,5 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Local Adoption Baseline | 6/6 | Complete   | 2026-05-24 |
-| 2. Reliable Daily Use | 0/8 | Not started | - |
+| 2. Reliable Daily Use | 1/8 | In Progress|  |
 | 3. Mature Local Product | 0/TBD | Not started | - |
