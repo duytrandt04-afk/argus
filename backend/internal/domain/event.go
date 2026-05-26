@@ -47,6 +47,11 @@ type NormalizedEvent struct {
 	ToolResultStderr    string `json:"tool_result_stderr,omitempty"`
 	DurationMS          int    `json:"duration_ms,omitempty"`
 	Trigger             string `json:"trigger,omitempty"`
+
+	// Normalization metadata — set by ingestion pipeline.
+	NormalizationStatus string `json:"normalization_status,omitempty"`
+	NormalizerVersion   string `json:"normalizer_version,omitempty"`
+	AgentVersion        string `json:"agent_version,omitempty"`
 }
 
 type CtxLine struct {

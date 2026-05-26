@@ -41,6 +41,9 @@ var schema006 string
 //go:embed migrations/007_session_ended_at.sql
 var schema007 string
 
+//go:embed migrations/008_normalization_fields.sql
+var schema008 string
+
 type DB struct {
 	db    *sql.DB
 	ready atomic.Bool
@@ -94,6 +97,7 @@ func (d *DB) migrate() error {
 		{5, schema005},
 		{6, schema006},
 		{7, schema007},
+		{8, schema008},
 	}
 	for _, m := range migrations {
 		var count int
@@ -101,11 +105,20 @@ func (d *DB) migrate() error {
 		if count > 0 {
 			continue
 		}
-		if _, err := d.db.Exec(m.sql); err != nil {
+		tx, err := d.db.Begin()
+		if err != nil {
+			return fmt.Errorf("migration %d begin: %w", m.version, err)
+		}
+		if _, err := tx.Exec(m.sql); err != nil {
+			_ = tx.Rollback()
 			return fmt.Errorf("migration %d: %w", m.version, err)
 		}
-		if _, err := d.db.Exec(`INSERT INTO schema_migrations (version) VALUES (?)`, m.version); err != nil {
+		if _, err := tx.Exec(`INSERT INTO schema_migrations (version) VALUES (?)`, m.version); err != nil {
+			_ = tx.Rollback()
 			return fmt.Errorf("record migration %d: %w", m.version, err)
+		}
+		if err := tx.Commit(); err != nil {
+			return fmt.Errorf("migration %d commit: %w", m.version, err)
 		}
 	}
 	return nil
@@ -127,8 +140,9 @@ func (d *DB) Add(e domain.NormalizedEvent) error {
 			task_id, task_title, task_description,
 			notification_type, notification_title, notification_message,
 			change_type, old_cwd, new_cwd, tool_calls_json,
-			tool_result_stdout, tool_result_stderr, duration_ms, trigger
-		) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+			tool_result_stdout, tool_result_stderr, duration_ms, trigger,
+			normalizer_version, agent_version, normalization_status
+		) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
 		e.Time, e.Agent, e.Session, e.HookEventName, e.TurnID, e.ToolUseID,
 		e.Tool, e.Model, e.Source, e.CWD, e.TranscriptPath,
 		nullStr(e.Action), nullStr(e.Path), nullStr(e.Command),
@@ -142,6 +156,7 @@ func (d *DB) Add(e domain.NormalizedEvent) error {
 		nullStr(e.NotificationType), nullStr(e.NotificationTitle), nullStr(e.NotificationMessage),
 		nullStr(e.ChangeType), nullStr(e.OldCWD), nullStr(e.NewCWD), nullStr(e.ToolCallsJSON),
 		nullStr(e.ToolResultStdout), nullStr(e.ToolResultStderr), nullInt(e.DurationMS), nullStr(e.Trigger),
+		nullStr(e.NormalizerVersion), nullStr(e.AgentVersion), normalizationStatus(e.NormalizationStatus),
 	)
 	return err
 }
@@ -172,7 +187,8 @@ func (d *DB) listWithWhere(where string, args []any, limit, offset int) ([]domai
 		       COALESCE(change_type,''), COALESCE(old_cwd,''), COALESCE(new_cwd,''),
 		       COALESCE(tool_calls_json,''),
 		       COALESCE(tool_result_stdout,''), COALESCE(tool_result_stderr,''),
-		       COALESCE(duration_ms,0), COALESCE(trigger,'')
+		       COALESCE(duration_ms,0), COALESCE(trigger,''),
+		       COALESCE(normalizer_version,''), COALESCE(agent_version,''), COALESCE(normalization_status,'')
 		FROM hook_events
 	`
 	if where != "" {
@@ -211,6 +227,7 @@ func (d *DB) listWithWhere(where string, args []any, limit, offset int) ([]domai
 			&e.NotificationType, &e.NotificationTitle, &e.NotificationMessage,
 			&e.ChangeType, &e.OldCWD, &e.NewCWD, &e.ToolCallsJSON,
 			&e.ToolResultStdout, &e.ToolResultStderr, &e.DurationMS, &e.Trigger,
+			&e.NormalizerVersion, &e.AgentVersion, &e.NormalizationStatus,
 		); err != nil {
 			return nil, err
 		}
@@ -770,6 +787,17 @@ func dedupKey(e domain.NormalizedEvent) string {
 func nullStr(s string) any {
 	if s == "" {
 		return nil
+	}
+	return s
+}
+
+// normalizationStatus returns 'ok' when the status is empty so that the
+// NOT NULL DEFAULT constraint on normalization_status is always satisfied
+// without relying on SQLite's DEFAULT keyword (which doesn't fire when an
+// explicit NULL is supplied via INSERT).
+func normalizationStatus(s string) string {
+	if s == "" {
+		return "ok"
 	}
 	return s
 }
