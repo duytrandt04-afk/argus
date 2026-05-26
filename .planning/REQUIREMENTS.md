@@ -45,8 +45,8 @@
 - [x] **MODEL-01**: Raw payload bytes stored on every ingested event (wire `e.RawPayload = raw` in handler; confirm `repository.Add` SQL includes column)
 - [x] **MODEL-02**: `normalizer_version` field added to stored events so future re-processing can identify which adapter version produced a record
 - [x] **MODEL-03**: `agent_version` field captured when available in hook payload
-- [ ] **MODEL-04**: Unknown or partially-supported payloads ingested in degraded mode (store raw, extract whatever canonical fields are available, mark normalization status as partial)
-- [ ] **MODEL-05**: `dedupKey()` locked by a snapshot regression test asserting a known payload always produces the same key
+- [x] **MODEL-04**: Unknown or partially-supported payloads ingested in degraded mode (store raw, extract whatever canonical fields are available, mark normalization status as partial)
+- [x] **MODEL-05**: `dedupKey()` locked by a snapshot regression test asserting a known payload always produces the same key
 
 ### Backend Hardening (HARD)
 
@@ -181,8 +181,8 @@
 | MODEL-01 | Phase 2 | Complete |
 | MODEL-02 | Phase 2 | Complete |
 | MODEL-03 | Phase 2 | Complete |
-| MODEL-04 | Phase 2 | Pending |
-| MODEL-05 | Phase 2 | Pending |
+| MODEL-04 | Phase 2 | Complete |
+| MODEL-05 | Phase 2 | Complete |
 | HARD-01 | Phase 2 | Complete |
 | HARD-02 | Phase 2 | Complete |
 | HARD-03 | Phase 2 | Pending |
