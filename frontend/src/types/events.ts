@@ -48,6 +48,9 @@ export interface EventRecord {
   duration_ms?: number
   trigger?: string
   agent?: string
+  normalization_status?: 'ok' | 'degraded'
+  normalizer_version?: string
+  agent_version?: string
 }
 
 export interface SessionUsage {

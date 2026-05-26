@@ -8,6 +8,7 @@ type EventBadgesProps = {
 
 export function EventBadges({ event: e }: EventBadgesProps) {
   const hasAny =
+    e.normalization_status === 'degraded' ||
     e.tool ||
     e.source ||
     e.turn_id ||
@@ -23,6 +24,14 @@ export function EventBadges({ event: e }: EventBadgesProps) {
 
   return (
     <div className="mt-[6px] text-[0.68rem] text-[#888] flex flex-wrap gap-[6px]">
+      {e.normalization_status === 'degraded' && (
+        <Badge
+          variant="outline"
+          className="text-[0.68rem] font-semibold leading-none border-[rgba(245,166,35,0.35)] bg-[rgba(245,166,35,0.08)] text-[#f5a623] px-[6px] py-[2px] h-auto rounded"
+        >
+          degraded
+        </Badge>
+      )}
       {e.tool && (
         <Badge
           variant="outline"
