@@ -3,6 +3,7 @@ package handler
 import (
 	"crypto/sha256"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -31,8 +32,15 @@ func Hook(svc *service.EventService, matcher IgnoreMatcher) http.Handler {
 			return
 		}
 
+		const maxHookBodyBytes = 1 << 20 // 1 MiB
+		r.Body = http.MaxBytesReader(w, r.Body, maxHookBodyBytes)
 		raw, err := io.ReadAll(r.Body)
 		if err != nil {
+			var maxErr *http.MaxBytesError
+			if errors.As(err, &maxErr) {
+				http.Error(w, "request body too large", http.StatusRequestEntityTooLarge)
+				return
+			}
 			http.Error(w, "read body", http.StatusBadRequest)
 			return
 		}
