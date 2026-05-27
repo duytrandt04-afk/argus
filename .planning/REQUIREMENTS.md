@@ -60,8 +60,8 @@
 ### Security (SEC)
 
 - [x] **SEC-01**: Host header validation middleware rejects requests where Host is not `localhost`, `127.0.0.1`, or `[::1]` (prevents DNS rebinding attack on wildcard CORS)
-- [ ] **SEC-02**: CORS origin restricted to explicit allowlist (not `*`) — at minimum `http://localhost` + configured port
-- [ ] **SEC-03**: Loopback-only bind (`127.0.0.1`) is enforced default; remote bind requires explicit env var opt-in with startup warning
+- [x] **SEC-02**: CORS origin restricted to explicit allowlist (not `*`) — at minimum `http://localhost` + configured port
+- [x] **SEC-03**: Loopback-only bind (`127.0.0.1`) is enforced default; remote bind requires explicit env var opt-in with startup warning
 - [x] **SEC-04**: Threat model documented: localhost-use only, single-user trust model, no auth for loopback use, remote sharing via ngrok is unofficial/unsupported
 - [x] **SEC-05**: Export endpoints (`/api/export/*`) implement `Sec-Fetch-Site` check before being publicly documented
 
@@ -197,8 +197,8 @@
 | TEST-06 | Phase 2 | Complete |
 | TEST-07 | Phase 2 | Complete |
 | SEC-05 | Phase 2 | Complete |
-| SEC-02 | Phase 3 | Pending |
-| SEC-03 | Phase 3 | Pending |
+| SEC-02 | Phase 3 | Complete |
+| SEC-03 | Phase 3 | Complete |
 | SEC-04 | Phase 3 | Complete |
 | PRIV-01 | Phase 3 | Complete |
 | PRIV-02 | Phase 3 | Complete |

@@ -8,7 +8,7 @@ hooker is a working prototype that needs hardening into a trustworthy daily-use 
 
 - [x] **Phase 1: Local Adoption Baseline** - CI gates + security fix + install/doctor/health/version/release pipeline (completed 2026-05-24)
 - [x] **Phase 2: Reliable Daily Use** - Migration safety + backend hardening + data model + testing + export (completed 2026-05-26)
-- [ ] **Phase 3: Mature Local Product** - Privacy controls + security posture + contributor infrastructure
+- [x] **Phase 3: Mature Local Product** - Privacy controls + security posture + contributor infrastructure (completed 2026-05-27)
 
 ## Phase Details
 
@@ -96,7 +96,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 03-03-PLAN.md — CORS allowlist + remote-bind enforcement + Docker behavior
+- [x] 03-03-PLAN.md — CORS allowlist + remote-bind enforcement + Docker behavior
 
 ## Progress
 
@@ -104,4 +104,4 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Local Adoption Baseline | 6/6 | Complete   | 2026-05-24 |
 | 2. Reliable Daily Use | 8/8 | Complete   | 2026-05-26 |
-| 3. Mature Local Product | 4/5 | In Progress|  |
+| 3. Mature Local Product | 5/5 | Complete   | 2026-05-27 |
