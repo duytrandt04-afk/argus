@@ -6,15 +6,27 @@ import (
 )
 
 type Config struct {
-	Addr   string
-	DBPath string
+	Addr       string
+	DBPath     string
+	IgnorePath string
 }
 
 func Load() Config {
 	return Config{
-		Addr:   envOr("ADDR", "127.0.0.1:8765"),
-		DBPath: envOr("DB_PATH", defaultDBPath()),
+		Addr:       envOr("ADDR", "127.0.0.1:8765"),
+		DBPath:     envOr("DB_PATH", defaultDBPath()),
+		IgnorePath: envOr("HOOKER_IGNORE", defaultIgnorePath()),
 	}
+}
+
+// defaultIgnorePath returns the canonical default ignore file path:
+// ~/.config/hooker/ignore (D-01).
+func defaultIgnorePath() string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return filepath.Join(".config", "hooker", "ignore")
+	}
+	return filepath.Join(home, ".config", "hooker", "ignore")
 }
 
 func envOr(key, fallback string) string {
