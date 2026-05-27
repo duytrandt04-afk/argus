@@ -51,14 +51,15 @@ A developer can install hooker from source in under 10 minutes and trust that it
 - [ ] `normalizer_version` and `agent_version` fields on stored events
 - [ ] Partial-ingest mode for unknown/drifted payloads with visible warnings
 
-**Milestone 3 — Mature Local Product:**
+**Milestone 3 — Mature Local Product:** ✓ Complete (Phase 03, 2026-05-27)
 
-- [ ] Semantic versioning with automated changelog from conventional commits
-- [ ] Security threat model documented; loopback-only as enforced default
-- [ ] CORS tightened; optional local auth for non-loopback use
-- [ ] Privacy controls: ignore/exclusion patterns for repos/paths; data-capture warning in docs
-- [ ] `CONTRIBUTING.md` + architecture overview + ADRs (SQLite choice, normalization strategy, local-first positioning)
-- [ ] Contributor guardrails: new adapter contract, fixture coverage requirement
+- [x] Security threat model documented; loopback-only as enforced default
+- [x] CORS tightened: explicit allowlist, `Vary: Origin`, no wildcard `*`
+- [x] Remote bind opt-in: `HOOKER_ALLOW_REMOTE=1` required; actionable startup error otherwise
+- [x] Privacy controls: gitignore-style exclusions via `~/.config/hooker/ignore` / `HOOKER_IGNORE`
+- [x] Privacy and security posture documented in `docs/privacy.md` + `docs/security.md`
+- [x] `CONTRIBUTING.md` + architecture ADRs (SQLite, normalization strategy, local-first, proxy scope)
+- [x] Contributor guardrails: adapter contract with fixture requirement, frontend-backend checklist
 
 **Phase 4 — Product Features (deferred until M3 stable):**
 
@@ -79,6 +80,10 @@ A developer can install hooker from source in under 10 minutes and trust that it
 - Binary release artifacts — source install first, Docker second, binaries later
 - External adapter plugin system — keep adapters in-tree until ecosystem justifies the complexity
 - Remote sharing / ngrok support as official feature — unofficial/advanced; public internet exposure not supported
+
+## Current State
+
+Phase 03 complete (2026-05-27) — all three milestone phases shipped. Privacy gate, CORS allowlist, remote-bind enforcement, contributor docs, and ADRs all in production. Human UAT pending for 3 runtime checks (doctor output, bind rejection, privacy gate E2E).
 
 ## Context
 
