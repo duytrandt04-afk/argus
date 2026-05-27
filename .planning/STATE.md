@@ -33,8 +33,9 @@ Last activity: 2026-05-27 — Milestone v1.1 roadmap approved
 
 | Wave | Plans | Autonomous | Description |
 |------|-------|------------|-------------|
-| 1 | 01-01, 01-02, 01-03, 01-04, 01-05 | yes | Parallel: backend security+health, version+diagnostics, CI/release infra, scripts, docs |
-| 2 | 01-06 | yes | Frontend VersionBadge (depends on 01-02 version API shape) |
+| 1 | 04-01, 04-02, 04-03 | no | Backend diagnostics data contract, endpoint, and tests |
+| 2 | 05-01, 05-02, 05-03 | no | Hook telemetry, config detection, and privacy/security diagnostics |
+| 3 | 06-01, 06-02, 06-03 | no | Diagnostics route, UI layout, states, and frontend tests |
 
 ## Performance Metrics
 
