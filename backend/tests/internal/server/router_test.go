@@ -205,3 +205,13 @@ func TestNewRouterVersionReturnsAppVersion(t *testing.T) {
 		t.Fatalf("buildDate = %q, want unknown", payload.BuildDate)
 	}
 }
+
+func TestHostHeaderAllowsIPv6Loopback(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/api/version", nil)
+	req.Host = "[::1]:8765"
+	rec := httptest.NewRecorder()
+	newTestRouter().ServeHTTP(rec, req)
+	if rec.Code == http.StatusForbidden {
+		t.Fatalf("status = %d, want 200 for [::1]:8765", rec.Code)
+	}
+}

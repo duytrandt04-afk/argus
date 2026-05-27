@@ -79,12 +79,9 @@ func corsAllowlist(origins []string) func(http.Handler) http.Handler {
 				next.ServeHTTP(w, r)
 				return
 			}
-			// Origin present but not in allowlist.
-			if r.Method == http.MethodOptions {
-				http.Error(w, "forbidden", http.StatusForbidden)
-				return
-			}
-			next.ServeHTTP(w, r)
+			// Origin present but not in allowlist — reject regardless of method.
+			http.Error(w, "forbidden", http.StatusForbidden)
+			return
 		})
 	}
 }
@@ -96,7 +93,7 @@ func hostHeader(next http.Handler) http.Handler {
 	allowed := map[string]bool{
 		"localhost": true,
 		"127.0.0.1": true,
-		"[::1]":     true,
+		"::1":       true,
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		host := r.Host
