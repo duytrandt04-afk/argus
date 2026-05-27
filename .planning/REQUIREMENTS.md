@@ -85,7 +85,7 @@
 
 ### Privacy & Data Controls (PRIV)
 
-- [ ] **PRIV-01**: gitignore-style path exclusion file (`~/.config/hooker/ignore` or `$HOOKER_IGNORE`) — matched paths not ingested
+- [x] **PRIV-01**: gitignore-style path exclusion file (`~/.config/hooker/ignore` or `$HOOKER_IGNORE`) — matched paths not ingested
 - [x] **PRIV-02**: Privacy warning visible in setup docs and `doctor` output: what categories of data are captured
 - [x] **PRIV-03**: Privacy implications of NDJSON/snapshot export documented (exports contain full prompts, diffs, file paths)
 
@@ -200,7 +200,7 @@
 | SEC-02 | Phase 3 | Pending |
 | SEC-03 | Phase 3 | Pending |
 | SEC-04 | Phase 3 | Complete |
-| PRIV-01 | Phase 3 | Pending |
+| PRIV-01 | Phase 3 | Complete |
 | PRIV-02 | Phase 3 | Complete |
 | PRIV-03 | Phase 3 | Complete |
 | CONTRIB-01 | Phase 3 | Complete |

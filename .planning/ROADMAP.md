@@ -92,7 +92,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 03-02-PLAN.md — Privacy ignore matcher + hook ingestion gate
+- [x] 03-02-PLAN.md — Privacy ignore matcher + hook ingestion gate
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -104,4 +104,4 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Local Adoption Baseline | 6/6 | Complete   | 2026-05-24 |
 | 2. Reliable Daily Use | 8/8 | Complete   | 2026-05-26 |
-| 3. Mature Local Product | 3/5 | In Progress|  |
+| 3. Mature Local Product | 4/5 | In Progress|  |
