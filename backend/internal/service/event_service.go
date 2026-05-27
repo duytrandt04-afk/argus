@@ -2,6 +2,7 @@ package service
 
 import (
 	"log/slog"
+	"os"
 	"slices"
 	"strings"
 	"sync"
@@ -12,6 +13,7 @@ import (
 	"hooker/internal/agents/geminicli"
 	"hooker/internal/domain"
 	"hooker/internal/repository"
+	"hooker/internal/version"
 )
 
 type EventService struct {
@@ -68,6 +70,46 @@ func (s *EventService) ListEventsBySession(sessionID string, limit int) ([]domai
 
 func (s *EventService) SessionModel(sessionID string) (string, error) {
 	return s.repo.SessionModel(sessionID)
+}
+
+func (s *EventService) Diagnostics(dbPath string, ready bool) (domain.Diagnostics, error) {
+	stats, err := s.repo.DiagnosticsStorageStats()
+	if err != nil {
+		return domain.Diagnostics{}, err
+	}
+
+	health := domain.DiagnosticsHealth{
+		Live:  true,
+		Ready: ready,
+	}
+	if !ready {
+		health.Reason = "database not ready"
+	}
+
+	storage := domain.DiagnosticsStorage{
+		DBPath:        dbPath,
+		TotalEvents:   stats.TotalEvents,
+		TotalSessions: stats.TotalSessions,
+		LatestEventAt: stats.LatestEventAt,
+	}
+	if dbPath == ":memory:" {
+		storage.DBSizeReason = "unavailable"
+	} else if info, err := os.Stat(dbPath); err == nil {
+		size := info.Size()
+		storage.DBSizeBytes = &size
+	} else {
+		storage.DBSizeReason = "unavailable"
+	}
+
+	return domain.Diagnostics{
+		Version: domain.DiagnosticsVersion{
+			Version:   version.Version,
+			Commit:    version.Commit,
+			BuildDate: version.BuildDate,
+		},
+		Health:  health,
+		Storage: storage,
+	}, nil
 }
 
 func (s *EventService) ListProjects() ([]domain.Project, error) {

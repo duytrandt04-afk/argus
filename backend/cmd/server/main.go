@@ -73,6 +73,7 @@ func main() {
 	h := server.NewRouter(svc, repo, repo.Ready, server.Options{
 		Matcher:     matcher,
 		CORSOrigins: cfg.CORSOrigins,
+		DBPath:      cfg.DBPath,
 	})
 
 	slog.Info("hooker", "version", version.Version, "commit", version.Commit)

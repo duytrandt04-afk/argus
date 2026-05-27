@@ -20,6 +20,9 @@ type Options struct {
 	// CORSOrigins is the explicit set of allowed CORS origins.
 	// If empty, the default loopback origins for port 8765 are used.
 	CORSOrigins []string
+
+	// DBPath is reported by the read-only diagnostics endpoint.
+	DBPath string
 }
 
 // allowNone is the default matcher used when Options.Matcher is nil.
@@ -51,6 +54,7 @@ func NewRouter(svc *service.EventService, repo repository.EventRepository, ready
 	mux.Handle("GET /api/events", handler.Events(svc))
 	mux.Handle("GET /api/events/stream", handler.EventsStream(svc))
 	mux.Handle("GET /api/version", handler.Version())
+	mux.Handle("GET /api/diagnostics", handler.Diagnostics(svc, ready, opts.DBPath))
 	mux.Handle("GET /api/session-usage", handler.Usage())
 	mux.Handle("GET /api/projects", handler.Projects(svc))
 	mux.Handle("GET /api/sessions", handler.Sessions(svc))
