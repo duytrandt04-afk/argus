@@ -2,135 +2,127 @@
 
 ## What This Is
 
-hooker is a local-first monitoring dashboard for AI coding agent activity. It receives hook payloads from Claude Code, Codex, and Gemini CLI, normalizes them into a canonical event model, persists to SQLite, and streams to a React SPA in real time. Built for solo developers who want visibility into their coding agent sessions without cloud dependencies.
+hooker is a local-first monitoring dashboard for AI coding agent activity. It receives hook payloads from Claude Code, Codex, and Gemini CLI, normalizes them into a canonical event model, persists them to SQLite, and streams them to a React SPA in real time. It is built for solo developers who want visibility into coding-agent sessions without cloud dependencies.
 
 ## Core Value
 
-A developer can install hooker from source in under 10 minutes and trust that it reliably captures, stores, and surfaces their coding agent activity without data loss, silent failures, or upgrade surprises.
+A developer can install hooker from source, capture coding-agent activity locally, and trust that the app handles diagnostics, data durability, privacy controls, exports, and security posture without silent surprises.
+
+## Current State
+
+**v1.0 MVP shipped on 2026-05-27.** The initial milestone is archived in `.planning/milestones/` and summarized in `.planning/MILESTONES.md`.
+
+What is now in place:
+
+- Source-install path with `./scripts/hooker setup`, `./scripts/hooker doctor`, quickstart/install/release docs, CI, and GoReleaser configuration.
+- Runtime diagnostics: `/healthz`, `/readyz`, `/api/version`, version badge, startup validation, DB path visibility, and actionable fatal errors.
+- Durable event model: raw payload archive, normalization metadata, degraded ingestion for unknown payloads, transactional migrations, WAL checkpointing, and export endpoints.
+- Reliability and regression coverage: backend tests, frontend hook/component tests, Playwright smoke wiring, panic recovery, graceful shutdown, HTTP timeouts, and export round-trip tests.
+- Privacy and security controls: host header validation, explicit CORS allowlist, loopback-only default bind, remote-bind opt-in, gitignore-style ignore file, privacy docs, and local threat model docs.
+- Contributor guardrails: `CONTRIBUTING.md`, frontend-backend contract checklist, adapter fixture requirements, and ADRs for SQLite, normalization, local-first positioning, and proxy scope.
+
+Known deferred close-out items:
+
+- Phase 01 verification still needs human confirmation for clean-machine onboarding timing, GitHub settings/hosted CI, and migration-failure message quality.
+- Phase 03 UAT still needs human confirmation for doctor privacy output, remote-bind runtime rejection, and end-to-end privacy gate behavior.
 
 ## Requirements
 
 ### Validated
 
-- ✓ Hook event ingestion via `POST /api/hook` — existing
-- ✓ Agent normalization for Claude Code, Codex, Gemini CLI — existing
-- ✓ SQLite persistence with versioned migrations — existing
-- ✓ SSE real-time event streaming to browser — existing
-- ✓ React SPA: session browser, events feed, dashboard stats, usage breakdown — existing
-- ✓ Docker support with embedded static file serving — existing
-- ✓ Official Anthropic Go SDK integration — existing (migrated in recent refactor)
-- ✓ Watcher worker for JSONL transcript polling — existing
+- Hook event ingestion via `POST /api/hook` — existing before v1.0
+- Agent normalization for Claude Code, Codex, Gemini CLI — existing before v1.0
+- SQLite persistence with versioned migrations — existing before v1.0
+- SSE real-time event streaming to browser — existing before v1.0
+- React SPA: session browser, events feed, dashboard stats, usage breakdown — existing before v1.0
+- Docker support with embedded static file serving — existing before v1.0
+- Official Anthropic Go SDK integration — existing before v1.0
+- Watcher worker for JSONL transcript polling — existing before v1.0
+- Source-install quickstart that uses `go build` and reaches first-event capture path — v1.0
+- Root helper script with `setup` and `doctor` subcommands — v1.0
+- Layered docs: terse README plus quickstart, install, hooks, release, privacy, and security docs — v1.0
+- pnpm standardization and frontend package-manager guardrails — v1.0
+- CI for backend build/test/vet/lint and frontend typecheck/test/build — v1.0
+- Versioned release pipeline with checksums and ldflag-injected version metadata — v1.0
+- Health, readiness, and version endpoints plus frontend runtime version display — v1.0
+- Startup diagnostics for port, DB path, migration/config, resolved DB location, and bind warnings — v1.0
+- DB lifecycle docs for WAL, backup, reset, prune, privacy, NDJSON export, and SQLite snapshot export — v1.0
+- Raw payload archive, normalizer version, agent version, and degraded ingestion status — v1.0
+- Transactional migration runner and migration regression tests — v1.0
+- Backend hardening: timeouts, panic recovery, slog, finite shutdown, WAL checkpointing — v1.0
+- Export endpoints protected by `Sec-Fetch-Site` — v1.0
+- Frontend hook/component tests and Playwright smoke wiring — v1.0
+- Explicit privacy controls via `~/.config/hooker/ignore` / `HOOKER_IGNORE` — v1.0
+- CORS allowlist and loopback-only default bind with `HOOKER_ALLOW_REMOTE=1` opt-in — v1.0
+- Threat model, privacy posture, contributor guide, and architecture ADRs — v1.0
 
 ### Active
 
-**Milestone 1 — Local Adoption Baseline:**
+No active requirements are defined. Start the next milestone with `$gsd-new-milestone` to create fresh requirements and roadmap phases.
 
-- [ ] Source-install quickstart that works in under 10 minutes
-- [ ] Root helper script (`./scripts/hooker`) with `setup` and `doctor` subcommands
-- [ ] Layered docs: terse README + `docs/quickstart.md` + `docs/install.md` + `docs/hooks.md`
-- [ ] `pnpm` standardization across frontend
-- [ ] CI: backend tests, vet, lint + frontend typecheck + frontend build
-- [ ] Versioned releases with checksums
-- [ ] App version visible in backend logs and frontend UI
-- [ ] `/healthz` and `/readyz` endpoints (with DB-open check)
-- [ ] `doctor` command: required checks (Go, Node, DB writable, port free) + optional warnings (hook config missing, remote bind)
-- [ ] Startup validation with actionable fatal error messages
-- [ ] DB file location documented + backup/reset instructions
-- [ ] JSON export and SQLite snapshot export paths
-- [ ] Retention defaults documented; manual cleanup/prune command
+### Candidate Next Milestone Ideas
 
-**Milestone 2 — Reliable Daily Use:**
-
-- [ ] Frontend regression coverage: component/hook tests + route smoke tests (Vitest + RTL)
-- [ ] Backend graceful shutdown + HTTP timeouts (read, write, idle)
-- [ ] Panic recovery middleware
-- [ ] SQLite WAL documented, indexes reviewed, migration correctness tested
-- [ ] End-to-end HTTP workflow test: ingest fixture payloads → verify via API
-- [ ] Playwright smoke: load events/sessions/dashboard, verify core data visible
-- [ ] Raw payload archive layer (canonical + raw event model)
-- [ ] `normalizer_version` and `agent_version` fields on stored events
-- [ ] Partial-ingest mode for unknown/drifted payloads with visible warnings
-
-**Milestone 3 — Mature Local Product:** ✓ Complete (Phase 03, 2026-05-27)
-
-- [x] Security threat model documented; loopback-only as enforced default
-- [x] CORS tightened: explicit allowlist, `Vary: Origin`, no wildcard `*`
-- [x] Remote bind opt-in: `HOOKER_ALLOW_REMOTE=1` required; actionable startup error otherwise
-- [x] Privacy controls: gitignore-style exclusions via `~/.config/hooker/ignore` / `HOOKER_IGNORE`
-- [x] Privacy and security posture documented in `docs/privacy.md` + `docs/security.md`
-- [x] `CONTRIBUTING.md` + architecture ADRs (SQLite, normalization strategy, local-first, proxy scope)
-- [x] Contributor guardrails: adapter contract with fixture requirement, frontend-backend checklist
-
-**Phase 4 — Product Features (deferred until M3 stable):**
-
-- [ ] Full-text search across prompts, paths, tools, errors
-- [ ] Filters by agent, session, time range, model, event type, status
-- [ ] Diagnostics page in UI (hook compatibility warnings, DB stats, app version, normalizer version)
-- [ ] Richer diff navigation and code context
-- [ ] Agent/session comparison tools
-- [ ] Better token and cost analytics
-- [ ] Anomaly highlighting for failed tool runs / repeated retries
-- [ ] Built-in sample data mode for demos
+- Full-text search across prompts, paths, tools, errors, and models.
+- Filter UI by agent, session, time range, model, event type, and status.
+- Diagnostics UI for hook compatibility warnings, DB stats, app version, and normalizer versions.
+- Richer diff navigation and code context.
+- Agent/session comparison tools.
+- Better token and cost analytics.
+- Anomaly highlighting for failed tool runs and repeated retries.
+- Built-in sample data mode for demos.
 
 ### Out of Scope
 
-- Kubernetes / distributed tracing / horizontal scaling — local-first product, SQLite until proven bottleneck
-- Multi-tenant auth or cloud control plane — out of product scope
-- Native Windows first-class support — macOS/Linux/WSL are first-class; Windows documented separately
-- Binary release artifacts — source install first, Docker second, binaries later
-- External adapter plugin system — keep adapters in-tree until ecosystem justifies the complexity
-- Remote sharing / ngrok support as official feature — unofficial/advanced; public internet exposure not supported
-
-## Current State
-
-Phase 03 complete (2026-05-27) — all three milestone phases shipped. Privacy gate, CORS allowlist, remote-bind enforcement, contributor docs, and ADRs all in production. Human UAT pending for 3 runtime checks (doctor output, bind rejection, privacy gate E2E).
+- Kubernetes / distributed tracing / horizontal scaling — local-first product, SQLite until proven bottleneck.
+- Multi-tenant auth or cloud control plane — out of product scope.
+- Native Windows first-class support — macOS/Linux/WSL are first-class; Windows documented separately.
+- External adapter plugin system — keep adapters in-tree until ecosystem justifies the complexity.
+- Remote sharing / ngrok support as an official feature — unofficial/advanced; public internet exposure not supported.
+- Automatic PII redaction — creates false confidence; gitignore-style path exclusion is the current scope.
+- curl-pipe-bash install script — wrong trust model for a tool that stores sensitive dev data.
+- Replacing SQLite — not until real usage data demands it.
 
 ## Context
 
-- **Solo developer project.** One maintainer — decisions optimize for low operational overhead, not team coordination.
-- **Existing codebase is post-refactor.** Worker/queue/AI-insights layer removed in recent cleanup; official Anthropic Go SDK replacing custom HTTP client.
-- **Architecture:** Layered Go monolith (config → service → repository) with embedded React SPA. Agent normalizers are strategy-pattern adapters. No global state library on frontend.
-- **Known architectural concerns:** `EventService` is over-concentrated (ingestion + aggregation + SSE fanout); multiple handlers duplicate query parsing. Both are tracked in `.planning/codebase/ARCHITECTURE.md`.
-- **Local usage scale target:** Dozens of sessions, years of history — SQLite is the right choice; no need to optimize for extreme scale.
-- **Existing plan.md** contains full gap analysis and prioritized roadmap — this PROJECT.md supersedes it as GSD source of truth.
+- **Solo developer project.** Decisions optimize for low operational overhead.
+- **Architecture:** Layered Go monolith (config -> service -> repository) with embedded React SPA. Agent normalizers are in-tree strategy adapters.
+- **Known architectural concerns:** `EventService` is over-concentrated; multiple handlers duplicate query parsing. These remain tracked in `.planning/codebase/ARCHITECTURE.md`.
+- **Local usage scale target:** Dozens of sessions and years of history. SQLite remains the right default.
+- **Planning state:** v1.0 artifacts are archived. New product work should begin with fresh requirements, not by extending the archived v1 requirement file.
 
 ## Constraints
 
-- **Stack:** Go backend + React/TypeScript SPA — no new runtimes without strong justification
-- **Storage:** SQLite for all local use — no alternative until real usage data demands it
-- **Solo maintainer:** Avoid abstractions or CI overhead that creates maintenance tax without proportional value
-- **Source install first:** Docs and scripts must support source install as the primary path; Docker is secondary
-- **No breaking schema changes without migration + upgrade notes**
-- **Privacy:** Product captures prompts, diffs, tool outputs, file paths — data handling must be explicit, not implicit
+- **Stack:** Go backend + React/TypeScript SPA; no new runtimes without strong justification.
+- **Storage:** SQLite for all local use until real usage data proves otherwise.
+- **Solo maintainer:** Avoid abstractions or CI overhead that creates maintenance tax without proportional value.
+- **Source install first:** Docs and scripts must support source install as the primary path; Docker is secondary.
+- **No breaking schema changes without migration and upgrade notes.**
+- **Privacy:** Product captures prompts, diffs, tool outputs, file paths, raw payloads, and exports; data handling must stay explicit.
 
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| SQLite as sole storage | Local-first, single-user, zero infra overhead | — Pending |
-| Agent normalizers as in-tree adapters | Too early for plugin complexity; fixture coverage is required for each | — Pending |
-| Embedded React SPA in Go binary | Single-binary distribution; no separate static server | — Pending |
-| Source install as primary distribution | OSS users expect it; Docker is secondary convenience | — Pending |
-| Refactored out worker/queue/AI-insights | Reduced scope to core monitoring; deferred async AI features | — Pending |
-| Official Anthropic Go SDK over custom HTTP client | Reduces maintenance burden; better error classification | — Pending |
-| pnpm standardization | Eliminate lockfile drift between contributors | — Pending |
+| SQLite as sole storage | Local-first, single-user, zero infra overhead | Good — validated in v1.0 |
+| Agent normalizers as in-tree adapters | Too early for plugin complexity; fixture coverage is required for each | Good — contributor guide codifies this |
+| Embedded React SPA in Go binary | Single-binary distribution; no separate static server | Good — release flow supports embedded frontend build |
+| Source install as primary distribution | OSS users can inspect and run locally before trusting a sensitive-data tool | Good — quickstart/setup path is documented |
+| Refactored out worker/queue/AI-insights | Reduced scope to core monitoring; deferred async AI features | Good — kept v1.0 focused |
+| Official Anthropic Go SDK over custom HTTP client | Reduces maintenance burden; better error classification | Good — retained as existing foundation |
+| pnpm standardization | Eliminates lockfile drift between contributors | Good — enforced in package metadata and CI |
+| Export before advanced diagnostics UI | Backup/migration path is more urgent than UI polish | Good — NDJSON and snapshot export shipped in v1.0 |
+| Gitignore-style privacy gate | Explicit path exclusion is clearer than unreliable automatic redaction | Good — shipped as local privacy control |
+| Remote bind requires explicit opt-in | Local-first product should not silently expose sensitive data | Good — enforced with startup failure and warning |
 
 ## Evolution
 
-This document evolves at phase transitions and milestone boundaries.
+This document evolves at milestone boundaries.
 
-**After each phase transition** (via `/gsd-transition`):
-1. Requirements invalidated? → Move to Out of Scope with reason
-2. Requirements validated? → Move to Validated with phase reference
-3. New requirements emerged? → Add to Active
-4. Decisions to log? → Add to Key Decisions
-5. "What This Is" still accurate? → Update if drifted
-
-**After each milestone** (via `/gsd-complete-milestone`):
-1. Full review of all sections
-2. Core Value check — still the right priority?
-3. Audit Out of Scope — reasons still valid?
-4. Update Context with current state
+**After each milestone:**
+1. Move shipped requirements to Validated.
+2. Add new requirements for the next milestone only after fresh discovery.
+3. Update Current State and known deferred items.
+4. Revisit Key Decisions and mark outcomes.
 
 ---
-*Last updated: 2026-05-24 after initialization*
+*Last updated: 2026-05-27 after v1.0 milestone*

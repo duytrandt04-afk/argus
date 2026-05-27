@@ -2,35 +2,33 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: milestone_complete
-stopped_at: Milestone complete (Phase 03 was final phase)
-last_updated: 2026-05-27T08:12:27.419Z
-last_activity: 2026-05-27
+status: Awaiting next milestone
+stopped_at: Completed 03-05-PLAN.md
+last_updated: "2026-05-27T09:34:26.674Z"
+last_activity: 2026-05-27 — Milestone v1.0 completed and archived
 progress:
   total_phases: 3
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 19
   completed_plans: 19
-  percent: 67
+  percent: 100
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-05-24)
+See: .planning/PROJECT.md (updated 2026-05-27)
 
 **Core value:** A developer can install hooker from source in under 10 minutes and trust that it reliably captures, stores, and surfaces their coding agent activity without data loss, silent failures, or upgrade surprises.
-**Current focus:** Milestone complete
+**Current focus:** Planning next milestone
 
 ## Current Position
 
-Phase: 03
-Plan: Not started
-Status: Milestone complete
-Last activity: 2026-05-27
-
-Progress: [██████████] 95%
+Phase: Milestone v1.0 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-05-27 — Milestone v1.0 completed and archived
 
 ## Wave Structure
 
@@ -104,23 +102,28 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-- Execute Wave 1 plans (01-01 through 01-05) in parallel
-- Execute Wave 2 plan (01-06) after 01-02 completes
+- Start the next milestone with `/gsd-new-milestone`.
+- Decide whether to burn down or keep deferring the three human verification items listed below.
 
 ### Blockers/Concerns
 
-- [Phase 1]: Plans 01-01 and 01-02 must both be applied before `go build ./...` passes — executor should apply both before running final compile check
-- [Phase 1]: Squash-merge enforcement in GitHub settings must be done before first GoReleaser tag (REL-03) — manual repo settings change required (documented in 01-05 via releases.md)
-- [Phase 2]: Verify `repository.Add` SQL includes `raw_payload` column before wiring MODEL-01 handler fix
+- No active milestone blockers.
+- Deferred human checks remain for clean-machine onboarding, hosted GitHub settings/CI, migration-failure message quality, doctor privacy output, remote-bind runtime rejection, and privacy gate E2E.
 
 ## Deferred Items
 
 | Category | Item | Status | Deferred At |
 |----------|------|--------|-------------|
-| *(none)* | | | |
+| uat | Phase 03: 03-HUMAN-UAT.md | partial (3 pending scenarios) | 2026-05-27 |
+| verification | Phase 01: 01-VERIFICATION.md | human_needed | 2026-05-27 |
+| verification | Phase 03: 03-VERIFICATION.md | human_needed | 2026-05-27 |
 
 ## Session Continuity
 
 Last session: 2026-05-27T06:39:23.209Z
 Stopped at: Completed 03-05-PLAN.md
 Resume file: None
+
+## Operator Next Steps
+
+- Start the next milestone with /gsd-new-milestone
