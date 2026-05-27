@@ -9,8 +9,8 @@
 
 - [ ] **DIAG-01**: Operator can open diagnostics and see app version, Git commit, and build date.
 - [ ] **DIAG-02**: Operator can see current health/readiness state in the Diagnostics UI.
-- [ ] **DIAG-03**: Operator can see DB path, DB size, total event count, total session count, and latest event timestamp.
-- [ ] **DIAG-04**: Diagnostics backend computes counts with aggregate queries, not by loading all events into memory.
+- [x] **DIAG-03**: Operator can see DB path, DB size, total event count, total session count, and latest event timestamp.
+- [x] **DIAG-04**: Diagnostics backend computes counts with aggregate queries, not by loading all events into memory.
 
 ### Agent Connectivity (HOOK)
 
@@ -36,7 +36,7 @@
 
 ### Regression Coverage (TEST)
 
-- [ ] **TEST-01**: Backend tests cover diagnostics response shape, DB stats, agent summaries, privacy status, and hook config detection states.
+- [x] **TEST-01**: Backend tests cover diagnostics response shape, DB stats, agent summaries, privacy status, and hook config detection states.
 - [ ] **TEST-02**: Frontend tests cover diagnostics rendering for healthy, warning, loading, error, and empty states.
 - [ ] **TEST-03**: Route/sidebar tests cover Diagnostics navigation.
 
@@ -71,8 +71,8 @@
 |-------------|-------|--------|
 | DIAG-01 | Phase 4 | Pending |
 | DIAG-02 | Phase 4 | Pending |
-| DIAG-03 | Phase 4 | Pending |
-| DIAG-04 | Phase 4 | Pending |
+| DIAG-03 | Phase 4 | Complete |
+| DIAG-04 | Phase 4 | Complete |
 | HOOK-01 | Phase 5 | Pending |
 | HOOK-02 | Phase 5 | Pending |
 | HOOK-03 | Phase 5 | Pending |
@@ -86,7 +86,7 @@
 | UI-02 | Phase 6 | Pending |
 | UI-03 | Phase 6 | Pending |
 | UI-04 | Phase 6 | Pending |
-| TEST-01 | Phase 4 | Pending |
+| TEST-01 | Phase 4 | Complete |
 | TEST-02 | Phase 6 | Pending |
 | TEST-03 | Phase 6 | Pending |
 
