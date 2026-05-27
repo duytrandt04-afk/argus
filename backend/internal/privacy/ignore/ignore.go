@@ -170,20 +170,57 @@ func matchDirPattern(patternSegs []string, candidate string) bool {
 		return matchGlob(patternSegs[1:], candidateSegs)
 	}
 
-	// Relative pattern: match any contiguous window.
-	pLen := len(patternSegs)
-	for i := 0; i <= len(candidateSegs)-pLen; i++ {
-		if matchGlobSegments(patternSegs, candidateSegs[i:i+pLen]) {
-			return true
-		}
-	}
-	// Also match if the pattern is a prefix of the candidate (the candidate goes deeper).
-	for i := 0; i <= len(candidateSegs)-pLen; i++ {
-		if matchGlobSegments(patternSegs, candidateSegs[i:i+pLen]) {
+	// Relative pattern: try anchoring the pattern at every start offset.
+	// Use matchGlobPrefix so ** correctly matches zero or more intermediate
+	// segments (e.g. frontend/**/dist matches frontend/dist) and so the
+	// pattern does not need to consume the full remaining candidate
+	// (directory pattern "node_modules" matches a prefix of any deeper path).
+	for start := 0; start < len(candidateSegs); start++ {
+		if matchGlobPrefix(patternSegs, candidateSegs[start:]) {
 			return true
 		}
 	}
 	return false
+}
+
+// matchGlobPrefix reports whether pattern matches a *prefix* of candidate
+// (i.e. the pattern is fully consumed, and zero or more candidate segments
+// may remain after the match). This is used for directory-only patterns where
+// the matched directory may have descendants.
+func matchGlobPrefix(pattern, candidate []string) bool {
+	return matchGlobPrefixRec(pattern, candidate, 0, 0)
+}
+
+func matchGlobPrefixRec(pattern, candidate []string, pi, ci int) bool {
+	for pi < len(pattern) {
+		if ci >= len(candidate) {
+			// Pattern not exhausted but candidate is — only succeeds if remaining
+			// pattern is all **.
+			for pi < len(pattern) {
+				if pattern[pi] != "**" {
+					return false
+				}
+				pi++
+			}
+			return true
+		}
+		if pattern[pi] == "**" {
+			// ** matches zero or more candidate segments.
+			for skip := 0; ci+skip <= len(candidate); skip++ {
+				if matchGlobPrefixRec(pattern, candidate, pi+1, ci+skip) {
+					return true
+				}
+			}
+			return false
+		}
+		if !matchSegment(pattern[pi], candidate[ci]) {
+			return false
+		}
+		pi++
+		ci++
+	}
+	// Pattern fully consumed — candidate may have remaining segments (prefix match OK).
+	return true
 }
 
 // matchGlob matches pattern segments against candidate segments, supporting ** for

@@ -199,6 +199,11 @@ func TestMatchEvent_DoubleStarPattern(t *testing.T) {
 			event: domain.NormalizedEvent{CWD: "/home/user/project/backend/dist"},
 			want:  false,
 		},
+		{
+			name:  "CWD matches double star with zero intermediates",
+			event: domain.NormalizedEvent{CWD: "/home/user/project/frontend/dist"},
+			want:  true,
+		},
 	}
 
 	for _, c := range cases {
