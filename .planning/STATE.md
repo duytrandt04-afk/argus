@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Diagnostics
-status: planning
+status: roadmap_ready
 last_updated: "2026-05-27T09:56:27.237Z"
 last_activity: 2026-05-27
 progress:
-  total_phases: 0
+  total_phases: 3
   completed_phases: 0
-  total_plans: 0
+  total_plans: 9
   completed_plans: 0
   percent: 0
 ---
@@ -20,14 +20,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-27)
 
 **Core value:** A developer can install hooker from source in under 10 minutes and trust that it reliably captures, stores, and surfaces their coding agent activity without data loss, silent failures, or upgrade surprises.
-**Current focus:** Planning next milestone
+**Current focus:** Phase 4 — Diagnostics Data Contract
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 04 — Diagnostics Data Contract
 Plan: —
-Status: Defining requirements
-Last activity: 2026-05-27 — Milestone v1.1 started
+Status: Roadmap ready
+Last activity: 2026-05-27 — Milestone v1.1 roadmap approved
 
 ## Wave Structure
 
@@ -101,7 +101,7 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-- Start the next milestone with `/gsd-new-milestone`.
+- Start Phase 4 with `$gsd-discuss-phase 4` or `$gsd-plan-phase 4`.
 - Decide whether to burn down or keep deferring the three human verification items listed below.
 
 ### Blockers/Concerns
@@ -125,4 +125,5 @@ Resume file: None
 
 ## Operator Next Steps
 
-- Start the next milestone with /gsd-new-milestone
+- Start Phase 4 with `$gsd-discuss-phase 4`.
+- Or skip discussion and plan directly with `$gsd-plan-phase 4`.
