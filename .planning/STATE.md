@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-04-PLAN.md
-last_updated: "2026-05-27T04:22:40.418Z"
-last_activity: 2026-05-27 -- Phase 03 execution started
+stopped_at: Completed 03-05-PLAN.md
+last_updated: "2026-05-27T04:27:21Z"
+last_activity: 2026-05-27 -- Completed 03-05 contributor guide and ADRs
 progress:
   total_phases: 3
   completed_phases: 2
   total_plans: 19
-  completed_plans: 16
-  percent: 67
+  completed_plans: 17
+  percent: 89
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-05-24)
 ## Current Position
 
 Phase: 03 (mature-local-product) — EXECUTING
-Plan: 1 of 5
+Plan: 3 of 5
 Status: Executing Phase 03
-Last activity: 2026-05-27 -- Phase 03 execution started
+Last activity: 2026-05-27 -- Completed 03-05 contributor guide and ADRs
 
-Progress: [████████░░] 84%
+Progress: [█████████░] 89%
 
 ## Wave Structure
 
@@ -98,6 +98,8 @@ Recent decisions affecting current work:
 - [Phase ?]: Agent Normalize() now sets NormalizationStatus='ok' so the field is correct when calling Normalize() directly, not just via hook.go
 - [Phase 03-mature-local-product]: Canonical privacy and security guidance lives in docs/privacy.md and docs/security.md; README only links to those documents.
 - [Phase 03-mature-local-product]: Doctor warns about sensitive data capture without making privacy warnings a required-check failure.
+- [Phase 03-mature-local-product]: Contributor guide is checklist-driven for adapter changes, DB field decisions, and frontend-backend contract synchronization.
+- [Phase 03-mature-local-product]: ADRs use lightweight accepted files under docs/adr/ for SQLite storage, normalization strategy, local-first positioning, and proxy scope.
 ### Pending Todos
 
 - Execute Wave 1 plans (01-01 through 01-05) in parallel
@@ -117,6 +119,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-05-27T04:22:34.438Z
-Stopped at: Completed 03-04-PLAN.md
+Last session: 2026-05-27T04:27:21Z
+Stopped at: Completed 03-05-PLAN.md
 Resume file: None

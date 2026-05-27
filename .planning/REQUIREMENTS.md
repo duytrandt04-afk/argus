@@ -91,9 +91,9 @@
 
 ### Contributor Infrastructure (CONTRIB)
 
-- [ ] **CONTRIB-01**: `CONTRIBUTING.md` covers: project structure, layer boundaries, how to add a new agent adapter (adapter contract + fixture requirement), when to add new DB columns vs extension data
-- [ ] **CONTRIB-02**: ADRs documented for: SQLite choice, hook normalization strategy, local-first positioning, proxy scope
-- [ ] **CONTRIB-03**: Frontend-backend contract change process documented: update shared types + fixtures + tests on both sides
+- [x] **CONTRIB-01**: `CONTRIBUTING.md` covers: project structure, layer boundaries, how to add a new agent adapter (adapter contract + fixture requirement), when to add new DB columns vs extension data
+- [x] **CONTRIB-02**: ADRs documented for: SQLite choice, hook normalization strategy, local-first positioning, proxy scope
+- [x] **CONTRIB-03**: Frontend-backend contract change process documented: update shared types + fixtures + tests on both sides
 
 ---
 
@@ -203,9 +203,9 @@
 | PRIV-01 | Phase 3 | Pending |
 | PRIV-02 | Phase 3 | Complete |
 | PRIV-03 | Phase 3 | Complete |
-| CONTRIB-01 | Phase 3 | Pending |
-| CONTRIB-02 | Phase 3 | Pending |
-| CONTRIB-03 | Phase 3 | Pending |
+| CONTRIB-01 | Phase 3 | Complete |
+| CONTRIB-02 | Phase 3 | Complete |
+| CONTRIB-03 | Phase 3 | Complete |
 
 ---
 
