@@ -493,6 +493,24 @@ func (d *DB) GetTracesPage(sessionID, since string, page, size int) ([]domain.No
 	return events, total, err
 }
 
+func (d *DB) DiagnosticsStorageStats() (domain.DiagnosticsStorageStats, error) {
+	var stats domain.DiagnosticsStorageStats
+	if err := d.db.QueryRow("SELECT COUNT(*) FROM hook_events").Scan(&stats.TotalEvents); err != nil {
+		return stats, fmt.Errorf("diagnostics total events: %w", err)
+	}
+	if err := d.db.QueryRow("SELECT COUNT(*) FROM sessions").Scan(&stats.TotalSessions); err != nil {
+		return stats, fmt.Errorf("diagnostics total sessions: %w", err)
+	}
+	var latest sql.NullString
+	if err := d.db.QueryRow("SELECT MAX(created_at) FROM hook_events").Scan(&latest); err != nil {
+		return stats, fmt.Errorf("diagnostics latest event: %w", err)
+	}
+	if latest.Valid {
+		stats.LatestEventAt = &latest.String
+	}
+	return stats, nil
+}
+
 func projectName(cwd string) string {
 	if cwd == "" {
 		return "unknown"

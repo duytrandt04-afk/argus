@@ -101,6 +101,10 @@ func (m *mockRepo) GetDashboardStats(_, _ string) (*domain.DashboardStats, error
 	return nil, nil
 }
 
+func (m *mockRepo) DiagnosticsStorageStats() (domain.DiagnosticsStorageStats, error) {
+	return domain.DiagnosticsStorageStats{}, nil
+}
+
 func (m *mockRepo) GetSessionTree(_ string) ([]domain.SessionTreeNode, error) {
 	return nil, nil
 }
