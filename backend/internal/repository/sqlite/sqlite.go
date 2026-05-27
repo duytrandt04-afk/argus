@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	_ "embed"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -501,13 +502,19 @@ func (d *DB) DiagnosticsStorageStats() (domain.DiagnosticsStorageStats, error) {
 	if err := d.db.QueryRow("SELECT COUNT(*) FROM sessions").Scan(&stats.TotalSessions); err != nil {
 		return stats, fmt.Errorf("diagnostics total sessions: %w", err)
 	}
-	var latest sql.NullString
-	if err := d.db.QueryRow("SELECT MAX(created_at) FROM hook_events").Scan(&latest); err != nil {
+	var latest string
+	if err := d.db.QueryRow(`
+		SELECT created_at
+		FROM hook_events
+		ORDER BY datetime(created_at) DESC, created_at DESC
+		LIMIT 1
+	`).Scan(&latest); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return stats, nil
+		}
 		return stats, fmt.Errorf("diagnostics latest event: %w", err)
 	}
-	if latest.Valid {
-		stats.LatestEventAt = &latest.String
-	}
+	stats.LatestEventAt = &latest
 	return stats, nil
 }
 

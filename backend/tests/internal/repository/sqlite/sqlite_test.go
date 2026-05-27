@@ -717,6 +717,7 @@ func TestDiagnosticsStorageStatsCountsRowsAndLatestTimestamp(t *testing.T) {
 	early := base.Format(time.RFC3339)
 	middle := base.Add(time.Hour).Format(time.RFC3339)
 	latest := base.Add(2 * time.Hour).Format(time.RFC3339)
+	offsetLatest := "2026-05-27T08:30:00-05:00"
 
 	addEvent(t, db, domain.NormalizedEvent{
 		Time:          latest,
@@ -743,6 +744,14 @@ func TestDiagnosticsStorageStatsCountsRowsAndLatestTimestamp(t *testing.T) {
 		ToolUseID:     "tu-middle",
 		Tool:          "Shell",
 	})
+	addEvent(t, db, domain.NormalizedEvent{
+		Time:          offsetLatest,
+		Agent:         "codex",
+		Session:       "diagnostics-a",
+		HookEventName: "PostToolUse",
+		ToolUseID:     "tu-offset-latest",
+		Tool:          "Bash",
+	})
 	addSessionAt(t, db, "diagnostics-a", "codex", base)
 	addSessionAt(t, db, "diagnostics-b", "claudecode", base)
 
@@ -750,14 +759,14 @@ func TestDiagnosticsStorageStatsCountsRowsAndLatestTimestamp(t *testing.T) {
 	if err != nil {
 		t.Fatalf("DiagnosticsStorageStats: %v", err)
 	}
-	if stats.TotalEvents != 3 {
-		t.Fatalf("TotalEvents = %d, want 3", stats.TotalEvents)
+	if stats.TotalEvents != 4 {
+		t.Fatalf("TotalEvents = %d, want 4", stats.TotalEvents)
 	}
 	if stats.TotalSessions != 2 {
 		t.Fatalf("TotalSessions = %d, want 2", stats.TotalSessions)
 	}
-	if stats.LatestEventAt == nil || *stats.LatestEventAt != latest {
-		t.Fatalf("LatestEventAt = %v, want %q", stats.LatestEventAt, latest)
+	if stats.LatestEventAt == nil || *stats.LatestEventAt != offsetLatest {
+		t.Fatalf("LatestEventAt = %v, want %q", stats.LatestEventAt, offsetLatest)
 	}
 }
 
