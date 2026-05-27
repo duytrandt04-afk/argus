@@ -9,10 +9,25 @@ import (
 	"testing"
 	"time"
 
+	"hooker/internal/domain"
 	"hooker/internal/handler"
 	"hooker/internal/repository/sqlite"
 	"hooker/internal/service"
 )
+
+// matchAllMatcher implements handler.IgnoreMatcher and matches every event.
+type matchAllMatcher struct{}
+
+func (matchAllMatcher) MatchEvent(_ domain.NormalizedEvent) (bool, string) {
+	return true, "pattern \"**\" (line 1)"
+}
+
+// matchNoneMatcher implements handler.IgnoreMatcher and matches no event.
+type matchNoneMatcher struct{}
+
+func (matchNoneMatcher) MatchEvent(_ domain.NormalizedEvent) (bool, string) {
+	return false, ""
+}
 
 func newTestService(t *testing.T) *service.EventService {
 	t.Helper()
@@ -23,8 +38,14 @@ func newTestService(t *testing.T) *service.EventService {
 	return service.New(db)
 }
 
+// newHook creates a hook handler with the allow-none (matchNoneMatcher) matcher,
+// matching normal production behaviour where no events are ignored by default.
+func newHook(svc *service.EventService) http.Handler {
+	return handler.Hook(svc, matchNoneMatcher{})
+}
+
 func TestHookHandlerRejectsGET(t *testing.T) {
-	h := handler.Hook(newTestService(t))
+	h := newHook(newTestService(t))
 	req := httptest.NewRequest(http.MethodGet, "/api/hook", nil)
 	rec := httptest.NewRecorder()
 
@@ -36,7 +57,7 @@ func TestHookHandlerRejectsGET(t *testing.T) {
 }
 
 func TestHookHandlerAcceptsValidPayload(t *testing.T) {
-	h := handler.Hook(newTestService(t))
+	h := newHook(newTestService(t))
 
 	body := []byte(`{
 		"session_id": "s1",
@@ -60,7 +81,7 @@ func TestHookHandlerAcceptsValidPayload(t *testing.T) {
 }
 
 func TestHookHandlerRejectsBadJSON(t *testing.T) {
-	h := handler.Hook(newTestService(t))
+	h := newHook(newTestService(t))
 	req := httptest.NewRequest(http.MethodPost, "/api/hook", bytes.NewReader([]byte(`not json`)))
 	rec := httptest.NewRecorder()
 
@@ -73,7 +94,7 @@ func TestHookHandlerRejectsBadJSON(t *testing.T) {
 
 func TestHookHandlerStoresEventWithoutPath(t *testing.T) {
 	svc := newTestService(t)
-	h := handler.Hook(svc)
+	h := newHook(svc)
 
 	body := []byte(`{
 		"session_id": "s2",
@@ -107,7 +128,7 @@ func TestHookHandlerStoresEventWithoutPath(t *testing.T) {
 
 func TestHookHandlerAcceptsDegradedPayload(t *testing.T) {
 	svc := newTestService(t)
-	h := handler.Hook(svc)
+	h := newHook(svc)
 
 	// Valid JSON but no fields that any agent's Normalize() recognises fully —
 	// passes json.Unmarshal for meta but results in a degraded store.
@@ -141,7 +162,7 @@ func TestHookHandlerAcceptsDegradedPayload(t *testing.T) {
 
 func TestHookHandlerTwoDifferentDegradedPayloadsStoredDistinctly(t *testing.T) {
 	svc := newTestService(t)
-	h := handler.Hook(svc)
+	h := newHook(svc)
 
 	body1 := []byte(`{"unknown_field":"value_one"}`)
 	body2 := []byte(`{"unknown_field":"value_two"}`)
@@ -166,7 +187,7 @@ func TestHookHandlerTwoDifferentDegradedPayloadsStoredDistinctly(t *testing.T) {
 
 func TestHookHandlerValidPayloadHasNormalizationStatusOK(t *testing.T) {
 	svc := newTestService(t)
-	h := handler.Hook(svc)
+	h := newHook(svc)
 
 	body := []byte(`{
 		"session_id": "s-ok",
@@ -220,7 +241,7 @@ func TestHookHandlerAcknowledgesWhenStoreIsTemporarilyLocked(t *testing.T) {
 		_, _ = conn.ExecContext(context.Background(), `ROLLBACK`)
 	}()
 
-	h := handler.Hook(service.New(db))
+	h := handler.Hook(service.New(db), matchNoneMatcher{})
 	body := []byte(`{
 		"session_id": "s-locked",
 		"hook_event_name": "PreToolUse",
@@ -239,5 +260,103 @@ func TestHookHandlerAcknowledgesWhenStoreIsTemporarilyLocked(t *testing.T) {
 	}
 	if elapsed >= 2*time.Second {
 		t.Fatalf("handler returned after %s, want before hook timeout", elapsed)
+	}
+}
+
+// TestHookIgnoredEventReturns200 verifies a matched (ignored) event returns HTTP 200
+// with an empty JSON body {} (D-03).
+func TestHookIgnoredEventReturns200(t *testing.T) {
+	svc := newTestService(t)
+	h := handler.Hook(svc, matchAllMatcher{})
+
+	body := []byte(`{
+		"session_id": "s-ignored",
+		"transcript_path": "/home/user/.claude/sessions/abc.jsonl",
+		"hook_event_name": "PreToolUse",
+		"tool_name": "Edit",
+		"cwd": "/secret/project",
+		"tool_input": {"file_path": "main.go"}
+	}`)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/hook", bytes.NewReader(body))
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200 for ignored event; body: %s", rec.Code, rec.Body.String())
+	}
+	if got := rec.Body.String(); got != "{}" {
+		t.Fatalf("body = %q, want {}", got)
+	}
+	if ct := rec.Header().Get("Content-Type"); ct != "application/json" {
+		t.Fatalf("Content-Type = %q, want application/json", ct)
+	}
+}
+
+// TestHookIgnoredEventStoresNoRows verifies a matched event produces no DB row (D-03).
+func TestHookIgnoredEventStoresNoRows(t *testing.T) {
+	svc := newTestService(t)
+	h := handler.Hook(svc, matchAllMatcher{})
+
+	body := []byte(`{
+		"session_id": "s-ignored-db",
+		"transcript_path": "/home/user/.claude/sessions/abc.jsonl",
+		"hook_event_name": "PreToolUse",
+		"tool_name": "Edit",
+		"cwd": "/secret/project",
+		"tool_input": {"file_path": "main.go"}
+	}`)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/hook", bytes.NewReader(body))
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200; body: %s", rec.Code, rec.Body.String())
+	}
+
+	events, err := svc.ListEvents(10)
+	if err != nil {
+		t.Fatalf("ListEvents: %v", err)
+	}
+	if len(events) != 0 {
+		t.Fatalf("events len = %d, want 0 — ignored event must not be stored", len(events))
+	}
+}
+
+// TestHookIgnoredEventNoSSEBroadcast verifies a matched event sends nothing to
+// an existing subscriber channel (D-03).
+func TestHookIgnoredEventNoSSEBroadcast(t *testing.T) {
+	svc := newTestService(t)
+
+	// Subscribe BEFORE the POST to ensure the channel is registered.
+	ch := svc.Subscribe()
+	defer svc.Unsubscribe(ch)
+
+	h := handler.Hook(svc, matchAllMatcher{})
+
+	body := []byte(`{
+		"session_id": "s-ignored-sse",
+		"transcript_path": "/home/user/.claude/sessions/abc.jsonl",
+		"hook_event_name": "PreToolUse",
+		"tool_name": "Edit",
+		"cwd": "/secret/project",
+		"tool_input": {"file_path": "main.go"}
+	}`)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/hook", bytes.NewReader(body))
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200; body: %s", rec.Code, rec.Body.String())
+	}
+
+	// No event should arrive on the subscriber channel.
+	select {
+	case e := <-ch:
+		t.Fatalf("received unexpected SSE event for ignored hook: agent=%q session=%q", e.Agent, e.Session)
+	case <-time.After(50 * time.Millisecond):
+		// Pass: no broadcast received.
 	}
 }
