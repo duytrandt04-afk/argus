@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Diagnostics
-status: verifying
-stopped_at: Phase 6 UI-SPEC approved
-last_updated: "2026-05-28T15:52:06.000Z"
+status: milestone_complete
+stopped_at: Milestone complete (Phase 06 was final phase)
+last_updated: 2026-05-28T15:58:04.342Z
 last_activity: 2026-05-28
 progress:
   total_phases: 3
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-27)
 
 **Core value:** A developer can install hooker from source in under 10 minutes and trust that it reliably captures, stores, and surfaces their coding agent activity without data loss, silent failures, or upgrade surprises.
-**Current focus:** Phase 06 — diagnostics-ui
+**Current focus:** Milestone complete
 
 ## Current Position
 
-Phase: 06 (diagnostics-ui) — EXECUTING
-Plan: 3 of 3
-Status: Phase complete — ready for verification
+Phase: 06
+Plan: Not started
+Status: Milestone complete
 Last activity: 2026-05-28
 
 ## Wave Structure
@@ -42,7 +42,7 @@ Last activity: 2026-05-28
 
 **Velocity:**
 
-- Total plans completed: 19
+- Total plans completed: 22
 - Average duration: —
 - Total execution time: —
 
@@ -54,6 +54,7 @@ Last activity: 2026-05-28
 | 03 | 5 | - | - |
 | 04 | 3 | - | - |
 | 5 | 3 | - | - |
+| 06 | 3 | - | - |
 
 **Recent Trend:**
 
