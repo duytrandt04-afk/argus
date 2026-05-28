@@ -35,6 +35,10 @@ func (noopRepo) DiagnosticsStorageStats() (domain.DiagnosticsStorageStats, error
 	return domain.DiagnosticsStorageStats{}, nil
 }
 
+func (noopRepo) DiagnosticsAgentStats() ([]domain.DiagnosticsAgentStats, error) {
+	return nil, nil
+}
+
 func (noopRepo) GetSessionTree(string) ([]domain.SessionTreeNode, error) { return nil, nil }
 
 func (noopRepo) GetTraces(string, string) ([]domain.NormalizedEvent, error) { return nil, nil }

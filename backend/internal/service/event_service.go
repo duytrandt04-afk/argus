@@ -77,6 +77,10 @@ func (s *EventService) Diagnostics(dbPath string, ready bool) (domain.Diagnostic
 	if err != nil {
 		return domain.Diagnostics{}, err
 	}
+	agentStats, err := s.repo.DiagnosticsAgentStats()
+	if err != nil {
+		return domain.Diagnostics{}, err
+	}
 
 	health := domain.DiagnosticsHealth{
 		Live:  true,
@@ -109,7 +113,46 @@ func (s *EventService) Diagnostics(dbPath string, ready bool) (domain.Diagnostic
 		},
 		Health:  health,
 		Storage: storage,
+		Agents:  diagnosticsAgents(agentStats),
 	}, nil
+}
+
+func diagnosticsAgents(stats []domain.DiagnosticsAgentStats) []domain.DiagnosticsAgent {
+	byAgent := map[string]domain.DiagnosticsAgentStats{}
+	for _, stat := range stats {
+		byAgent[stat.Agent] = stat
+	}
+	defs := []struct {
+		id    string
+		label string
+	}{
+		{id: "claudecode", label: "Claude Code"},
+		{id: "codex", label: "Codex"},
+	}
+	agents := make([]domain.DiagnosticsAgent, 0, len(defs))
+	for _, def := range defs {
+		stat := byAgent[def.id]
+		row := domain.DiagnosticsAgent{
+			ID:                def.id,
+			Label:             def.label,
+			EventCount:        stat.EventCount,
+			LastSeenAt:        stat.LastSeenAt,
+			DegradedCount:     stat.DegradedCount,
+			NormalizerVersion: stat.NormalizerVersion,
+			HookConfigStatus:  "unknown",
+			Status:            "ok",
+		}
+		switch {
+		case row.DegradedCount > 0:
+			row.Status = "degraded"
+			row.Warnings = append(row.Warnings, "degraded events")
+		case row.EventCount == 0:
+			row.Status = "no events"
+			row.Warnings = append(row.Warnings, "no events")
+		}
+		agents = append(agents, row)
+	}
+	return agents
 }
 
 func (s *EventService) ListProjects() ([]domain.Project, error) {

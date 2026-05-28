@@ -29,15 +29,22 @@ func TestDiagnosticsHandlerReturnsGroupedShape(t *testing.T) {
 	if err := json.NewDecoder(rec.Body).Decode(&payload); err != nil {
 		t.Fatalf("decode diagnostics: %v", err)
 	}
-	for _, key := range []string{"version", "health", "storage"} {
+	for _, key := range []string{"version", "health", "storage", "agents"} {
 		if _, ok := payload[key]; !ok {
 			t.Fatalf("payload missing %q: %#v", key, payload)
 		}
 	}
-	for _, forbidden := range []string{"agents", "privacy"} {
+	for _, forbidden := range []string{"privacy"} {
 		if _, ok := payload[forbidden]; ok {
 			t.Fatalf("payload includes forbidden top-level key %q", forbidden)
 		}
+	}
+	agents, ok := payload["agents"].([]any)
+	if !ok {
+		t.Fatalf("agents = %#v, want array", payload["agents"])
+	}
+	if len(agents) != 2 {
+		t.Fatalf("len(agents) = %d, want 2", len(agents))
 	}
 
 	storage, ok := payload["storage"].(map[string]any)
@@ -111,7 +118,6 @@ func TestDiagnosticsHandlerDoesNotExposeCapturedContent(t *testing.T) {
 	}
 	body := rec.Body.String()
 	for _, forbidden := range []string{
-		"agents",
 		"privacy",
 		"raw_payload",
 		"prompt",

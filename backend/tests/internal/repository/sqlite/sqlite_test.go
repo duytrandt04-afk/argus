@@ -770,6 +770,100 @@ func TestDiagnosticsStorageStatsCountsRowsAndLatestTimestamp(t *testing.T) {
 	}
 }
 
+func TestDiagnosticsAgentStatsEmptyDB(t *testing.T) {
+	db := newTestDB(t)
+
+	stats, err := db.DiagnosticsAgentStats()
+	if err != nil {
+		t.Fatalf("DiagnosticsAgentStats: %v", err)
+	}
+	if len(stats) != 0 {
+		t.Fatalf("len(stats) = %d, want 0", len(stats))
+	}
+}
+
+func TestDiagnosticsAgentStatsAggregatesSessionsAndEvents(t *testing.T) {
+	db := newTestDB(t)
+	base := time.Date(2026, 5, 27, 10, 0, 0, 0, time.UTC)
+	claudeSeen := base.Add(time.Hour).Format(time.RFC3339)
+	codexSeen := base.Add(2 * time.Hour).Format(time.RFC3339)
+
+	addSessionAt(t, db, "claude-a", "claudecode", base)
+	addSessionAt(t, db, "claude-b", "claudecode", base.Add(time.Hour))
+	addSessionAt(t, db, "codex-a", "codex", base.Add(2*time.Hour))
+	addSessionAt(t, db, "gemini-a", "geminicli", base.Add(3*time.Hour))
+
+	addEvent(t, db, domain.NormalizedEvent{
+		Time:                claudeSeen,
+		Agent:               "claudecode",
+		Session:             "claude-b",
+		HookEventName:       "PreToolUse",
+		ToolUseID:           "claude-tool",
+		Tool:                "Read",
+		NormalizationStatus: "degraded",
+		NormalizerVersion:   "claudecode/1",
+	})
+	addEvent(t, db, domain.NormalizedEvent{
+		Time:                codexSeen,
+		Agent:               "codex",
+		Session:             "codex-a",
+		HookEventName:       "PostToolUse",
+		ToolUseID:           "codex-tool",
+		Tool:                "Bash",
+		NormalizationStatus: "ok",
+		NormalizerVersion:   "codex/1",
+	})
+	addEvent(t, db, domain.NormalizedEvent{
+		Time:                base.Add(30 * time.Minute).Format(time.RFC3339),
+		Agent:               "unknown",
+		Source:              "gemini",
+		Session:             "unknown-gemini",
+		HookEventName:       "PostToolUse",
+		ToolUseID:           "gemini-tool",
+		Tool:                "Read",
+		NormalizationStatus: "degraded",
+		NormalizerVersion:   "hooker/1",
+	})
+
+	stats, err := db.DiagnosticsAgentStats()
+	if err != nil {
+		t.Fatalf("DiagnosticsAgentStats: %v", err)
+	}
+	byAgent := map[string]domain.DiagnosticsAgentStats{}
+	for _, stat := range stats {
+		byAgent[stat.Agent] = stat
+	}
+	if _, ok := byAgent["geminicli"]; ok {
+		t.Fatalf("geminicli stats present: %+v", byAgent["geminicli"])
+	}
+	claude := byAgent["claudecode"]
+	if claude.EventCount != 2 {
+		t.Fatalf("claude EventCount = %d, want 2", claude.EventCount)
+	}
+	if claude.LastSeenAt == nil || *claude.LastSeenAt != claudeSeen {
+		t.Fatalf("claude LastSeenAt = %v, want %q", claude.LastSeenAt, claudeSeen)
+	}
+	if claude.DegradedCount != 1 {
+		t.Fatalf("claude DegradedCount = %d, want 1", claude.DegradedCount)
+	}
+	if claude.NormalizerVersion == nil || *claude.NormalizerVersion != "claudecode/1" {
+		t.Fatalf("claude NormalizerVersion = %v, want claudecode/1", claude.NormalizerVersion)
+	}
+	codex := byAgent["codex"]
+	if codex.EventCount != 1 {
+		t.Fatalf("codex EventCount = %d, want 1", codex.EventCount)
+	}
+	if codex.LastSeenAt == nil || *codex.LastSeenAt != codexSeen {
+		t.Fatalf("codex LastSeenAt = %v, want %q", codex.LastSeenAt, codexSeen)
+	}
+	if codex.DegradedCount != 0 {
+		t.Fatalf("codex DegradedCount = %d, want 0", codex.DegradedCount)
+	}
+	if codex.NormalizerVersion == nil || *codex.NormalizerVersion != "codex/1" {
+		t.Fatalf("codex NormalizerVersion = %v, want codex/1", codex.NormalizerVersion)
+	}
+}
+
 func addEvent(t *testing.T, db *sqlite.DB, e domain.NormalizedEvent) {
 	t.Helper()
 	e.RawPayload = []byte(`{}`)

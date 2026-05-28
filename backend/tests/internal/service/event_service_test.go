@@ -27,6 +27,7 @@ type mockRepo struct {
 	lastEnded string
 
 	diagnosticsStats domain.DiagnosticsStorageStats
+	agentStats       []domain.DiagnosticsAgentStats
 	diagnosticsErr   error
 	diagnosticsCalls int
 }
@@ -111,6 +112,12 @@ func (m *mockRepo) DiagnosticsStorageStats() (domain.DiagnosticsStorageStats, er
 	defer m.mu.Unlock()
 	m.diagnosticsCalls++
 	return m.diagnosticsStats, m.diagnosticsErr
+}
+
+func (m *mockRepo) DiagnosticsAgentStats() ([]domain.DiagnosticsAgentStats, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return append([]domain.DiagnosticsAgentStats{}, m.agentStats...), m.diagnosticsErr
 }
 
 func (m *mockRepo) GetSessionTree(_ string) ([]domain.SessionTreeNode, error) {
@@ -260,6 +267,54 @@ func TestDiagnosticsReturnsStorageStatsError(t *testing.T) {
 
 	if _, err := svc.Diagnostics(":memory:", true); !errors.Is(err, wantErr) {
 		t.Fatalf("Diagnostics error = %v, want %v", err, wantErr)
+	}
+}
+
+func TestDiagnosticsIncludesClaudeCodeAndCodexAgentRows(t *testing.T) {
+	claudeSeen := "2026-05-27T11:00:00Z"
+	claudeVersion := "claudecode/1"
+	svc := service.New(&mockRepo{
+		agentStats: []domain.DiagnosticsAgentStats{
+			{
+				Agent:             "claudecode",
+				EventCount:        2,
+				LastSeenAt:        &claudeSeen,
+				DegradedCount:     1,
+				NormalizerVersion: &claudeVersion,
+			},
+			{Agent: "geminicli", EventCount: 99},
+		},
+	})
+
+	got, err := svc.Diagnostics(":memory:", true)
+	if err != nil {
+		t.Fatalf("Diagnostics: %v", err)
+	}
+	if len(got.Agents) != 2 {
+		t.Fatalf("len(Agents) = %d, want 2: %+v", len(got.Agents), got.Agents)
+	}
+	if got.Agents[0].ID != "claudecode" || got.Agents[0].Label != "Claude Code" {
+		t.Fatalf("first agent = %+v, want Claude Code row", got.Agents[0])
+	}
+	if got.Agents[0].EventCount != 2 || got.Agents[0].LastSeenAt == nil || *got.Agents[0].LastSeenAt != claudeSeen {
+		t.Fatalf("Claude row activity = %+v, want count=2 lastSeenAt=%s", got.Agents[0], claudeSeen)
+	}
+	if got.Agents[0].DegradedCount != 1 || got.Agents[0].Status != "degraded" {
+		t.Fatalf("Claude row degraded status = %+v, want degraded count/status", got.Agents[0])
+	}
+	if got.Agents[0].NormalizerVersion == nil || *got.Agents[0].NormalizerVersion != claudeVersion {
+		t.Fatalf("Claude normalizer version = %v, want %s", got.Agents[0].NormalizerVersion, claudeVersion)
+	}
+	if got.Agents[1].ID != "codex" || got.Agents[1].EventCount != 0 || got.Agents[1].Status != "no events" {
+		t.Fatalf("Codex zero row = %+v, want no events", got.Agents[1])
+	}
+	for _, agent := range got.Agents {
+		if agent.ID == "geminicli" {
+			t.Fatalf("unexpected Gemini CLI row: %+v", agent)
+		}
+	}
+	if !got.Health.Ready {
+		t.Fatalf("health should remain ready despite agent warnings: %+v", got.Health)
 	}
 }
 

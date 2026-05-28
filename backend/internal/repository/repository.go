@@ -19,6 +19,7 @@ type EventRepository interface {
 	ListSessionsByCWD(cwd, since string) ([]domain.Session, error)
 	UpsertSession(sessionID, agent, model, source, cwd, transcriptPath, eventTime, endedAt string, usage domain.SessionUsage) error
 	DiagnosticsStorageStats() (domain.DiagnosticsStorageStats, error)
+	DiagnosticsAgentStats() ([]domain.DiagnosticsAgentStats, error)
 	GetDashboardStats(since, until string) (*domain.DashboardStats, error)
 	GetSessionTree(since string) ([]domain.SessionTreeNode, error)
 	GetTraces(sessionID, since string) ([]domain.NormalizedEvent, error)
