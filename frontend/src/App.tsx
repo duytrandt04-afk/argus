@@ -20,6 +20,9 @@ const SessionList = lazy(() =>
 const TraceView = lazy(() =>
   import('./features/sessions/TraceViewPage').then((m) => ({ default: m.TraceViewPage }))
 )
+const DiagnosticsPage = lazy(() =>
+  import('./features/diagnostics/DiagnosticsPage').then((m) => ({ default: m.DiagnosticsPage }))
+)
 
 export default function App() {
   return (
@@ -72,6 +75,14 @@ export default function App() {
             element={
               <Suspense fallback={null}>
                 <TraceView />
+              </Suspense>
+            }
+          />
+          <Route
+            path="diagnostics"
+            element={
+              <Suspense fallback={null}>
+                <DiagnosticsPage />
               </Suspense>
             }
           />

@@ -4,6 +4,7 @@ import {
   GitFork,
   LayoutDashboard,
   PanelLeft,
+  Stethoscope,
   TerminalSquare,
   X,
   type LucideIcon,
@@ -54,6 +55,13 @@ const NAV_ITEMS: NavItem[] = [
     label: 'Projects',
     ariaLabel: 'Projects',
     icon: GitFork,
+    end: false,
+  },
+  {
+    to: '/diagnostics',
+    label: 'Diagnostics',
+    ariaLabel: 'System Diagnostics',
+    icon: Stethoscope,
     end: false,
   },
 ]
