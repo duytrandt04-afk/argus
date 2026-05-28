@@ -59,8 +59,16 @@ Plans:
 **Plans**: 3 plans
 Plans:
 
+**Wave 1**
+
 - [ ] 05-01-PLAN.md — Agent telemetry aggregates and normalizer/degraded status
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 05-02-PLAN.md — Best-effort hook config detection shared with doctor-known locations
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 05-03-PLAN.md — Privacy/security posture diagnostics + backend tests
 
 ### Phase 6: Diagnostics UI
