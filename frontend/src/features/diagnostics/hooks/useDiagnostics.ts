@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Diagnostics } from '../types'
 
 export function useDiagnostics(): {
@@ -15,12 +15,13 @@ export function useDiagnostics(): {
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null)
+  const hasDataRef = useRef(false)
 
   const reload = useCallback(() => setReloadKey((k) => k + 1), [])
 
   useEffect(() => {
     let mounted = true
-    const isRefresh = reloadKey > 0 && data !== null
+    const isRefresh = reloadKey > 0 && hasDataRef.current
     if (isRefresh) {
       setRefreshing(true)
     } else {
@@ -36,14 +37,15 @@ export function useDiagnostics(): {
       .then((json: Diagnostics) => {
         if (!mounted) return
         setData(json)
+        hasDataRef.current = true
         setLastUpdatedAt(new Date())
       })
-      .catch(() => {
+      .catch((err: unknown) => {
         if (!mounted) return
-        setError('Could not reach /api/diagnostics')
+        const msg = err instanceof Error ? err.message : 'Could not reach /api/diagnostics'
+        setError(msg)
       })
       .finally(() => {
-        if (!mounted) return
         setLoading(false)
         setRefreshing(false)
       })
@@ -51,7 +53,7 @@ export function useDiagnostics(): {
     return () => {
       mounted = false
     }
-  }, [reloadKey]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [reloadKey])
 
   return { data, loading, refreshing, error, lastUpdatedAt, reload }
 }

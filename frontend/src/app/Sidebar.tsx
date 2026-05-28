@@ -1,4 +1,4 @@
-import { Fragment, useEffect, type RefObject } from 'react'
+import { Fragment, forwardRef, useEffect, type AnchorHTMLAttributes, type RefObject } from 'react'
 import {
   FishingHook,
   GitFork,
@@ -9,7 +9,7 @@ import {
   X,
   type LucideIcon,
 } from 'lucide-react'
-import { NavLink, useLocation } from 'react-router-dom'
+import { NavLink, useMatch } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { VersionBadge } from '@/features/version/VersionBadge'
@@ -34,6 +34,40 @@ interface NavItem {
   icon: LucideIcon
   end: boolean
 }
+
+type NavButtonProps = NavItem &
+  Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'href' | 'onClick' | 'className' | 'aria-label'> & {
+    onNavigate?: () => void
+    desktopNavLabelClassName: string
+    navButtonClassNameFn: (isActive: boolean) => string
+  }
+
+const NavButton = forwardRef<HTMLAnchorElement, NavButtonProps>(function NavButton(
+  { to, label, ariaLabel, icon: Icon, end, onNavigate, desktopNavLabelClassName, navButtonClassNameFn, ...rest },
+  ref,
+) {
+  const match = useMatch({ path: to, end })
+  const isActive = match !== null
+
+  return (
+    <Button asChild variant="ghost" className={navButtonClassNameFn(isActive)}>
+      <NavLink ref={ref} to={to} end={end} aria-label={ariaLabel} onClick={() => onNavigate?.()} {...rest}>
+        <span className="flex size-9 shrink-0 items-center justify-center">
+          <Icon
+            className={cn(
+              'size-[15px] shrink-0 transition-colors duration-200',
+              isActive ? 'text-[#e6e6e6]' : 'text-current',
+            )}
+          />
+        </span>
+        <span aria-hidden="true" className={desktopNavLabelClassName}>
+          {label}
+        </span>
+      </NavLink>
+    </Button>
+  )
+})
+NavButton.displayName = 'NavButton'
 
 const NAV_ITEMS: NavItem[] = [
   {
@@ -77,7 +111,6 @@ export function Sidebar({
   className,
   containerRef,
 }: SidebarProps) {
-  const location = useLocation()
   const showCollapsedTooltips = mode === 'desktop' && collapsed
   const isMobile = mode === 'mobile'
   const desktopLabelStateClassName = collapsed ? 'sidebar-label-closed' : 'sidebar-label-open'
@@ -85,9 +118,6 @@ export function Sidebar({
     'sidebar-label-motion sidebar-label-nav',
     desktopLabelStateClassName
   )
-  const isNavItemActive = (to: string, end: boolean) =>
-    end ? location.pathname === to : location.pathname.startsWith(to)
-
   const navButtonClassName = (isActive: boolean) =>
     cn(
       'sidebar-nav-item h-9 gap-0 border text-[0.8rem] font-normal transition-all duration-200',
@@ -103,27 +133,14 @@ export function Sidebar({
     collapsed ? 'size-9 justify-center rounded-lg px-0' : 'size-9 justify-center rounded-lg px-0'
   )
 
-  const renderNavButton = ({ to, label, ariaLabel, icon: Icon, end }: NavItem) => {
-    const isActive = isNavItemActive(to, end)
-
-    return (
-      <Button asChild variant="ghost" className={navButtonClassName(isActive)}>
-        <NavLink to={to} end={end} aria-label={ariaLabel} onClick={() => onNavigate?.()}>
-          <span className="flex size-9 shrink-0 items-center justify-center">
-            <Icon
-              className={cn(
-                'size-[15px] shrink-0 transition-colors duration-200',
-                isActive ? 'text-[#e6e6e6]' : 'text-current'
-              )}
-            />
-          </span>
-          <span aria-hidden="true" className={desktopNavLabelClassName}>
-            {label}
-          </span>
-        </NavLink>
-      </Button>
-    )
-  }
+  const renderNavButton = (item: NavItem) => (
+    <NavButton
+      {...item}
+      onNavigate={onNavigate}
+      desktopNavLabelClassName={desktopNavLabelClassName}
+      navButtonClassNameFn={navButtonClassName}
+    />
+  )
 
   useEffect(() => {
     const container = containerRef?.current

@@ -24,6 +24,7 @@ const BADGE_AMBER = 'border-[var(--cwd)] text-[var(--cwd)] bg-transparent'
 const BADGE_GREEN = 'border-[var(--worktree)] text-[var(--worktree)] bg-transparent'
 
 function formatBytes(bytes: number): string {
+  if (!Number.isFinite(bytes) || bytes < 0) return 'Unknown'
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
   if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
@@ -39,13 +40,18 @@ function MonoPath({ path, ariaLabel }: { path: string; ariaLabel: string }) {
       >
         {path}
       </span>
-      <button
-        onClick={() => navigator.clipboard.writeText(path)}
-        className="ml-1 opacity-40 hover:opacity-100 transition-opacity"
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-sm"
+        onClick={() => {
+          navigator.clipboard.writeText(path).catch(() => {})
+        }}
+        className="ml-1 h-auto p-0 opacity-40 hover:opacity-100 transition-opacity"
         aria-label={ariaLabel}
       >
-        <Copy className="size-3 inline" />
-      </button>
+        <Copy className="size-3" />
+      </Button>
     </span>
   )
 }
@@ -106,6 +112,7 @@ function LoadedContent({ data }: { data: Diagnostics }) {
   const agentWarningCount = data.agents.filter(
     (a) =>
       a.status === 'degraded' ||
+      a.status === 'stale' ||
       a.hookConfigStatus === 'missing' ||
       (a.hookConfigStatus === 'unknown' && a.eventCount === 0)
   ).length
