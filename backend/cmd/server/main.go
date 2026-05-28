@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"hooker/internal/config"
+	"hooker/internal/domain"
 	"hooker/internal/hookconfig"
 	"hooker/internal/privacy/ignore"
 	"hooker/internal/repository/sqlite"
@@ -65,7 +66,7 @@ func main() {
 
 	// Load ignore matcher. A missing default file returns an empty matcher (safe).
 	// An unreadable explicit HOOKER_IGNORE path exits with an actionable error (T-03-02-04).
-	matcher, err := ignore.Load(cfg.IgnorePath)
+	matcher, ignoreStatus, err := ignore.LoadWithStatus(cfg.IgnorePath)
 	if err != nil {
 		slog.Error("load ignore file", "path", cfg.IgnorePath, "err", err)
 		os.Exit(1)
@@ -75,6 +76,9 @@ func main() {
 		Matcher:     matcher,
 		CORSOrigins: cfg.CORSOrigins,
 		DBPath:      cfg.DBPath,
+		IgnoreFile:  domainIgnoreFile(ignoreStatus),
+		Addr:        cfg.Addr,
+		AllowRemote: cfg.AllowRemote,
 		HookConfig:  hookconfig.Detector{}.Detect(),
 	})
 
@@ -146,6 +150,14 @@ func warnRemoteBind(cfg config.Config) {
 		"captures", "prompts, diffs, file paths, tool outputs, raw payloads, exports",
 		"note", "public internet exposure is unsupported",
 	)
+}
+
+func domainIgnoreFile(status ignore.LoadStatus) domain.DiagnosticsIgnoreFile {
+	return domain.DiagnosticsIgnoreFile{
+		Path:               status.Path,
+		Status:             status.Status,
+		ActivePatternCount: status.ActivePatternCount,
+	}
 }
 
 // isAddrInUse reports whether err indicates the port is already bound.

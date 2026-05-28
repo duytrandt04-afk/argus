@@ -26,6 +26,13 @@ type Options struct {
 
 	// HookConfig carries best-effort hook configuration diagnostics.
 	HookConfig []domain.DiagnosticsHookConfig
+
+	// IgnoreFile carries safe ignore-file diagnostics: path, status, and count only.
+	IgnoreFile domain.DiagnosticsIgnoreFile
+
+	// Addr and AllowRemote describe bind posture for diagnostics display.
+	Addr        string
+	AllowRemote bool
 }
 
 // allowNone is the default matcher used when Options.Matcher is nil.
@@ -57,7 +64,14 @@ func NewRouter(svc *service.EventService, repo repository.EventRepository, ready
 	mux.Handle("GET /api/events", handler.Events(svc))
 	mux.Handle("GET /api/events/stream", handler.EventsStream(svc))
 	mux.Handle("GET /api/version", handler.Version())
-	mux.Handle("GET /api/diagnostics", handler.Diagnostics(svc, ready, opts.DBPath, opts.HookConfig))
+	mux.Handle("GET /api/diagnostics", handler.Diagnostics(svc, ready, service.DiagnosticsOptions{
+		DBPath:      opts.DBPath,
+		HookConfig:  opts.HookConfig,
+		IgnoreFile:  opts.IgnoreFile,
+		Addr:        opts.Addr,
+		AllowRemote: opts.AllowRemote,
+		CORSOrigins: corsOrigins,
+	}))
 	mux.Handle("GET /api/session-usage", handler.Usage())
 	mux.Handle("GET /api/projects", handler.Projects(svc))
 	mux.Handle("GET /api/sessions", handler.Sessions(svc))

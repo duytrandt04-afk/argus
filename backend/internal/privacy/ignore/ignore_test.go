@@ -36,6 +36,23 @@ func TestLoad_MissingDefaultFile(t *testing.T) {
 	}
 }
 
+func TestLoadWithStatus_MissingDefaultFile(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "nonexistent-ignore")
+	m, status, err := ignore.LoadWithStatus(path)
+	if err != nil {
+		t.Fatalf("LoadWithStatus missing default: got error %v, want nil", err)
+	}
+	if status.Status != "missing_ok" {
+		t.Fatalf("status = %q, want missing_ok", status.Status)
+	}
+	if status.ActivePatternCount != 0 {
+		t.Fatalf("active pattern count = %d, want 0", status.ActivePatternCount)
+	}
+	if m.RuleCount() != 0 {
+		t.Fatalf("RuleCount = %d, want 0", m.RuleCount())
+	}
+}
+
 // TestLoad_EmptyFile verifies that an empty file matches nothing.
 func TestLoad_EmptyFile(t *testing.T) {
 	path := writeIgnoreFile(t, "")
@@ -75,6 +92,26 @@ func TestLoad_CommentsIgnored(t *testing.T) {
 	matched, _ := m.MatchEvent(e)
 	if matched {
 		t.Fatal("comment-only file should not match any event")
+	}
+}
+
+func TestLoadWithStatus_CountsOnlyActivePatterns(t *testing.T) {
+	path := writeIgnoreFile(t, "\n# comment\nnode_modules/\n   \n!/node_modules/keep\n*.pem\n")
+	m, status, err := ignore.LoadWithStatus(path)
+	if err != nil {
+		t.Fatalf("LoadWithStatus: %v", err)
+	}
+	if status.Path != path {
+		t.Fatalf("status path = %q, want %q", status.Path, path)
+	}
+	if status.Status != "loaded" {
+		t.Fatalf("status = %q, want loaded", status.Status)
+	}
+	if status.ActivePatternCount != 3 {
+		t.Fatalf("active pattern count = %d, want 3", status.ActivePatternCount)
+	}
+	if m.RuleCount() != 3 {
+		t.Fatalf("RuleCount = %d, want 3", m.RuleCount())
 	}
 }
 
@@ -141,9 +178,9 @@ func TestMatchEvent_DirectoryPattern(t *testing.T) {
 	}
 
 	cases := []struct {
-		name    string
-		event   domain.NormalizedEvent
-		want    bool
+		name  string
+		event domain.NormalizedEvent
+		want  bool
 	}{
 		{
 			name:  "CWD ends with node_modules",
@@ -350,9 +387,9 @@ func TestMatchEvent_WildcardPattern(t *testing.T) {
 	}
 
 	cases := []struct {
-		name  string
-		cwd   string
-		want  bool
+		name string
+		cwd  string
+		want bool
 	}{
 		{"/home/alice/secret", "/home/alice/secret", true},
 		{"/home/bob/secret", "/home/bob/secret", true},

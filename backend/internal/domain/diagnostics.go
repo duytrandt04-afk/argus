@@ -1,10 +1,12 @@
 package domain
 
 type Diagnostics struct {
-	Version DiagnosticsVersion `json:"version"`
-	Health  DiagnosticsHealth  `json:"health"`
-	Storage DiagnosticsStorage `json:"storage"`
-	Agents  []DiagnosticsAgent `json:"agents"`
+	Version  DiagnosticsVersion  `json:"version"`
+	Health   DiagnosticsHealth   `json:"health"`
+	Storage  DiagnosticsStorage  `json:"storage"`
+	Agents   []DiagnosticsAgent  `json:"agents"`
+	Privacy  DiagnosticsPrivacy  `json:"privacy"`
+	Security DiagnosticsSecurity `json:"security"`
 }
 
 type DiagnosticsVersion struct {
@@ -60,4 +62,32 @@ type DiagnosticsHookConfig struct {
 	Path   string
 	Status string
 	Reason string
+}
+
+type DiagnosticsPrivacy struct {
+	IgnoreFile    DiagnosticsIgnoreFile `json:"ignoreFile"`
+	ExportWarning string                `json:"exportWarning"`
+}
+
+type DiagnosticsIgnoreFile struct {
+	Path               string `json:"path"`
+	Status             string `json:"status"`
+	ActivePatternCount int    `json:"activePatternCount"`
+}
+
+type DiagnosticsSecurity struct {
+	RemoteBind DiagnosticsRemoteBind `json:"remoteBind"`
+	CORS       DiagnosticsCORS       `json:"cors"`
+}
+
+type DiagnosticsRemoteBind struct {
+	Addr        string `json:"addr"`
+	Status      string `json:"status"`
+	AllowRemote bool   `json:"allowRemote"`
+}
+
+type DiagnosticsCORS struct {
+	TotalOrigins int `json:"totalOrigins"`
+	LocalOrigins int `json:"localOrigins"`
+	ExtraOrigins int `json:"extraOrigins"`
 }

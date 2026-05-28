@@ -16,7 +16,7 @@ import (
 func TestDiagnosticsHandlerReturnsGroupedShape(t *testing.T) {
 	repo := newTestRepo(t)
 	svc := service.New(repo)
-	h := handler.Diagnostics(svc, repo.Ready, ":memory:")
+	h := handler.Diagnostics(svc, repo.Ready, service.DiagnosticsOptions{DBPath: ":memory:"})
 
 	req := httptest.NewRequest(http.MethodGet, "/api/diagnostics", nil)
 	rec := httptest.NewRecorder()
@@ -29,14 +29,9 @@ func TestDiagnosticsHandlerReturnsGroupedShape(t *testing.T) {
 	if err := json.NewDecoder(rec.Body).Decode(&payload); err != nil {
 		t.Fatalf("decode diagnostics: %v", err)
 	}
-	for _, key := range []string{"version", "health", "storage", "agents"} {
+	for _, key := range []string{"version", "health", "storage", "agents", "privacy", "security"} {
 		if _, ok := payload[key]; !ok {
 			t.Fatalf("payload missing %q: %#v", key, payload)
-		}
-	}
-	for _, forbidden := range []string{"privacy"} {
-		if _, ok := payload[forbidden]; ok {
-			t.Fatalf("payload includes forbidden top-level key %q", forbidden)
 		}
 	}
 	agents, ok := payload["agents"].([]any)
@@ -63,12 +58,25 @@ func TestDiagnosticsHandlerReturnsGroupedShape(t *testing.T) {
 	if storage["latestEventAt"] != nil {
 		t.Fatalf("storage.latestEventAt = %#v, want nil", storage["latestEventAt"])
 	}
+	privacy, ok := payload["privacy"].(map[string]any)
+	if !ok {
+		t.Fatalf("privacy = %#v, want object", payload["privacy"])
+	}
+	if _, ok := privacy["ignoreFile"].(map[string]any); !ok {
+		t.Fatalf("privacy.ignoreFile = %#v, want object", privacy["ignoreFile"])
+	}
+	if privacy["exportWarning"] == "" {
+		t.Fatalf("privacy.exportWarning = %#v, want non-empty", privacy["exportWarning"])
+	}
+	if _, ok := payload["security"].(map[string]any); !ok {
+		t.Fatalf("security = %#v, want object", payload["security"])
+	}
 }
 
 func TestDiagnosticsHandlerReturns200WhenNotReady(t *testing.T) {
 	repo := newTestRepo(t)
 	svc := service.New(repo)
-	h := handler.Diagnostics(svc, func() bool { return false }, ":memory:")
+	h := handler.Diagnostics(svc, func() bool { return false }, service.DiagnosticsOptions{DBPath: ":memory:"})
 
 	req := httptest.NewRequest(http.MethodGet, "/api/diagnostics", nil)
 	rec := httptest.NewRecorder()
@@ -107,7 +115,15 @@ func TestDiagnosticsHandlerDoesNotExposeCapturedContent(t *testing.T) {
 	}); err != nil {
 		t.Fatalf("AddEvent: %v", err)
 	}
-	h := handler.Diagnostics(svc, repo.Ready, ":memory:")
+	h := handler.Diagnostics(svc, repo.Ready, service.DiagnosticsOptions{
+		DBPath: ":memory:",
+		IgnoreFile: domain.DiagnosticsIgnoreFile{
+			Path:               "/tmp/private-ignore",
+			Status:             "loaded",
+			ActivePatternCount: 1,
+		},
+		CORSOrigins: []string{"http://localhost:8765", "https://sensitive-origin.example"},
+	})
 
 	req := httptest.NewRequest(http.MethodGet, "/api/diagnostics", nil)
 	rec := httptest.NewRecorder()
@@ -118,18 +134,23 @@ func TestDiagnosticsHandlerDoesNotExposeCapturedContent(t *testing.T) {
 	}
 	body := rec.Body.String()
 	for _, forbidden := range []string{
-		"privacy",
 		"raw_payload",
-		"prompt",
 		"tool_result_stdout",
 		"tool_result_stderr",
 		"secret prompt",
 		"rm -rf",
 		"tool_result_stdout secret",
 		"tool_result_stderr secret",
+		"*.pem",
+		"https://sensitive-origin.example",
 	} {
 		if strings.Contains(body, forbidden) {
 			t.Fatalf("diagnostics response contains forbidden content %q: %s", forbidden, body)
+		}
+	}
+	for _, want := range []string{"prompts", "diffs", "file paths", "tool outputs", "raw payloads", "exports"} {
+		if !strings.Contains(body, want) {
+			t.Fatalf("diagnostics response missing export warning term %q: %s", want, body)
 		}
 	}
 }
@@ -140,7 +161,7 @@ func TestDiagnosticsHandlerReturns500OnAggregateError(t *testing.T) {
 	if err := repo.RawDB().Close(); err != nil {
 		t.Fatalf("Close: %v", err)
 	}
-	h := handler.Diagnostics(svc, repo.Ready, ":memory:")
+	h := handler.Diagnostics(svc, repo.Ready, service.DiagnosticsOptions{DBPath: ":memory:"})
 
 	req := httptest.NewRequest(http.MethodGet, "/api/diagnostics", nil)
 	rec := httptest.NewRecorder()
@@ -154,9 +175,12 @@ func TestDiagnosticsHandlerReturns500OnAggregateError(t *testing.T) {
 func TestDiagnosticsHandlerSerializesHookConfigStatus(t *testing.T) {
 	repo := newTestRepo(t)
 	svc := service.New(repo)
-	h := handler.Diagnostics(svc, repo.Ready, ":memory:", []domain.DiagnosticsHookConfig{
-		{Agent: "claudecode", Status: "missing"},
-		{Agent: "codex", Status: "unknown", Reason: "read_error"},
+	h := handler.Diagnostics(svc, repo.Ready, service.DiagnosticsOptions{
+		DBPath: ":memory:",
+		HookConfig: []domain.DiagnosticsHookConfig{
+			{Agent: "claudecode", Status: "missing"},
+			{Agent: "codex", Status: "unknown", Reason: "read_error"},
+		},
 	})
 
 	req := httptest.NewRequest(http.MethodGet, "/api/diagnostics", nil)

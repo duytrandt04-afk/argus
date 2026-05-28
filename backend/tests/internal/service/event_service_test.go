@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -345,6 +346,79 @@ func TestDiagnosticsMergesHookConfigStatuses(t *testing.T) {
 	}
 	if !got.Health.Ready {
 		t.Fatalf("health should stay ready for hook config warnings: %+v", got.Health)
+	}
+}
+
+func TestDiagnosticsIncludesPrivacyAndSecurityPosture(t *testing.T) {
+	svc := service.New(&mockRepo{})
+
+	got, err := svc.DiagnosticsWithOptions(service.DiagnosticsOptions{
+		DBPath: ":memory:",
+		IgnoreFile: domain.DiagnosticsIgnoreFile{
+			Path:               "/tmp/hooker-ignore",
+			Status:             "loaded",
+			ActivePatternCount: 2,
+		},
+		Addr:        "0.0.0.0:8765",
+		AllowRemote: true,
+		CORSOrigins: []string{
+			"http://localhost:8765",
+			"http://127.0.0.1:8765",
+			"https://ops.example.test",
+		},
+	}, true)
+	if err != nil {
+		t.Fatalf("DiagnosticsWithOptions: %v", err)
+	}
+	if got.Privacy.IgnoreFile.Path != "/tmp/hooker-ignore" {
+		t.Fatalf("ignore path = %q, want /tmp/hooker-ignore", got.Privacy.IgnoreFile.Path)
+	}
+	if got.Privacy.IgnoreFile.Status != "loaded" {
+		t.Fatalf("ignore status = %q, want loaded", got.Privacy.IgnoreFile.Status)
+	}
+	if got.Privacy.IgnoreFile.ActivePatternCount != 2 {
+		t.Fatalf("ignore active count = %d, want 2", got.Privacy.IgnoreFile.ActivePatternCount)
+	}
+	for _, want := range []string{"prompts", "diffs", "file paths", "tool outputs", "raw payloads", "exports"} {
+		if !strings.Contains(got.Privacy.ExportWarning, want) {
+			t.Fatalf("export warning %q missing %q", got.Privacy.ExportWarning, want)
+		}
+	}
+	if got.Security.RemoteBind.Addr != "0.0.0.0:8765" {
+		t.Fatalf("remote bind addr = %q, want 0.0.0.0:8765", got.Security.RemoteBind.Addr)
+	}
+	if !got.Security.RemoteBind.AllowRemote || got.Security.RemoteBind.Status != "remote_enabled" {
+		t.Fatalf("remote bind = %+v, want remote enabled", got.Security.RemoteBind)
+	}
+	if got.Security.CORS.TotalOrigins != 3 || got.Security.CORS.LocalOrigins != 2 || got.Security.CORS.ExtraOrigins != 1 {
+		t.Fatalf("cors = %+v, want total=3 local=2 extra=1", got.Security.CORS)
+	}
+}
+
+func TestDiagnosticsDefaultsMissingIgnoreAndLoopbackPosture(t *testing.T) {
+	svc := service.New(&mockRepo{})
+
+	got, err := svc.DiagnosticsWithOptions(service.DiagnosticsOptions{
+		DBPath: ":memory:",
+		IgnoreFile: domain.DiagnosticsIgnoreFile{
+			Path:   "/tmp/missing-ignore",
+			Status: "missing_ok",
+		},
+		Addr:        "127.0.0.1:8765",
+		AllowRemote: false,
+		CORSOrigins: nil,
+	}, true)
+	if err != nil {
+		t.Fatalf("DiagnosticsWithOptions: %v", err)
+	}
+	if got.Privacy.IgnoreFile.Status != "missing_ok" || got.Privacy.IgnoreFile.ActivePatternCount != 0 {
+		t.Fatalf("ignore file = %+v, want missing_ok with zero active rules", got.Privacy.IgnoreFile)
+	}
+	if got.Security.RemoteBind.Status != "loopback" || got.Security.RemoteBind.AllowRemote {
+		t.Fatalf("remote bind = %+v, want loopback with allowRemote=false", got.Security.RemoteBind)
+	}
+	if got.Security.CORS.TotalOrigins != 0 || got.Security.CORS.ExtraOrigins != 0 {
+		t.Fatalf("cors = %+v, want zero counts when no origins are passed", got.Security.CORS)
 	}
 }
 

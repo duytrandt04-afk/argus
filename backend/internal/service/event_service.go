@@ -21,6 +21,17 @@ type EventService struct {
 	subscribers sync.Map
 }
 
+type DiagnosticsOptions struct {
+	DBPath      string
+	HookConfig  []domain.DiagnosticsHookConfig
+	IgnoreFile  domain.DiagnosticsIgnoreFile
+	Addr        string
+	AllowRemote bool
+	CORSOrigins []string
+}
+
+const exportSensitivityWarning = "Exports may include prompts, diffs, file paths, tool outputs, raw payloads, and exports; handle exported data as sensitive."
+
 func New(repo repository.EventRepository) *EventService {
 	return &EventService{repo: repo}
 }
@@ -73,6 +84,13 @@ func (s *EventService) SessionModel(sessionID string) (string, error) {
 }
 
 func (s *EventService) Diagnostics(dbPath string, ready bool, hookConfigs ...[]domain.DiagnosticsHookConfig) (domain.Diagnostics, error) {
+	return s.DiagnosticsWithOptions(DiagnosticsOptions{
+		DBPath:     dbPath,
+		HookConfig: hookConfigSlice(hookConfigs),
+	}, ready)
+}
+
+func (s *EventService) DiagnosticsWithOptions(opts DiagnosticsOptions, ready bool) (domain.Diagnostics, error) {
 	stats, err := s.repo.DiagnosticsStorageStats()
 	if err != nil {
 		return domain.Diagnostics{}, err
@@ -91,14 +109,14 @@ func (s *EventService) Diagnostics(dbPath string, ready bool, hookConfigs ...[]d
 	}
 
 	storage := domain.DiagnosticsStorage{
-		DBPath:        dbPath,
+		DBPath:        opts.DBPath,
 		TotalEvents:   stats.TotalEvents,
 		TotalSessions: stats.TotalSessions,
 		LatestEventAt: stats.LatestEventAt,
 	}
-	if dbPath == ":memory:" {
+	if opts.DBPath == ":memory:" {
 		storage.DBSizeReason = "unavailable"
-	} else if info, err := os.Stat(dbPath); err == nil {
+	} else if info, err := os.Stat(opts.DBPath); err == nil {
 		size := info.Size()
 		storage.DBSizeBytes = &size
 	} else {
@@ -113,8 +131,46 @@ func (s *EventService) Diagnostics(dbPath string, ready bool, hookConfigs ...[]d
 		},
 		Health:  health,
 		Storage: storage,
-		Agents:  diagnosticsAgents(agentStats, hookConfigSlice(hookConfigs)),
+		Agents:  diagnosticsAgents(agentStats, opts.HookConfig),
+		Privacy: domain.DiagnosticsPrivacy{
+			IgnoreFile:    opts.IgnoreFile,
+			ExportWarning: exportSensitivityWarning,
+		},
+		Security: domain.DiagnosticsSecurity{
+			RemoteBind: diagnosticsRemoteBind(opts),
+			CORS:       diagnosticsCORS(opts.CORSOrigins),
+		},
 	}, nil
+}
+
+func diagnosticsRemoteBind(opts DiagnosticsOptions) domain.DiagnosticsRemoteBind {
+	status := "loopback"
+	if opts.AllowRemote {
+		status = "remote_enabled"
+	}
+	return domain.DiagnosticsRemoteBind{
+		Addr:        opts.Addr,
+		Status:      status,
+		AllowRemote: opts.AllowRemote,
+	}
+}
+
+func diagnosticsCORS(origins []string) domain.DiagnosticsCORS {
+	counts := domain.DiagnosticsCORS{TotalOrigins: len(origins)}
+	for _, origin := range origins {
+		if isLocalOrigin(origin) {
+			counts.LocalOrigins++
+		} else {
+			counts.ExtraOrigins++
+		}
+	}
+	return counts
+}
+
+func isLocalOrigin(origin string) bool {
+	return strings.Contains(origin, "localhost") ||
+		strings.Contains(origin, "127.0.0.1") ||
+		strings.Contains(origin, "[::1]")
 }
 
 func hookConfigSlice(hookConfigs [][]domain.DiagnosticsHookConfig) []domain.DiagnosticsHookConfig {

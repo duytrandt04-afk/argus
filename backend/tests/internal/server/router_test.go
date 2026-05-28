@@ -78,6 +78,13 @@ func newTestRouter() http.Handler {
 	return server.NewRouter(service.New(repo), repo, repo.Ready, server.Options{
 		CORSOrigins: testCORSOrigins,
 		DBPath:      ":memory:",
+		IgnoreFile: domain.DiagnosticsIgnoreFile{
+			Path:               "/tmp/hooker-ignore",
+			Status:             "missing_ok",
+			ActivePatternCount: 0,
+		},
+		Addr:        "127.0.0.1:8765",
+		AllowRemote: false,
 		HookConfig: []domain.DiagnosticsHookConfig{
 			{Agent: "claudecode", Status: "configured"},
 			{Agent: "codex", Status: "missing"},
@@ -274,6 +281,21 @@ func TestNewRouterDiagnosticsReturnsJSON(t *testing.T) {
 	}
 	if payload.Storage.LatestEventAt != nil {
 		t.Fatalf("storage.latestEventAt = %q, want nil", *payload.Storage.LatestEventAt)
+	}
+	if payload.Privacy.IgnoreFile.Path != "/tmp/hooker-ignore" {
+		t.Fatalf("privacy.ignoreFile.path = %q, want /tmp/hooker-ignore", payload.Privacy.IgnoreFile.Path)
+	}
+	if payload.Privacy.IgnoreFile.Status != "missing_ok" {
+		t.Fatalf("privacy.ignoreFile.status = %q, want missing_ok", payload.Privacy.IgnoreFile.Status)
+	}
+	if payload.Privacy.ExportWarning == "" {
+		t.Fatal("privacy.exportWarning is empty")
+	}
+	if payload.Security.RemoteBind.Status != "loopback" {
+		t.Fatalf("security.remoteBind.status = %q, want loopback", payload.Security.RemoteBind.Status)
+	}
+	if payload.Security.CORS.TotalOrigins != 3 || payload.Security.CORS.LocalOrigins != 3 || payload.Security.CORS.ExtraOrigins != 0 {
+		t.Fatalf("security.cors = %+v, want total=3 local=3 extra=0", payload.Security.CORS)
 	}
 }
 

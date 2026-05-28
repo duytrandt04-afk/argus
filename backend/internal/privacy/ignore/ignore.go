@@ -18,10 +18,10 @@ import (
 
 // rule represents a single parsed pattern line from the ignore file.
 type rule struct {
-	pattern  string // the original pattern text (for reason messages)
-	lineNum  int    // 1-based line number (for reason messages)
-	negate   bool   // true when the pattern starts with !
-	dirOnly  bool   // true when the pattern ends with /
+	pattern  string   // the original pattern text (for reason messages)
+	lineNum  int      // 1-based line number (for reason messages)
+	negate   bool     // true when the pattern starts with !
+	dirOnly  bool     // true when the pattern ends with /
 	segments []string // path segments after splitting on /
 }
 
@@ -30,18 +30,29 @@ type Matcher struct {
 	rules []rule
 }
 
+type LoadStatus struct {
+	Path               string
+	Status             string
+	ActivePatternCount int
+}
+
 // Load parses the ignore file at path and returns a Matcher.
 // If path does not exist, Load returns an empty Matcher (no error) — a missing
 // default file is treated as no rules (D-01 / T-03-02-04: missing default is safe).
 // If path is provided but cannot be read (permissions, I/O error), Load returns an error
 // so the caller can fail with an actionable message.
 func Load(path string) (*Matcher, error) {
+	m, _, err := LoadWithStatus(path)
+	return m, err
+}
+
+func LoadWithStatus(path string) (*Matcher, LoadStatus, error) {
 	f, err := os.Open(path) //nolint:gosec // user-supplied ignore file path is intentional
 	if err != nil {
 		if os.IsNotExist(err) {
-			return &Matcher{}, nil
+			return &Matcher{}, LoadStatus{Path: path, Status: "missing_ok"}, nil
 		}
-		return nil, fmt.Errorf("open ignore file %q: %w", path, err)
+		return nil, LoadStatus{Path: path, Status: "error"}, fmt.Errorf("open ignore file %q: %w", path, err)
 	}
 	defer f.Close()
 
@@ -62,10 +73,18 @@ func Load(path string) (*Matcher, error) {
 		rules = append(rules, r)
 	}
 	if err := scanner.Err(); err != nil {
-		return nil, fmt.Errorf("read ignore file %q: %w", path, err)
+		return nil, LoadStatus{Path: path, Status: "error"}, fmt.Errorf("read ignore file %q: %w", path, err)
 	}
 
-	return &Matcher{rules: rules}, nil
+	matcher := &Matcher{rules: rules}
+	return matcher, LoadStatus{Path: path, Status: "loaded", ActivePatternCount: matcher.RuleCount()}, nil
+}
+
+func (m *Matcher) RuleCount() int {
+	if m == nil {
+		return 0
+	}
+	return len(m.rules)
 }
 
 // parseRule converts a trimmed, non-comment pattern line into a rule.
