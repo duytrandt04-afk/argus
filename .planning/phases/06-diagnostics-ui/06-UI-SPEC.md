@@ -57,14 +57,13 @@ Exceptions:
 | Role | Size | Weight | Line Height | Font | Usage |
 |------|------|--------|-------------|------|-------|
 | Page heading | 22px | 600 (semibold) | 1.2 | Geist | "Diagnostics" page title — matches Dashboard h1 |
-| Section heading | 13px | 600 (semibold) | 1.3 | Geist | "Agent Connectivity", "System Facts", "Privacy" panel labels |
-| Body / label | 13px | 400 (regular) | 1.5 | Geist | Tile values, table cell content, fact list rows |
-| Monospace path | 12px | 400 (regular) | 1.5 | JetBrains Mono | DB path, ignore file path — always monospace |
-| Muted / dim | 12px | 400 (regular) | 1.5 | Geist | Timestamps, secondary labels, "Updated ..." text |
 | Tile value (large) | 20px | 600 (semibold) | 1.2 | Geist | Primary number/status in summary tiles |
-| Tile label | 11px | 400 (regular) | 1.4 | Geist | Label beneath tile value ("Readiness", "Events", etc.) |
+| Body / label | 13px | 400 (regular) | 1.5 | Geist | Section headings, table cell content, fact list rows, label text |
+| Monospace path / muted / dim | 12px | 400 (regular) | 1.5 | Geist / JetBrains Mono | Monospace paths (JetBrains Mono), timestamps, secondary labels, tile sublabels, "Updated ..." text, dim secondary info |
 
 Weights used: regular (400) and semibold (600) only.
+
+**Note:** Tile sublabels ("Readiness", "Events", etc.) use 12px regular Geist (muted-foreground), merged with the monospace/muted tier. The 1px difference between 11px and 12px carries no hierarchy signal at this scale.
 
 **Source:** `Dashboard.tsx` h1 `text-[22px] font-semibold`; body token from existing page content patterns; monospace from `body { font-family: 'JetBrains Mono' }` in index.css overridden per-section with `font-sans` for UI chrome.
 
@@ -133,7 +132,7 @@ Reuse the Dashboard page shell exactly:
 
 Each tile uses `<Card>` with `p-4` padding:
 - Top: tile value at 20px semibold (or status dot + label)
-- Bottom: tile label at 11px muted-foreground
+- Bottom: tile label at 12px muted-foreground
 
 | # | Tile | Primary value | Secondary |
 |---|------|---------------|-----------|
@@ -204,7 +203,7 @@ Keep page shell and header visible. Replace content area body with a compact ret
 <Card className="p-6 flex flex-col items-center gap-3 text-center">
   <p className="text-sm text-foreground">Failed to load diagnostics</p>
   <p className="text-xs text-muted-foreground">Could not reach /api/diagnostics</p>
-  <Button variant="outline" size="sm" onClick={reload}>Retry</Button>
+  <Button variant="outline" size="sm" onClick={reload}>Retry Load</Button>
 </Card>
 ```
 
@@ -413,7 +412,7 @@ Feature directory: `frontend/src/features/diagnostics/`
 | Empty / first-run body | "Run hooker setup or hooker doctor to configure hook integrations." |
 | Error state heading | "Failed to load diagnostics" |
 | Error state body | "Could not reach /api/diagnostics" |
-| Retry button | "Retry" |
+| Retry button | "Retry Load" |
 | Export warning | Verbatim from `privacy.exportWarning` backend field |
 
 No destructive actions exist in this phase — no confirmation dialogs required.
