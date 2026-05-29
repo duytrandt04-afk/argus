@@ -169,7 +169,7 @@ func TestExportEventsRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	resp.Body.Close()
+	_ = resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("POST /api/hook: %d", resp.StatusCode)
 	}
@@ -178,7 +178,7 @@ func TestExportEventsRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("GET /api/export/events: %d", resp.StatusCode)
 	}

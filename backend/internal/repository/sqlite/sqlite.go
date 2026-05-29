@@ -533,17 +533,14 @@ func (d *DB) DiagnosticsAgentStats() ([]domain.DiagnosticsAgentStats, error) {
 	if err != nil {
 		return nil, fmt.Errorf("diagnostics agent sessions: %w", err)
 	}
+	defer sessionRows.Close()
 	for sessionRows.Next() {
 		var agent string
 		var count int
 		if err := sessionRows.Scan(&agent, &count); err != nil {
-			sessionRows.Close()
 			return nil, fmt.Errorf("diagnostics agent session scan: %w", err)
 		}
 		stats[agent].EventCount = count
-	}
-	if err := sessionRows.Close(); err != nil {
-		return nil, fmt.Errorf("diagnostics agent sessions close: %w", err)
 	}
 	if err := sessionRows.Err(); err != nil {
 		return nil, fmt.Errorf("diagnostics agent sessions rows: %w", err)
@@ -565,16 +562,13 @@ func (d *DB) DiagnosticsAgentStats() ([]domain.DiagnosticsAgentStats, error) {
 	if err != nil {
 		return nil, fmt.Errorf("diagnostics agent last seen: %w", err)
 	}
+	defer lastSeenRows.Close()
 	for lastSeenRows.Next() {
 		var agent, lastSeen string
 		if err := lastSeenRows.Scan(&agent, &lastSeen); err != nil {
-			lastSeenRows.Close()
 			return nil, fmt.Errorf("diagnostics agent last seen scan: %w", err)
 		}
 		stats[agent].LastSeenAt = &lastSeen
-	}
-	if err := lastSeenRows.Close(); err != nil {
-		return nil, fmt.Errorf("diagnostics agent last seen close: %w", err)
 	}
 	if err := lastSeenRows.Err(); err != nil {
 		return nil, fmt.Errorf("diagnostics agent last seen rows: %w", err)
@@ -603,17 +597,14 @@ func (d *DB) DiagnosticsAgentStats() ([]domain.DiagnosticsAgentStats, error) {
 	if err != nil {
 		return nil, fmt.Errorf("diagnostics agent events: %w", err)
 	}
+	defer eventRows.Close()
 	for eventRows.Next() {
 		var agent string
 		var degraded int
 		if err := eventRows.Scan(&agent, &degraded); err != nil {
-			eventRows.Close()
 			return nil, fmt.Errorf("diagnostics agent events scan: %w", err)
 		}
 		stats[agent].DegradedCount = degraded
-	}
-	if err := eventRows.Close(); err != nil {
-		return nil, fmt.Errorf("diagnostics agent events close: %w", err)
 	}
 	if err := eventRows.Err(); err != nil {
 		return nil, fmt.Errorf("diagnostics agent events rows: %w", err)

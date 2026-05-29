@@ -92,5 +92,5 @@ func TestMigrationNewColumns(t *testing.T) {
 	if err != nil {
 		t.Fatalf("second sqlite.New on same path: %v", err)
 	}
-	defer db2.RawDB().Close()
+	defer func() { _ = db2.RawDB().Close() }()
 }

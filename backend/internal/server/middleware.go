@@ -81,7 +81,6 @@ func corsAllowlist(origins []string) func(http.Handler) http.Handler {
 			}
 			// Origin present but not in allowlist — reject regardless of method.
 			http.Error(w, "forbidden", http.StatusForbidden)
-			return
 		})
 	}
 }

@@ -23,6 +23,10 @@ import (
 )
 
 func main() {
+	os.Exit(run())
+}
+
+func run() int {
 	cfg := config.Load()
 
 	// Pre-check: verify the DB path is writable before attempting open/migrate.
@@ -31,7 +35,7 @@ func main() {
 		f, err := os.OpenFile(cfg.DBPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
 		if err != nil {
 			slog.Error("db not writable", "path", cfg.DBPath, "err", err)
-			os.Exit(1)
+			return 1
 		}
 		_ = f.Close()
 	}
@@ -39,13 +43,13 @@ func main() {
 	// Validate ADDR format — net.Listen returns an opaque error for bad formats.
 	if _, _, err := net.SplitHostPort(cfg.Addr); err != nil {
 		slog.Error("invalid ADDR", "addr", cfg.Addr, "err", err)
-		os.Exit(1)
+		return 1
 	}
 
 	// Reject non-loopback bind unless HOOKER_ALLOW_REMOTE=1 (D-07, D-08).
 	if err := validateBind(cfg); err != nil {
 		slog.Error(err.Error())
-		os.Exit(1)
+		return 1
 	}
 	if cfg.AllowRemote {
 		warnRemoteBind(cfg)
@@ -54,7 +58,7 @@ func main() {
 	repo, err := sqlite.New(cfg.DBPath)
 	if err != nil {
 		slog.Error("open db", "err", err)
-		os.Exit(1)
+		return 1
 	}
 	defer func() {
 		if err := repo.Close(); err != nil {
@@ -69,7 +73,7 @@ func main() {
 	matcher, ignoreStatus, err := ignore.LoadWithStatus(cfg.IgnorePath)
 	if err != nil {
 		slog.Error("load ignore file", "path", cfg.IgnorePath, "err", err)
-		os.Exit(1)
+		return 1
 	}
 
 	h := server.NewRouter(svc, repo, repo.Ready, server.Options{
@@ -110,13 +114,14 @@ func main() {
 		if isAddrInUse(err) {
 			stop()
 			slog.Error("port already in use", "addr", cfg.Addr, "err", err)
-			os.Exit(1)
+			return 1
 		}
 		stop()
 		slog.Error("listen", "err", err)
-		os.Exit(1)
+		return 1
 	}
 	stop()
+	return 0
 }
 
 // validateBind rejects non-loopback ADDR unless AllowRemote is explicitly set (D-07, D-08).
