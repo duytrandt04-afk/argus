@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Diagnostics
-status: milestone_complete
-stopped_at: Milestone complete (Phase 06 was final phase)
-last_updated: 2026-05-28T15:58:04.342Z
-last_activity: 2026-05-28
+status: archived
+stopped_at: v1.1 archived 2026-05-29, ready for next milestone planning
+last_updated: 2026-05-29T09:15:00.000Z
+last_activity: 2026-05-29
 progress:
   total_phases: 3
   completed_phases: 3
@@ -18,10 +18,10 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-05-27)
+See: .planning/PROJECT.md (updated 2026-05-29)
 
-**Core value:** A developer can install hooker from source in under 10 minutes and trust that it reliably captures, stores, and surfaces their coding agent activity without data loss, silent failures, or upgrade surprises.
-**Current focus:** Milestone complete
+**Core value:** A developer can install hooker from source, capture coding-agent activity locally, and trust that the app handles diagnostics, data durability, privacy controls, exports, and security posture without silent surprises.
+**Current focus:** Planning next milestone (v1.2)
 
 ## Current Position
 

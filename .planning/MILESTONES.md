@@ -20,4 +20,20 @@
 
 3 open human-verification items were acknowledged and deferred at milestone close; see `.planning/STATE.md` Deferred Items.
 
+## v1.1 Diagnostics (Shipped: 2026-05-29)
+
+**Phases completed:** 3 phases (4–6), 9 plans, 20 tasks  
+**Archive:** [v1.1-ROADMAP.md](milestones/v1.1-ROADMAP.md), [v1.1-REQUIREMENTS.md](milestones/v1.1-REQUIREMENTS.md), [v1.1-MILESTONE-AUDIT.md](milestones/v1.1-MILESTONE-AUDIT.md)
+
+### Key Accomplishments
+
+- Defined typed diagnostics domain contract with grouped version/health/storage sections and targeted SQLite aggregate queries — no full-table scans.
+- Wired `GET /api/diagnostics` end-to-end: service composition, read-only handler, router mount, and DB path propagation via server options.
+- Added Claude Code and Codex agent telemetry rows with event count, last-seen timestamp, degraded warning status, and normalizer version.
+- Implemented best-effort hook config detection (`configured`/`missing`/`unknown`) in a new `hookconfig` package matching doctor-known locations.
+- Exposed privacy/security posture: ignore file path/status/pattern count, remote-bind posture, CORS origin counts, and export sensitivity warning — without leaking raw captured content.
+- Built full `DiagnosticsPage` with 7 state branches, 4 summary tiles, agent connectivity table, system facts card, privacy & security card, and responsive two-column layout.
+- Delivered 176/176 backend tests and 87/87 frontend tests covering all rendering states, route, and sidebar navigation.
+- Closed 2 audit gaps at milestone boundary: HOOK-01 scope reduced to Claude Code + Codex; agent status `"ok"→"healthy"` mismatch fixed.
+
 ---

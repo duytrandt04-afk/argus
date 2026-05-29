@@ -10,35 +10,23 @@ A developer can install hooker from source, capture coding-agent activity locall
 
 ## Current State
 
-**v1.0 MVP shipped on 2026-05-27.** The initial milestone is archived in `.planning/milestones/` and summarized in `.planning/MILESTONES.md`.
+**v1.1 Diagnostics shipped on 2026-05-29.** Both milestones are archived in `.planning/milestones/` and summarized in `.planning/MILESTONES.md`.
 
 What is now in place:
 
 - Source-install path with `./scripts/hooker setup`, `./scripts/hooker doctor`, quickstart/install/release docs, CI, and GoReleaser configuration.
 - Runtime diagnostics: `/healthz`, `/readyz`, `/api/version`, version badge, startup validation, DB path visibility, and actionable fatal errors.
 - Durable event model: raw payload archive, normalization metadata, degraded ingestion for unknown payloads, transactional migrations, WAL checkpointing, and export endpoints.
-- Reliability and regression coverage: backend tests, frontend hook/component tests, Playwright smoke wiring, panic recovery, graceful shutdown, HTTP timeouts, and export round-trip tests.
+- Reliability and regression coverage: backend tests (176/176), frontend tests (87/87), Playwright smoke wiring, panic recovery, graceful shutdown, HTTP timeouts, and export round-trip tests.
 - Privacy and security controls: host header validation, explicit CORS allowlist, loopback-only default bind, remote-bind opt-in, gitignore-style ignore file, privacy docs, and local threat model docs.
 - Contributor guardrails: `CONTRIBUTING.md`, frontend-backend contract checklist, adapter fixture requirements, and ADRs for SQLite, normalization, local-first positioning, and proxy scope.
+- Operator Diagnostics: `GET /api/diagnostics` with version/health/storage/agent/privacy/security sections; React DiagnosticsPage with 7 state branches, agent connectivity table, system facts card, and privacy & security card.
 
 Known deferred close-out items:
 
 - Phase 01 verification still needs human confirmation for clean-machine onboarding timing, GitHub settings/hosted CI, and migration-failure message quality.
 - Phase 03 UAT still needs human confirmation for doctor privacy output, remote-bind runtime rejection, and end-to-end privacy gate behavior.
-
-## Current Milestone: v1.1 Diagnostics
-
-**Goal:** Build an operator-focused Diagnostics UI that tells a solo developer whether hooker is healthy, correctly connected to agent hooks, and safe to trust for local capture.
-
-**Progress:** Phase 5 complete on 2026-05-28. The backend diagnostics contract is available at `GET /api/diagnostics` with version, health/readiness, DB path/size, total event/session counts, latest event timestamp, Claude Code/Codex agent telemetry, hook config status, privacy ignore posture, remote-bind/CORS posture, and export sensitivity warning. The React Diagnostics page remains in Phase 6.
-
-**Target features:**
-
-- Diagnostics page in the React app.
-- Backend diagnostics endpoint(s) for version, DB path/size, readiness, event/session counts, last event time, and normalizer/degraded status.
-- Hook status summary for Claude Code and Codex: configured/missing/unknown where detectable, last seen event per agent, and degraded warnings. Gemini CLI diagnostics are deferred.
-- Privacy summary: ignore file path/load status, active ignore pattern count, and export sensitivity warning.
-- Backend and frontend tests covering diagnostics data, loading/error states, and rendered warnings.
+- Phases 4–6 have no VALIDATION.md (Nyquist) files; all phases have VERIFICATION.md with full evidence.
 
 ## Requirements
 
@@ -71,17 +59,11 @@ Known deferred close-out items:
 - Threat model, privacy posture, contributor guide, and architecture ADRs — v1.0
 - Diagnostics backend data contract: `GET /api/diagnostics` grouped response with version, health/readiness, storage facts, aggregate counts, latest event timestamp, and captured-content non-leakage tests — v1.1 Phase 4
 - Diagnostics agent/privacy/security backend contract: Claude Code and Codex telemetry/config rows, ignore file status/count, remote-bind/CORS posture counts, and export sensitivity warning — v1.1 Phase 5
+- Operator Diagnostics page: compact React UI with 7 state branches, 4 summary tiles, agent connectivity table, system facts card, privacy & security card, responsive layout, and 87/87 tests — v1.1 Phase 6
 
 ### Active
 
-**Milestone v1.1 — Diagnostics:**
-
-- [x] Backend diagnostics endpoint exposes version, health/readiness, DB facts, aggregate counts, and latest event timestamp.
-- [x] Backend diagnostics endpoint exposes Claude Code/Codex hook status, privacy posture, and security posture.
-- [ ] Operator can open a Diagnostics page and understand whether hooker is healthy right now.
-- [ ] Operator can see whether supported agent hooks appear configured and recently active in the UI.
-- [ ] Operator can see privacy posture and export-sensitivity reminders in the UI without digging through docs.
-- [ ] Diagnostics data is backed by frontend rendering tests.
+No active milestone requirements. Start next milestone with `/gsd-new-milestone`.
 
 ### Candidate Next Milestone Ideas
 
@@ -136,6 +118,10 @@ Known deferred close-out items:
 | Export before advanced diagnostics UI | Backup/migration path is more urgent than UI polish | Good — NDJSON and snapshot export shipped in v1.0 |
 | Gitignore-style privacy gate | Explicit path exclusion is clearer than unreliable automatic redaction | Good — shipped as local privacy control |
 | Remote bind requires explicit opt-in | Local-first product should not silently expose sensitive data | Good — enforced with startup failure and warning |
+| Diagnostics uses dedicated repository aggregate method | Avoids mixing diagnostics reads with dashboard/list flows | Good — DiagnosticsStorageStats() / DiagnosticsAgentStats() are separate concerns |
+| hookconfig as separate Go package | Testable and reusable without shelling out to scripts/hooker | Good — doctor-equivalent detection in-process |
+| HOOK-01 scope reduced to Claude Code + Codex | Gemini CLI not emitting compatible hook payloads; implementing would require spec work | Good — requirement updated at audit, no tech debt |
+| Agent status "healthy" not "ok" | UI AgentStatusCell switch needs exact string match; "ok" hit the default case silently | Good — fixed at audit, prevented silent rendering failure |
 
 ## Evolution
 
@@ -148,4 +134,4 @@ This document evolves at milestone boundaries.
 4. Revisit Key Decisions and mark outcomes.
 
 ---
-*Last updated: 2026-05-28 after completing v1.1 Diagnostics Phase 5*
+*Last updated: 2026-05-29 after v1.1 Diagnostics milestone*
