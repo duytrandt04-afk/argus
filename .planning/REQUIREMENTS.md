@@ -14,7 +14,7 @@
 
 ### Agent Connectivity (HOOK)
 
-- [x] **HOOK-01**: Operator can see one diagnostics row each for Claude Code, Codex, and Gemini CLI.
+- [x] **HOOK-01**: Operator can see one diagnostics row each for Claude Code and Codex.
 - [x] **HOOK-02**: Operator can see last-seen timestamp and event count per supported agent.
 - [x] **HOOK-03**: Operator can see degraded event count or warning state per supported agent.
 - [x] **HOOK-04**: Operator can see best-effort hook config status using existing setup/doctor-detectable locations, with `unknown` where detection is not implemented.

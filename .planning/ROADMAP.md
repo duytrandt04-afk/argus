@@ -50,7 +50,7 @@ Plans:
 **Requirements**: HOOK-01, HOOK-02, HOOK-03, HOOK-04, HOOK-05, PRIV-01, PRIV-02, PRIV-03, PRIV-04
 **Success Criteria** (what must be TRUE):
 
-1. Diagnostics reports one row each for Claude Code, Codex, and Gemini CLI with event count, last seen timestamp, degraded count/warning, and normalizer version information when available.
+1. Diagnostics reports one row each for Claude Code and Codex with event count, last seen timestamp, degraded count/warning, and normalizer version information when available.
 2. Diagnostics reports best-effort hook config status using setup/doctor-detectable config locations, with `unknown` where detection is not implemented.
 3. Hook statuses distinguish `configured`, `missing`, `unknown`, `no events`, `stale`, and `degraded` without treating unknown or stale states as fatal.
 4. Diagnostics reports ignore file path, load status, active pattern count, remote-bind posture, and CORS origin summary.

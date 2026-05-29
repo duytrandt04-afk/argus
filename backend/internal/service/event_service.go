@@ -207,7 +207,7 @@ func diagnosticsAgents(stats []domain.DiagnosticsAgentStats, hookConfigs []domai
 			DegradedCount:     stat.DegradedCount,
 			NormalizerVersion: stat.NormalizerVersion,
 			HookConfigStatus:  "unknown",
-			Status:            "ok",
+			Status:            "healthy",
 			Warnings:          []string{},
 		}
 		if hookConfig, ok := hookByAgent[def.id]; ok {

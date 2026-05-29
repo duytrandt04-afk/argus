@@ -37,17 +37,6 @@ const healthyDiagnostics: Diagnostics = {
       status: 'healthy',
       warnings: [],
     },
-    {
-      id: 'geminicli',
-      label: 'Gemini CLI',
-      eventCount: 0,
-      lastSeenAt: null,
-      degradedCount: 0,
-      normalizerVersion: null,
-      hookConfigStatus: 'unknown',
-      status: 'no events',
-      warnings: [],
-    },
   ],
   privacy: {
     ignoreFile: { path: '/home/user/.hooker/.ignore', status: 'loaded', activePatternCount: 3 },
@@ -139,7 +128,6 @@ describe('DiagnosticsPage', () => {
     expect(screen.getByText('System Facts')).toBeInTheDocument()
     expect(screen.getByText('Claude Code')).toBeInTheDocument()
     expect(screen.getByText('Codex')).toBeInTheDocument()
-    expect(screen.getByText('Gemini CLI')).toBeInTheDocument()
     // Readiness tile shows Ready
     expect(screen.getByText('Ready')).toBeInTheDocument()
     // Export warning always visible
