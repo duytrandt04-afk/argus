@@ -3,7 +3,6 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
 
 	"hooker/internal/domain"
 	"hooker/internal/service"
@@ -20,14 +19,7 @@ func Traces(svc *service.EventService) http.Handler {
 		w.Header().Set("Content-Type", "application/json")
 
 		if pageStr != "" {
-			page, _ := strconv.Atoi(pageStr)
-			size, _ := strconv.Atoi(sizeStr)
-			if page < 1 {
-				page = 1
-			}
-			if size < 1 || size > 500 {
-				size = 50
-			}
+			page, size := parsePageSize(pageStr, sizeStr, 50, 500)
 
 			traces, total, err := svc.GetTracesPage(sessionID, since, page, size)
 			if err != nil {

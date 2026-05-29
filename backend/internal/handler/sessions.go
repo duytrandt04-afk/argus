@@ -3,7 +3,6 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
 
 	"hooker/internal/domain"
 	"hooker/internal/service"
@@ -19,14 +18,7 @@ func Sessions(svc *service.EventService) http.Handler {
 		sizeStr := q.Get("size")
 
 		if cwd != "" && pageStr != "" {
-			page, _ := strconv.Atoi(pageStr)
-			size, _ := strconv.Atoi(sizeStr)
-			if page < 1 {
-				page = 1
-			}
-			if size < 1 || size > 200 {
-				size = 20
-			}
+			page, size := parsePageSize(pageStr, sizeStr, 20, 200)
 
 			sessions, total, err := svc.ListSessionsByCWDPage(cwd, since, page, size)
 			if err != nil {
