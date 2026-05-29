@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"time"
 
@@ -22,6 +23,9 @@ func SessionsTree(svc *service.EventService) http.Handler {
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(map[string]any{"sessions": tree})
+		resp := map[string]any{"sessions": tree}
+		if err := json.NewEncoder(w).Encode(resp); err != nil {
+			log.Printf("[handler] encode %T: %v", resp, err)
+		}
 	})
 }

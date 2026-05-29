@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"hooker/internal/domain"
@@ -24,6 +25,8 @@ func FileChanges(svc *service.EventService) http.Handler {
 		if groups == nil {
 			groups = []domain.FileChangeGroup{}
 		}
-		_ = json.NewEncoder(w).Encode(groups)
+		if err := json.NewEncoder(w).Encode(groups); err != nil {
+			log.Printf("[handler] encode %T: %v", groups, err)
+		}
 	})
 }

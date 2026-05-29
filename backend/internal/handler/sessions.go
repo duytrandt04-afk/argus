@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"hooker/internal/domain"
@@ -29,13 +30,16 @@ func Sessions(svc *service.EventService) http.Handler {
 				sessions = []domain.Session{}
 			}
 			hasMore := (page * size) < total
-			_ = json.NewEncoder(w).Encode(map[string]any{
+			resp := map[string]any{
 				"sessions": sessions,
 				"total":    total,
 				"page":     page,
 				"size":     size,
 				"has_more": hasMore,
-			})
+			}
+			if err := json.NewEncoder(w).Encode(resp); err != nil {
+				log.Printf("[handler] encode %T: %v", resp, err)
+			}
 			return
 		}
 
@@ -56,6 +60,8 @@ func Sessions(svc *service.EventService) http.Handler {
 		if sessions == nil {
 			sessions = make([]domain.Session, 0)
 		}
-		_ = json.NewEncoder(w).Encode(sessions)
+		if err := json.NewEncoder(w).Encode(sessions); err != nil {
+			log.Printf("[handler] encode %T: %v", sessions, err)
+		}
 	})
 }

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"hooker/internal/agents/claudecode"
@@ -19,12 +20,21 @@ func Usage() http.Handler {
 
 		w.Header().Set("Content-Type", "application/json")
 		if claudecode.MatchesTranscript(path) {
-			_ = json.NewEncoder(w).Encode(claudecode.ComputeUsage(path))
+			result := claudecode.ComputeUsage(path)
+			if err := json.NewEncoder(w).Encode(result); err != nil {
+				log.Printf("[handler] encode %T: %v", result, err)
+			}
 			return
 		} else if geminicli.MatchesTranscript(path) {
-			_ = json.NewEncoder(w).Encode(geminicli.ComputeUsage(path))
+			result := geminicli.ComputeUsage(path)
+			if err := json.NewEncoder(w).Encode(result); err != nil {
+				log.Printf("[handler] encode %T: %v", result, err)
+			}
 			return
 		}
-		_ = json.NewEncoder(w).Encode(codex.ComputeUsage(path))
+		result := codex.ComputeUsage(path)
+		if err := json.NewEncoder(w).Encode(result); err != nil {
+			log.Printf("[handler] encode %T: %v", result, err)
+		}
 	})
 }

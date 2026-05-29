@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"hooker/internal/domain"
@@ -30,13 +31,16 @@ func Traces(svc *service.EventService) http.Handler {
 				traces = []domain.NormalizedEvent{}
 			}
 			hasMore := (page * size) < total
-			_ = json.NewEncoder(w).Encode(map[string]any{
+			resp := map[string]any{
 				"traces":   traces,
 				"total":    total,
 				"page":     page,
 				"size":     size,
 				"has_more": hasMore,
-			})
+			}
+			if err := json.NewEncoder(w).Encode(resp); err != nil {
+				log.Printf("[handler] encode %T: %v", resp, err)
+			}
 			return
 		}
 
@@ -45,6 +49,9 @@ func Traces(svc *service.EventService) http.Handler {
 			http.Error(w, "get traces", http.StatusInternalServerError)
 			return
 		}
-		_ = json.NewEncoder(w).Encode(map[string]any{"traces": traces})
+		resp := map[string]any{"traces": traces}
+		if err := json.NewEncoder(w).Encode(resp); err != nil {
+			log.Printf("[handler] encode %T: %v", resp, err)
+		}
 	})
 }

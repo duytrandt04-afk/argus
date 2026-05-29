@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 
 	"hooker/internal/domain"
@@ -24,7 +25,10 @@ func Events(svc *service.EventService) http.Handler {
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(map[string]any{"events": events})
+		resp := map[string]any{"events": events}
+		if err := json.NewEncoder(w).Encode(resp); err != nil {
+			log.Printf("[handler] encode %T: %v", resp, err)
+		}
 	})
 }
 

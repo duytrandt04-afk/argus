@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"hooker/internal/service"
@@ -16,6 +17,8 @@ func Diagnostics(svc *service.EventService, ready func() bool, opts service.Diag
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(diagnostics)
+		if err := json.NewEncoder(w).Encode(diagnostics); err != nil {
+			log.Printf("[handler] encode %T: %v", diagnostics, err)
+		}
 	})
 }
