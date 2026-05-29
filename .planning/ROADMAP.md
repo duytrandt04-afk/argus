@@ -28,7 +28,7 @@
 
 **v1.2 Polish & Cleanup**
 
-- [ ] **Phase 7: Backend Code Quality** — Eliminate silent JSON failures, extract shared pagination helper, and add missing handler tests
+- [x] **Phase 7: Backend Code Quality** — Eliminate silent JSON failures, extract shared pagination helper, and add missing handler tests (completed 2026-05-29)
 - [ ] **Phase 8: Frontend Component Quality** — Replace raw buttons with shadcn primitive, remove inline styles, and flatten deep prop drilling in sessions feature
 - [ ] **Phase 9: Frontend Test Coverage & Docs Cleanup** — Add Vitest coverage for DiagnosticsPage, UsagePage, and VersionBadge; archive stale spec files
 
@@ -57,7 +57,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 07-03-PLAN.md — Replace all 14 suppressed JSON encode errors with log.Printf calls (BACK-01)
+- [x] 07-03-PLAN.md — Replace all 14 suppressed JSON encode errors with log.Printf calls (BACK-01)
 
 ### Phase 8: Frontend Component Quality
 
@@ -99,7 +99,7 @@ Plans:
 | 4. Diagnostics Data Contract | v1.1 | 3/3 | Complete | 2026-05-27 |
 | 5. Hook and Privacy Diagnostics | v1.1 | 3/3 | Complete | 2026-05-28 |
 | 6. Diagnostics UI | v1.1 | 3/3 | Complete | 2026-05-28 |
-| 7. Backend Code Quality | v1.2 | 2/3 | In Progress|  |
+| 7. Backend Code Quality | v1.2 | 3/3 | Complete   | 2026-05-29 |
 | 8. Frontend Component Quality | v1.2 | 0/? | Not started | - |
 | 9. Frontend Test Coverage & Docs Cleanup | v1.2 | 0/? | Not started | - |
 
