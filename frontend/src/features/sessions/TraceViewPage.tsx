@@ -35,9 +35,13 @@ export function TraceViewPage() {
     let mounted = true
 
     async function fetchSession() {
+      if (mounted) setSession(null)
       try {
         const res = await fetch(`/api/sessions?cwd=${encodeURIComponent(cwd)}`)
-        if (!res.ok) return
+        if (!res.ok) {
+          if (mounted) setSession(null)
+          return
+        }
         const data = (await res.json()) as SessionsResponse
         const sessions = getSessions(data)
         if (mounted) {
