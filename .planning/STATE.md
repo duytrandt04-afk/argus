@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Polish & Cleanup
-status: executing
-stopped_at: Phase 8 planning complete
-last_updated: "2026-05-31T11:03:45.092Z"
-last_activity: 2026-05-31 -- Phase 08 planning complete
+status: planning
+stopped_at: Phase 08 complete (3/3) — ready to discuss Phase 9
+last_updated: "2026-05-31T11:19:52.283Z"
+last_activity: 2026-05-31
 progress:
   total_phases: 3
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 6
-  completed_plans: 3
-  percent: 33
+  completed_plans: 6
+  percent: 67
 ---
 
 # Project State
@@ -21,26 +21,26 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-29)
 
 **Core value:** A developer can install hooker from source, capture coding-agent activity locally, and trust that the app handles diagnostics, data durability, privacy controls, exports, and security posture without silent surprises.
-**Current focus:** Phase 8 — session file changes view
+**Current focus:** Phase 9 — frontend test coverage & docs cleanup
 
 ## Current Position
 
-Phase: 8
+Phase: 9
 Plan: Not started
-Status: Ready to execute
-Last activity: 2026-05-31 -- Phase 08 planning complete
+Status: Ready to plan
+Last activity: 2026-05-31
 
 ```
-v1.2 Progress [░░░░░░░░░░] 0% — 0/3 phases
+v1.2 Progress [███████░░░] 67% — 2/3 phases
 ```
 
 ## Phase Structure
 
 | Phase | Name | Requirements | Status |
 |-------|------|--------------|--------|
-| 7 | Backend Code Quality | BACK-01, BACK-02, BACK-03 | Not started |
-| 8 | Session File Changes View | SESS-01, SESS-02, SESS-03 | Not started |
-| 9 | Frontend Test Coverage & Docs Cleanup | TEST-01, TEST-02, TEST-03, DOCS-01 | Not started |
+| 7 | Backend Code Quality | BACK-01, BACK-02, BACK-03 | Complete |
+| 8 | Session File Changes View | SESS-01, SESS-02, SESS-03 | Complete |
+| 9 | Frontend Test Coverage & Docs Cleanup | TEST-01, TEST-02, TEST-03, DOCS-01 | Ready to plan |
 
 ## Wave Structure
 
@@ -54,7 +54,7 @@ v1.2 Progress [░░░░░░░░░░] 0% — 0/3 phases
 
 **Velocity:**
 
-- Total plans completed: 25
+- Total plans completed: 28
 - Average duration: —
 - Total execution time: —
 
@@ -68,6 +68,7 @@ v1.2 Progress [░░░░░░░░░░] 0% — 0/3 phases
 | 5 | 3 | - | - |
 | 06 | 3 | - | - |
 | 07 | 3 | - | - |
+| 08 | 3 | - | - |
 
 **Recent Trend:**
 
@@ -140,10 +141,10 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-05-31T10:56:39.469Z
-Stopped at: Phase 8 UI-SPEC approved
-Resume file: .planning/phases/08-session-file-changes-view/08-UI-SPEC.md
+Last session: 2026-05-31T11:19:09.193Z
+Stopped at: Phase 08 complete (3/3) — ready to discuss Phase 9
+Resume file: .planning/phases/08-session-file-changes-view/08-03-SUMMARY.md
 
 ## Operator Next Steps
 
-- Execute Phase 8 with `/gsd-execute-phase 8`.
+- Discuss Phase 9 with `/gsd-discuss-phase 9`.

@@ -29,7 +29,7 @@
 **v1.2 Polish & Cleanup**
 
 - [x] **Phase 7: Backend Code Quality** — Eliminate silent JSON failures, extract shared pagination helper, and add missing handler tests (completed 2026-05-29)
-- [ ] **Phase 8: Session File Changes View** — Replace the session trace/timeline page with a paginated file-change browser showing old/new snippets
+- [x] **Phase 8: Session File Changes View** — Replace the session trace/timeline page with a paginated file-change browser showing old/new snippets (completed 2026-05-31)
 - [ ] **Phase 9: Frontend Test Coverage & Docs Cleanup** — Add Vitest coverage for DiagnosticsPage, UsagePage, and VersionBadge; archive stale spec files
 
 ---
@@ -74,9 +74,9 @@ Plans:
 
 **Plans**:
 
-- [ ] 08-01-PLAN.md — Replace the session trace route shell with the file-change page and compact session header (SESS-01, SESS-03)
-- [ ] 08-02-PLAN.md — Build paginated file rows with expandable timestamp/tool/line old-new snippets (SESS-01, SESS-02)
-- [ ] 08-03-PLAN.md — Add route, hook, and backend contract verification for the file-change page (SESS-01, SESS-02, SESS-03)
+- [x] 08-01-PLAN.md — Replace the session trace route shell with the file-change page and compact session header (SESS-01, SESS-03)
+- [x] 08-02-PLAN.md — Build paginated file rows with expandable timestamp/tool/line old-new snippets (SESS-01, SESS-02)
+- [x] 08-03-PLAN.md — Add route, hook, and backend contract verification for the file-change page (SESS-01, SESS-02, SESS-03)
 **UI hint**: yes
 
 ### Phase 9: Frontend Test Coverage & Docs Cleanup
