@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Polish & Cleanup
 status: planning
-stopped_at: Phase 8 re-scoped to session file changes view
-last_updated: "2026-05-31T10:55:00.000Z"
+stopped_at: Phase 8 UI-SPEC approved
+last_updated: "2026-05-31T10:56:39.475Z"
 last_activity: 2026-05-29
 progress:
   total_phases: 3
@@ -140,9 +140,9 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-05-31T10:55:00.000Z
-Stopped at: Phase 8 re-scoped to session file changes view
-Resume file: .planning/phases/08-session-file-changes-view/08-CONTEXT.md
+Last session: 2026-05-31T10:56:39.469Z
+Stopped at: Phase 8 UI-SPEC approved
+Resume file: .planning/phases/08-session-file-changes-view/08-UI-SPEC.md
 
 ## Operator Next Steps
 
