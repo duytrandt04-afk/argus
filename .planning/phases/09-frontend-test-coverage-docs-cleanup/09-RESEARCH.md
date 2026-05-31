@@ -364,16 +364,16 @@ Source: `VersionBadge` + `useVersion`. [VERIFIED: codegraph_context]
 | A1 | React loading assertions can miss fast-resolving promises unless the test controls the pending promise. | Common Pitfalls | Loading tests may become flaky or fail to prove the intended branch. |
 | A2 | Arbitrary sleeps are a warning sign for async UI tests. | Common Pitfalls | Tests may pass locally but fail in CI or on slower machines. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Do any stale superpowers docs remain authoritative despite Phase 8?**
+1. **RESOLVED: Do any stale superpowers docs remain authoritative despite Phase 8?**
    - What we know: CONTEXT lists eight docs as cleanup candidates and locks removal unless a concrete reason exists. [VERIFIED: CONTEXT.md]
-   - What's unclear: Whether the user has any out-of-repo reason to preserve a specific doc as finalized active material. [ASSUMED]
+   - Resolution: Phase 9 decisions D-16 and D-17 resolve this question. Delete all eight listed candidates unless planning finds concrete authority; no concrete authority was found in the current plan. [VERIFIED: CONTEXT.md]
    - Recommendation: Plan deletion of all eight listed files, then run a targeted scan for placeholder/stale terms. [VERIFIED: CONTEXT.md]
 
-2. **Should DiagnosticsPage get new tests or only assertion tightening?**
+2. **RESOLVED: Should DiagnosticsPage get new tests or only assertion tightening?**
    - What we know: Current DiagnosticsPage suite passes and covers loading, error, healthy, degraded, first-run, not-ready, and refresh. [VERIFIED: targeted Vitest run]
-   - What's unclear: Whether planner wants to call TEST-01 complete without edits or add a small assertion such as `aria-busy="true"` to strengthen loading. [VERIFIED: codebase grep]
+   - Resolution: Phase 9 decisions D-01, D-02, D-05, and D-06 resolve this question. Make TEST-01 an audit/tightening plan; edit only if an assertion gap is found and avoid duplicate coverage churn. [VERIFIED: CONTEXT.md]
    - Recommendation: Make TEST-01 an audit checkpoint; edit only if an assertion gap is found. [VERIFIED: CONTEXT.md]
 
 ## Environment Availability
@@ -396,9 +396,9 @@ Skipped because `.planning/config.json` has `workflow.nyquist_validation: false`
 Recommended verification commands for the implementation plan:
 
 ```bash
-cd frontend && pnpm test --run tests/features/diagnostics/DiagnosticsPage.test.tsx
-cd frontend && pnpm test --run tests/features/usage/UsagePage.test.tsx
-cd frontend && pnpm test --run tests/features/version/VersionBadge.test.tsx
+rtk bash -lc 'cd frontend && pnpm test --run tests/features/diagnostics/DiagnosticsPage.test.tsx'
+rtk bash -lc 'cd frontend && pnpm test --run tests/features/usage/UsagePage.test.tsx'
+rtk bash -lc 'cd frontend && pnpm test --run tests/features/version/VersionBadge.test.tsx'
 cd frontend && pnpm run typecheck
 rg -n "placeholder|stub|trace|timeline|waterfall|TODO|TBD|not implemented|semantic" docs/superpowers/specs docs/superpowers/plans
 ```
