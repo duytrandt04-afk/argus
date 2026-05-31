@@ -91,7 +91,14 @@ Plans:
   3. VersionBadge Vitest suite covers loaded, loading, and error states — all pass
   4. No files under `docs/superpowers/specs/` or `docs/superpowers/plans/` contain placeholder or stub content — directory is either empty or contains only finalized material
 
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+**Wave 1**
+
+- [ ] 09-01-PLAN.md — Audit and tighten DiagnosticsPage rendering-state coverage (TEST-01)
+- [ ] 09-02-PLAN.md — Add UsagePage loading and populated state coverage through the real hook path (TEST-02)
+- [ ] 09-03-PLAN.md — Add VersionBadge state coverage and remove stale active superpowers docs (TEST-03, DOCS-01)
 
 ---
 
