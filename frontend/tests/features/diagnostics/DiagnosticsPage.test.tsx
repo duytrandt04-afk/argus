@@ -86,8 +86,9 @@ function renderPage() {
 beforeEach(() => {
   vi.clearAllMocks()
   Object.defineProperty(navigator, 'clipboard', {
-    value: { writeText: vi.fn() },
+    configurable: true,
     writable: true,
+    value: { writeText: vi.fn() },
   })
   vi.stubGlobal(
     'fetch',
