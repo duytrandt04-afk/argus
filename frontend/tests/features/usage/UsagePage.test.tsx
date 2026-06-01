@@ -58,9 +58,7 @@ describe('UsagePage', () => {
 
   it('renders provider selector trigger', () => {
     renderUsagePage()
-    // The Select trigger should be visible (not necessarily showing text "OpenAI" — it shows SelectValue)
-    const input = screen.getByPlaceholderText('OpenAI Admin API Key...')
-    expect(input).toBeInTheDocument()
+    expect(screen.getByRole('combobox')).toBeInTheDocument()
   })
 
   it('renders Fetch button', () => {
