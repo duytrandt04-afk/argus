@@ -46,18 +46,18 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PERF-01 | — | Pending |
-| FRONT-01 | — | Pending |
-| FRONT-02 | — | Pending |
-| UX-01 | — | Pending |
-| UX-02 | — | Pending |
-| TRIAGE-01 | — | Pending |
+| PERF-01 | Phase 10 | Pending |
+| FRONT-01 | Phase 11 | Pending |
+| FRONT-02 | Phase 11 | Pending |
+| UX-01 | Phase 11 | Pending |
+| UX-02 | Phase 11 | Pending |
+| TRIAGE-01 | Phase 11 | Pending |
 
 **Coverage:**
 - v1.3 requirements: 6 total
-- Mapped to phases: 0
-- Unmapped: 6 ⚠️
+- Mapped to phases: 6
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-06-01*
-*Last updated: 2026-06-01 after initial definition*
+*Last updated: 2026-06-01 — traceability updated after roadmap creation*

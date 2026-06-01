@@ -2,11 +2,11 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: UI Quality
-status: planning
-last_updated: "2026-06-01T10:45:17.946Z"
+status: roadmapped
+last_updated: "2026-06-01"
 last_activity: 2026-06-01
 progress:
-  total_phases: 0
+  total_phases: 2
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -20,36 +20,40 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-01)
 
 **Core value:** A developer can install hooker from source, capture coding-agent activity locally, and trust that the app handles diagnostics, data durability, privacy controls, exports, and security posture without silent surprises.
-**Current focus:** Planning next milestone
+**Current focus:** Phase 10 — Diagnostics Backend Performance
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 10 — Diagnostics Backend Performance
 Plan: —
-Status: Defining requirements
-Last activity: 2026-06-01 — Milestone v1.3 started
+Status: Roadmapped, not started
+Last activity: 2026-06-01 — v1.3 roadmap created
+
+```
+[Phase 10] ░░░░░░░░░░░░░░░░░░░░  0% (0/? plans)
+[Phase 11] ░░░░░░░░░░░░░░░░░░░░  0% (0/? plans)
+[Milestone]░░░░░░░░░░░░░░░░░░░░  0%
+```
 
 ## Phase Structure
 
 | Phase | Name | Requirements | Status |
 |-------|------|--------------|--------|
-| 7 | Backend Code Quality | BACK-01, BACK-02, BACK-03 | Complete |
-| 8 | Session File Changes View | SESS-01, SESS-02, SESS-03 | Complete |
-| 9 | Frontend Test Coverage & Docs Cleanup | TEST-01, TEST-02, TEST-03, DOCS-01 | Complete |
+| 10 | Diagnostics Backend Performance | PERF-01 | Not started |
+| 11 | Frontend Polish & UX | FRONT-01, FRONT-02, UX-01, UX-02, TRIAGE-01 | Not started |
 
 ## Wave Structure
 
 | Wave | Plans | Autonomous | Description |
 |------|-------|------------|-------------|
-| 1 | 07-xx | TBD | Backend handler observability, pagination helper, and handler tests |
-| 2 | 08-xx | TBD | Replace session trace/timeline UI with paginated file-change browser and old/new snippets |
-| 3 | 09-xx | TBD | DiagnosticsPage/UsagePage/VersionBadge Vitest suites; stale doc cleanup |
+| 1 | 10-xx | TBD | Replace O(n²) correlated subquery in DiagnosticsAgentStats with MAX() join |
+| 2 | 11-xx | TBD | Diagnostics caching, chart scale fix, copyable session ID, file-change line numbers, triage bugs |
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 31
+- Total plans completed: 31 (v1.0–v1.2)
 - Average duration: —
 - Total execution time: —
 
@@ -72,20 +76,6 @@ Last activity: 2026-06-01 — Milestone v1.3 started
 - Trend: —
 
 *Updated after each plan completion*
-| Phase 01-local-adoption-baseline P03 | 6min | 2 tasks | 5 files |
-| Phase 01-local-adoption-baseline P04 | 25min | 2 tasks | 1 files |
-| Phase 01-local-adoption-baseline P05 | 2min | 3 tasks | 4 files |
-| Phase 01-local-adoption-baseline P06 | 7min | 2 tasks | 5 files |
-| Phase 02-reliable-daily-use P01 | 3min | 2 tasks | 4 files |
-| Phase 02-reliable-daily-use P03 | 3min | 3 tasks | 4 files |
-| Phase 02-reliable-daily-use P04 | 10min | 2 tasks | 9 files |
-| Phase 02-reliable-daily-use P06 | 20min | 2 tasks | 8 files |
-| Phase 02-reliable-daily-use P07 | 2min | 2 tasks | 8 files |
-| Phase 02-reliable-daily-use P08 | 35min | 2 tasks | 8 files |
-| Phase 06-diagnostics-ui P03 | 8min | 2 tasks | 3 files |
-| Phase 07-backend-code-quality P01 | 1min | 2 tasks | 3 files |
-| Phase 07-backend-code-quality P02 | 3min | 1 tasks | 1 files |
-| Phase 09 P01 | 1 | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -94,35 +84,14 @@ Last activity: 2026-06-01 — Milestone v1.3 started
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- [Init]: Granularity coarse → 3 phases
-- [Init]: SEC-01 (Host header fix) placed in Phase 1 — live DNS rebinding bug, must ship before public docs
-- [Init]: HARD-05 (migration transaction wrapping) placed in Phase 2 — prerequisite for all new schema work
-- [Init]: DATA-04/05 (export endpoints) placed in Phase 2 with SEC-05 (Sec-Fetch-Site check) — export ships before access control docs
-- [Phase 1 Plan]: Plans 01-01 and 01-02 are interdependent — router won't compile until both land (01-01 references handler.Healthz/Readyz from 01-02; 01-02 references NewRouter signature change from 01-01)
-- [Phase 01-local-adoption-baseline]: Established push/PR CI with corepack-based pnpm, backend quality gates, and advisory govulncheck. — Implements locked decisions D-08, D-10, D-11 and CI requirements CI-01..CI-06.
-- [Phase 01-local-adoption-baseline]: Established v* tag-only GoReleaser v2 releases with checksums and limited token scope. — Implements REL-01/REL-02/REL-04 and locked decisions D-12, D-13, D-14.
-- [Phase 01-local-adoption-baseline]: Setup patches only Claude/Codex hook configs with backup and idempotent checks
-- [Phase 01-local-adoption-baseline]: Doctor is report-only with required-fail and optional-warn split
-- [Phase 01-local-adoption-baseline]: Docs now use go build-first quickstart flow with setup-script path.
-- [Phase 01-local-adoption-baseline]: Install and releases docs now include data lifecycle/privacy and squash-merge release prerequisites.
-- [Phase 01-local-adoption-baseline]: Version badge now fetches /api/version at runtime and renders null for loading/error states.
-- [Phase 01-local-adoption-baseline]: Sidebar version display moved to footer and hidden when collapsed; static APP_VERSION path removed.
-- [Phase ?]: HTTP server timeout values: ReadHeaderTimeout=5s, ReadTimeout=30s, IdleTimeout=120s for Slowloris protection
-- [Phase ?]: Graceful shutdown drain timeout: 15s finite context.WithTimeout replaces context.Background()
-- [Phase ?]: slog migration: full replacement of all log.Printf/log.Fatalf in main.go, middleware.go, sqlite.go, event_service.go
-- [Phase ?]: WAL checkpoint: 5 minutes PASSIVE mode goroutine, context.Background() because New() has no context parameter
-- [Phase 02-reliable-daily-use]: vi.stubGlobal('localStorage') in beforeEach required with unstubGlobals:true — vi.spyOn(Storage.prototype) fails after cross-file stub restore leaves localStorage undefined
-- [Phase ?]: Agent Normalize() now sets NormalizationStatus='ok' so the field is correct when calling Normalize() directly, not just via hook.go
-- [Phase 03-mature-local-product]: Canonical privacy and security guidance lives in docs/privacy.md and docs/security.md; README only links to those documents.
-- [Phase 03-mature-local-product]: Doctor warns about sensitive data capture without making privacy warnings a required-check failure.
-- [Phase 03-mature-local-product]: Contributor guide is checklist-driven for adapter changes, DB field decisions, and frontend-backend contract synchronization.
-- [Phase 03-mature-local-product]: ADRs use lightweight accepted files under docs/adr/ for SQLite storage, normalization strategy, local-first positioning, and proxy scope.
-- [Phase ?]: vi.stubGlobal('fetch') used for all diagnostics tests — vi.spyOn(Storage.prototype) prohibited per Phase 2 decision
-- [Phase ?]: DiagnosticsPage TEST-01 audit: all 7 branches covered; aria-busy assertion added to loading test as only gap
+- [v1.3 Init]: Granularity coarse → 2 phases
+- [v1.3 Init]: PERF-01 alone in Phase 10 — the SQL fix is a self-contained backend change; it unblocks reliable diagnostics load times but does not gate any frontend work
+- [v1.3 Init]: FRONT-01/FRONT-02/UX-01/UX-02/TRIAGE-01 grouped in Phase 11 — all are frontend-only, independently shippable, and share the same UI review cycle
+- [v1.3 Init]: TRIAGE-01 placed in Phase 11 — all triage discovered during manual testing is UI-facing; no separate triage phase needed at coarse granularity
 
 ### Pending Todos
 
-- Start the next milestone with `/gsd-new-milestone`.
+- Run `/gsd-plan-phase 10` to plan Phase 10.
 
 ### Blockers/Concerns
 
@@ -139,10 +108,10 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-06-01T10:18:01.339Z
-Stopped at: Completed v1.2 milestone archive
+Last session: 2026-06-01
+Stopped at: v1.3 roadmap created
 Resume file: None
 
 ## Operator Next Steps
 
-- Start the next milestone with /gsd-new-milestone
+- Run `/gsd-plan-phase 10` to plan Phase 10: Diagnostics Backend Performance
