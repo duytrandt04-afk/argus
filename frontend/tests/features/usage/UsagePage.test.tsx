@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { UsagePage } from '@/features/usage/UsagePage'
@@ -66,5 +66,114 @@ describe('UsagePage', () => {
   it('renders Fetch button', () => {
     renderUsagePage()
     expect(screen.getByRole('button', { name: 'Fetch' })).toBeInTheDocument()
+  })
+
+  it('shows loading state when openai_admin_key is set and fetch is pending', () => {
+    // Return sk-test for openai_admin_key; null for everything else (cache keys, anthropic key)
+    localStorageMock.getItem.mockImplementation((key: string) => {
+      if (key === 'openai_admin_key') return 'sk-test'
+      return null
+    })
+    // Never-resolving fetch keeps loading=true and stats=null
+    vi.stubGlobal('fetch', vi.fn().mockReturnValue(new Promise(() => {})))
+
+    renderUsagePage()
+
+    // Page heading remains visible
+    expect(screen.getByText('OpenAI Usage')).toBeInTheDocument()
+    // Button is disabled and shows "Loading..." while fetch is pending
+    const btn = screen.getByRole('button', { name: 'Loading...' })
+    expect(btn).toBeDisabled()
+    // Loading spinner panel is rendered
+    expect(screen.getByText('Loading usage data...')).toBeInTheDocument()
+  })
+
+  it('renders charts and tables with populated usage data', async () => {
+    // Deterministic day: 2026-05-31T00:00:00Z = Unix 1748649600
+    const bucketStartTime = 1748649600
+    const bucketEndTime = bucketStartTime + 86400
+
+    // Primary completions response: 1 bucket with requests and tokens
+    const primaryCompletionsResponse = {
+      data: [
+        {
+          start_time: bucketStartTime,
+          end_time: bucketEndTime,
+          results: [
+            {
+              num_model_requests: 5,
+              input_tokens: 1000,
+              output_tokens: 500,
+            },
+          ],
+        },
+      ],
+    }
+
+    // Model-grouped response: 1 bucket with gpt-test model
+    const modelGroupedResponse = {
+      data: [
+        {
+          start_time: bucketStartTime,
+          end_time: bucketEndTime,
+          results: [
+            {
+              model: 'gpt-test',
+              num_model_requests: 5,
+              input_tokens: 1000,
+              output_tokens: 500,
+            },
+          ],
+        },
+      ],
+    }
+
+    // API key-grouped response: 1 bucket with key-test
+    const keyGroupedResponse = {
+      data: [
+        {
+          start_time: bucketStartTime,
+          end_time: bucketEndTime,
+          results: [
+            {
+              api_key_id: 'key-test',
+              input_tokens: 1000,
+              output_tokens: 500,
+            },
+          ],
+        },
+      ],
+    }
+
+    // Return sk-test for openai_admin_key; null for everything else
+    localStorageMock.getItem.mockImplementation((key: string) => {
+      if (key === 'openai_admin_key') return 'sk-test'
+      return null
+    })
+
+    // Three fetch responses in order: primary completions, model-grouped, api-key-grouped
+    // Promise.all fires all three concurrently — mockResolvedValueOnce delivers in call order
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValueOnce({ ok: true, json: async () => primaryCompletionsResponse })
+        .mockResolvedValueOnce({ ok: true, json: async () => modelGroupedResponse })
+        .mockResolvedValueOnce({ ok: true, json: async () => keyGroupedResponse })
+    )
+
+    renderUsagePage()
+
+    // Wait for charts and tables to appear after fetches resolve
+    expect(await screen.findByText(/Total Tokens/)).toBeInTheDocument()
+    expect(screen.getByText(/Total Requests/)).toBeInTheDocument()
+    expect(screen.getByText('Model Breakdown')).toBeInTheDocument()
+    expect(screen.getByText('API Key Breakdown')).toBeInTheDocument()
+
+    // Fixture values prove aggregation wired through real hook
+    await waitFor(() => {
+      expect(screen.getByText('gpt-test')).toBeInTheDocument()
+    })
+    expect(screen.getByText('key-test')).toBeInTheDocument()
   })
 })
