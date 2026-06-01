@@ -13,7 +13,7 @@ Requirements for the UI Quality milestone. Each maps to roadmap phases.
 
 ### Frontend
 
-- [ ] **FRONT-01**: Diagnostics page caches loaded data; re-fetches only on explicit refresh button press
+- [x] **FRONT-01**: Diagnostics page caches loaded data; re-fetches only on explicit refresh button press
 - [ ] **FRONT-02**: Dashboard chart displays token values at all magnitudes — small values are not visually invisible on a large-scale axis
 
 ### UX
@@ -47,7 +47,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | PERF-01 | 10 | Complete 2026-06-01 |
-| FRONT-01 | 11 | Pending |
+| FRONT-01 | 11 | Complete |
 | FRONT-02 | 11 | Pending |
 | UX-01 | 11 | Pending |
 | UX-02 | 11 | Pending |

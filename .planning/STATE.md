@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Diagnostics Backend Performance
 status: executing
-stopped_at: "Completed 10-01-PLAN.md: O(n) rewrite of DiagnosticsAgentStats queries"
-last_updated: "2026-06-01T15:50:35.389Z"
-last_activity: 2026-06-01 -- Phase 11 planning complete
+stopped_at: "Completed 11-01-PLAN.md: Diagnostics cache (30s TTL backend + nav cache frontend)"
+last_updated: "2026-06-01T16:00:09.009Z"
+last_activity: 2026-06-01
 progress:
-  total_phases: 2
-  completed_phases: 0
-  total_plans: 2
-  completed_plans: 1
-  percent: 0
+  total_phases: 4
+  completed_phases: 3
+  total_plans: 11
+  completed_plans: 10
+  percent: 75
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-29)
 
 **Core value:** A developer can install hooker from source, capture coding-agent activity locally, and trust that the app handles diagnostics, data durability, privacy controls, exports, and security posture without silent surprises.
-**Current focus:** Phase 10 complete — ready for Phase 11 (Frontend Polish & UX)
+**Current focus:** Phase 11 — frontend-polish-ux
 
 ## Current Position
 
-Phase: 10 → 11
-Plan: — (Phase 10 complete, Phase 11 not started)
+Phase: 11 (frontend-polish-ux) — EXECUTING
+Plan: 2 of 2
 Status: Ready to execute
-Last activity: 2026-06-01 -- Phase 11 planning complete
+Last activity: 2026-06-01
 
 ## Wave Structure
 
@@ -74,6 +74,7 @@ Last activity: 2026-06-01 -- Phase 11 planning complete
 | Phase 02-reliable-daily-use P08 | 35min | 2 tasks | 8 files |
 | Phase 06-diagnostics-ui P03 | 8min | 2 tasks | 3 files |
 | Phase 10-diagnostics-backend-performance P01 | 1min | 2 tasks | 1 files |
+| Phase 11 P01 | 10min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -108,6 +109,9 @@ Recent decisions affecting current work:
 - [Phase ?]: vi.stubGlobal('fetch') used for all diagnostics tests — vi.spyOn(Storage.prototype) prohibited per Phase 2 decision
 - [Phase 10-01]: DiagnosticsAgentStats lastSeenRows replaced with MAX(last_seen_at) GROUP BY agent — O(n) aggregate
 - [Phase 10-01]: DiagnosticsAgentStats versionRows replaced with two-CTE MAX(created_at)+JOIN pattern — O(n) aggregate
+- [Phase ?]: DiagnosticsWithOptions cache stored only on successful repo calls — error paths bypass cache store
+- [Phase ?]: Frontend diagnostics cache has no TTL — backend 30s TTL governs freshness; module cache prevents navigation re-fetches
+- [Phase ?]: SetDiagCachedAt exported as test-only helper; _resetDiagnosticsCache exported for frontend test isolation
 
 ### Pending Todos
 
@@ -130,8 +134,8 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-06-01T11:27:24.327Z
-Stopped at: Completed 10-01-PLAN.md: O(n) rewrite of DiagnosticsAgentStats queries
+Last session: 2026-06-01T16:00:09.005Z
+Stopped at: Completed 11-01-PLAN.md: Diagnostics cache (30s TTL backend + nav cache frontend)
 Resume file: None
 
 ## Operator Next Steps
