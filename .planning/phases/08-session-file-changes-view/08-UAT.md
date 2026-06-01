@@ -1,5 +1,5 @@
 ---
-status: passed
+status: complete
 phase: 08-session-file-changes-view
 source:
   - 08-01-SUMMARY.md
@@ -8,18 +8,14 @@ source:
   - 08-04-SUMMARY.md
   - 08-05-SUMMARY.md
 started: 2026-06-01T04:14:20Z
-updated: 2026-06-01T04:39:46Z
+updated: 2026-06-01T04:45:12Z
 retested: 2026-06-01T04:39:46Z
-completed: 2026-06-01T04:39:46Z
+completed: 2026-06-01T04:45:12Z
 ---
 
 ## Current Test
 
-number: 3
-name: Expand File Row Shows Change Details
-expected: |
-  Clicking a changed Codex `apply_patch` file row expands it. The expanded view shows each change timestamp, tool/action label, line number when available, and compact `Before` / `After` old-new snippet blocks without rendering unsafe HTML. Codex sessions should show changed files the same way Claude Code sessions do.
-awaiting: none
+[testing complete]
 
 ## Tests
 
