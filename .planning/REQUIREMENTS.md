@@ -21,11 +21,11 @@
 
 - [x] **TEST-01**: DiagnosticsPage has Vitest tests covering all main rendering states (loading, error, healthy, degraded)
 - [x] **TEST-02**: UsagePage has Vitest tests covering main rendering states (loading, empty, populated)
-- [ ] **TEST-03**: VersionBadge / version feature has Vitest tests covering loaded, loading, and error states
+- [x] **TEST-03**: VersionBadge / version feature has Vitest tests covering loaded, loading, and error states
 
 ### DOCS — Documentation
 
-- [ ] **DOCS-01**: Stale placeholder spec files in `docs/superpowers/specs/` and `docs/superpowers/plans/` are archived or removed — no placeholder-reference content remains in active docs
+- [x] **DOCS-01**: Stale placeholder spec files in `docs/superpowers/specs/` and `docs/superpowers/plans/` are archived or removed — no placeholder-reference content remains in active docs
 
 ## Future Requirements
 
@@ -69,8 +69,8 @@
 | BACK-03 | Phase 7 | Complete |
 | TEST-01 | Phase 9 | Complete |
 | TEST-02 | Phase 9 | Complete |
-| TEST-03 | Phase 9 | Pending |
-| DOCS-01 | Phase 9 | Pending |
+| TEST-03 | Phase 9 | Complete |
+| DOCS-01 | Phase 9 | Complete |
 
 **Coverage:**
 - v1.2 requirements: 10 total
