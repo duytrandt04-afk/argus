@@ -21,7 +21,7 @@ A developer can install hooker from source, capture coding-agent activity locall
 
 ## Current State
 
-**v1.1 Diagnostics shipped on 2026-05-29.** Both milestones are archived in `.planning/milestones/` and summarized in `.planning/MILESTONES.md`.
+**v1.1 Diagnostics shipped on 2026-05-29. Phase 9 (frontend-test-coverage-docs-cleanup) complete on 2026-06-01 — 102 frontend tests + 180 backend tests passing, stale docs removed.** Both milestones are archived in `.planning/milestones/` and summarized in `.planning/MILESTONES.md`.
 
 What is now in place:
 
@@ -80,8 +80,8 @@ Known deferred close-out items:
 - [ ] Fix broken component patterns and inconsistencies across frontend
 - [ ] Backend Go cleanup: dead code removal, handler consolidation, duplicated query parsing
 - [ ] Frontend TypeScript cleanup: inconsistent patterns, dead imports, prop drilling
-- [ ] Test quality: flaky/slow tests, missing coverage gaps
-- [ ] Docs cleanup: outdated docs, stale comments, README drift
+- [ ] Test quality: flaky/slow tests, missing coverage gaps — Validated in Phase 09: DiagnosticsPage (7 tests), UsagePage (7 tests), VersionBadge (5 tests) — 102 total passing
+- [ ] Docs cleanup: outdated docs, stale comments, README drift — Validated in Phase 09: 8 stale superpowers specs/plans removed (DOCS-01)
 
 ### Candidate Next Milestone Ideas
 
