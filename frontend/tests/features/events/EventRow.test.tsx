@@ -57,3 +57,15 @@ describe('EventRow dragging', () => {
     )
   })
 })
+
+describe('EventRow raw payload button', () => {
+  it('shows raw payload button when dedup_key is present', () => {
+    render(<EventRow event={buildEvent({ dedup_key: 'abc123' })} searchQuery="" />)
+    expect(screen.getByRole('button', { name: /raw payload/i })).toBeTruthy()
+  })
+
+  it('does not show raw payload button when dedup_key is absent', () => {
+    render(<EventRow event={buildEvent()} searchQuery="" />)
+    expect(screen.queryByRole('button', { name: /raw payload/i })).toBeNull()
+  })
+})

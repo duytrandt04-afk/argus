@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { DragEvent, ReactNode } from 'react'
 import { cn, displayModel } from '@/lib/utils'
 import { highlight } from '@/lib/format'
@@ -15,6 +15,8 @@ import { CwdBlock } from './renderers/CwdBlock'
 import { ToolResultBlock } from './renderers/ToolResultBlock'
 import { BatchBlock } from './renderers/BatchBlock'
 import { EventBadges } from './EventBadges'
+import { Braces } from 'lucide-react'
+import { RawPayloadModal } from './RawPayloadModal'
 
 type EventRowProps = {
   event: EventRecord
@@ -39,6 +41,7 @@ export function EventRow({
   const rowRef = useRef<HTMLDivElement>(null)
   const targetHandledRef = useRef(false)
   const suppressDragRef = useRef(false)
+  const [rawModalOpen, setRawModalOpen] = useState(false)
 
   const handleDragStart = (ev: DragEvent<HTMLDivElement>) => {
     if (suppressDragRef.current) {
@@ -104,16 +107,30 @@ export function EventRow({
         </div>
         <div className="min-w-0 flex-1 break-words text-[0.85rem] text-[#e2e8f0] sm:break-all">
           {/* Header line: hook, model, path */}
-          <div>
-            {e.hook_event_name && (
-              <span className={`hook hook-${e.hook_event_name}`}>{e.hook_event_name}</span>
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              {e.hook_event_name && (
+                <span className={`hook hook-${e.hook_event_name}`}>{e.hook_event_name}</span>
+              )}
+              {(e.hook_event_name === 'PreToolUse' ||
+                e.hook_event_name === 'PostToolUse' ||
+                e.hook_event_name === 'PreCompact' ||
+                e.hook_event_name === 'PostCompact') &&
+                e.model && <span className="event-model">{displayModel(e.model)}</span>}
+              {e.action !== 'BASH' && (highlight(e.path || '', searchQuery) as ReactNode)}
+            </div>
+            {e.dedup_key && (
+              <button
+                type="button"
+                data-event-drag-ignore
+                onClick={() => setRawModalOpen(true)}
+                className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded text-[#8f8f8f] transition hover:bg-white/[0.08] hover:text-[#d0d0d0]"
+                aria-label="View raw payload"
+                title="Raw payload"
+              >
+                <Braces className="h-3.5 w-3.5" />
+              </button>
             )}
-            {(e.hook_event_name === 'PreToolUse' ||
-              e.hook_event_name === 'PostToolUse' ||
-              e.hook_event_name === 'PreCompact' ||
-              e.hook_event_name === 'PostCompact') &&
-              e.model && <span className="event-model">{displayModel(e.model)}</span>}
-            {e.action !== 'BASH' && (highlight(e.path || '', searchQuery) as ReactNode)}
           </div>
 
           {/* Prompts and commands */}
@@ -191,6 +208,16 @@ export function EventRow({
           <EventBadges event={e} />
         </div>
       </div>
+      {e.dedup_key && (
+        <RawPayloadModal
+          dedupKey={e.dedup_key}
+          label={[e.hook_event_name, e.action, new Date(e.time).toLocaleTimeString([], { hour12: false })]
+            .filter(Boolean)
+            .join(' · ')}
+          open={rawModalOpen}
+          onClose={() => setRawModalOpen(false)}
+        />
+      )}
     </div>
   )
 }
