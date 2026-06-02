@@ -71,6 +71,7 @@ func NewRouter(svc *service.EventService, repo repository.EventRepository, ready
 	mux.Handle("POST /api/hook", handler.Hook(svc, m))
 	mux.Handle("GET /api/events", handler.Events(svc))
 	mux.Handle("GET /api/events/stream", handler.EventsStream(svc))
+	mux.Handle("GET /api/events/raw", handler.EventRawPayload(svc))
 	mux.Handle("GET /api/version", handler.Version())
 	mux.Handle("GET /api/diagnostics", handler.Diagnostics(svc, ready, service.DiagnosticsOptions{
 		DBPath:      opts.DBPath,

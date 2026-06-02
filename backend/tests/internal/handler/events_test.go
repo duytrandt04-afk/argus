@@ -115,3 +115,67 @@ func TestEventsHandlerSessionQueryIsBounded(t *testing.T) {
 		t.Fatalf("last path = %q, want /tmp/5999", payload.Events[len(payload.Events)-1].Path)
 	}
 }
+
+func TestEventRawPayloadHandler_returnsPayload(t *testing.T) {
+	svc := newTestService(t)
+	e := domain.NormalizedEvent{
+		Time:          "2026-01-01T00:00:00Z",
+		Agent:         "claudecode",
+		Session:       "sess-raw",
+		HookEventName: "PreToolUse",
+		TurnID:        "t1",
+		ToolUseID:     "u1",
+		RawPayload:    []byte(`{"tool":"Bash","input":"echo hi"}`),
+	}
+	if err := svc.AddEvent(e); err != nil {
+		t.Fatalf("AddEvent: %v", err)
+	}
+
+	events, err := svc.ListEvents(10)
+	if err != nil || len(events) == 0 {
+		t.Fatalf("ListEvents: %v, len=%d", err, len(events))
+	}
+	key := events[0].DedupKey
+	if key == "" {
+		t.Fatal("DedupKey empty")
+	}
+
+	h := handler.EventRawPayload(svc)
+	req := httptest.NewRequest(http.MethodGet, "/api/events/raw?key="+key, nil)
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200; body = %s", rec.Code, rec.Body.String())
+	}
+
+	var resp struct {
+		RawPayload map[string]any `json:"raw_payload"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if resp.RawPayload["tool"] != "Bash" {
+		t.Errorf("tool = %v, want Bash", resp.RawPayload["tool"])
+	}
+}
+
+func TestEventRawPayloadHandler_missingKeyReturns400(t *testing.T) {
+	h := handler.EventRawPayload(newTestService(t))
+	req := httptest.NewRequest(http.MethodGet, "/api/events/raw", nil)
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want 400", rec.Code)
+	}
+}
+
+func TestEventRawPayloadHandler_unknownKeyReturns404(t *testing.T) {
+	h := handler.EventRawPayload(newTestService(t))
+	req := httptest.NewRequest(http.MethodGet, "/api/events/raw?key=doesnotexist", nil)
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("status = %d, want 404", rec.Code)
+	}
+}

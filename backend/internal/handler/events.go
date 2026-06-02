@@ -88,3 +88,30 @@ func sendSSE(w http.ResponseWriter, v any) {
 	}
 	_, _ = fmt.Fprintf(w, "data: %s\n\n", b)
 }
+
+func EventRawPayload(svc *service.EventService) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		key := r.URL.Query().Get("key")
+		if key == "" {
+			http.Error(w, "missing key", http.StatusBadRequest)
+			return
+		}
+		raw, err := svc.GetRawPayload(key)
+		if err != nil {
+			log.Printf("[handler] GetRawPayload: %v", err)
+			http.Error(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if raw == nil {
+			http.Error(w, "not found", http.StatusNotFound)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		resp := struct {
+			RawPayload json.RawMessage `json:"raw_payload"`
+		}{RawPayload: json.RawMessage(raw)}
+		if err := json.NewEncoder(w).Encode(resp); err != nil {
+			log.Printf("[handler] encode raw payload: %v", err)
+		}
+	})
+}
