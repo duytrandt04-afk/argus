@@ -5,7 +5,7 @@ Target: first successful local run in 5 to 10 minutes.
 ## 1. Install source dependencies
 
 ```bash
-git clone <repo-url> hooker
+git clone https://github.com/duytrandt04-afk/hooker
 cd hooker
 ./scripts/hooker setup
 ```
