@@ -24,17 +24,9 @@ function formatSessionDuration(session: Session | null): string {
   return formatDuration(sessionDurationMs(session, new Date(session.last_seen_at).getTime()))
 }
 
-function safeDecodeURIComponent(value: string): string {
-  try {
-    return decodeURIComponent(value)
-  } catch {
-    return value
-  }
-}
-
-export function TraceViewPage() {
+export function SessionFileChangesPage() {
   const { encodedCwd = '', sessionId = '' } = useParams()
-  const cwd = useMemo(() => safeDecodeURIComponent(encodedCwd), [encodedCwd])
+  const cwd = useMemo(() => decodeURIComponent(encodedCwd), [encodedCwd])
   const cwdBasename = cwd.split('/').filter(Boolean).at(-1) || cwd
   const [session, setSession] = useState<Session | null>(null)
   const { groups: fileGroups, loading, error } = useFileChanges(sessionId)

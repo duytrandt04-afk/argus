@@ -19,6 +19,10 @@ import (
 type EventService struct {
 	repo        repository.EventRepository
 	subscribers sync.Map
+
+	diagMu       sync.RWMutex
+	diagCache    *domain.Diagnostics
+	diagCachedAt time.Time
 }
 
 type DiagnosticsOptions struct {
@@ -91,6 +95,16 @@ func (s *EventService) Diagnostics(dbPath string, ready bool, hookConfigs ...[]d
 }
 
 func (s *EventService) DiagnosticsWithOptions(opts DiagnosticsOptions, ready bool) (domain.Diagnostics, error) {
+	const ttl = 30 * time.Second
+
+	s.diagMu.RLock()
+	if s.diagCache != nil && time.Since(s.diagCachedAt) < ttl {
+		result := *s.diagCache // shallow copy — safe, cached value is never mutated after store
+		s.diagMu.RUnlock()
+		return result, nil
+	}
+	s.diagMu.RUnlock()
+
 	stats, err := s.repo.DiagnosticsStorageStats()
 	if err != nil {
 		return domain.Diagnostics{}, err
@@ -123,7 +137,7 @@ func (s *EventService) DiagnosticsWithOptions(opts DiagnosticsOptions, ready boo
 		storage.DBSizeReason = "unavailable"
 	}
 
-	return domain.Diagnostics{
+	result := domain.Diagnostics{
 		Version: domain.DiagnosticsVersion{
 			Version:   version.Version,
 			Commit:    version.Commit,
@@ -140,7 +154,21 @@ func (s *EventService) DiagnosticsWithOptions(opts DiagnosticsOptions, ready boo
 			RemoteBind: diagnosticsRemoteBind(opts),
 			CORS:       diagnosticsCORS(opts.CORSOrigins),
 		},
-	}, nil
+	}
+
+	s.diagMu.Lock()
+	s.diagCache = &result
+	s.diagCachedAt = time.Now()
+	s.diagMu.Unlock()
+	return result, nil
+}
+
+// SetDiagCachedAt sets the cache timestamp for testing TTL expiry.
+// This method exists for testing only — do not call in production code.
+func (s *EventService) SetDiagCachedAt(t time.Time) {
+	s.diagMu.Lock()
+	s.diagCachedAt = t
+	s.diagMu.Unlock()
 }
 
 func diagnosticsRemoteBind(opts DiagnosticsOptions) domain.DiagnosticsRemoteBind {
@@ -525,10 +553,6 @@ func (s *EventService) GetSessionTree(since string) ([]domain.SessionTreeNode, e
 	return s.repo.GetSessionTree(since)
 }
 
-func (s *EventService) GetTraces(sessionID, since string) ([]domain.NormalizedEvent, error) {
-	return s.repo.GetTraces(sessionID, since)
-}
-
 func (s *EventService) ListSessionsByCWDPage(cwd, since string, page, size int) ([]domain.Session, int, error) {
 	sessions, total, err := s.repo.ListSessionsByCWDPage(cwd, since, page, size)
 	if err != nil {
@@ -553,8 +577,4 @@ func (s *EventService) ListSessionsByCWDPage(cwd, since string, page, size int) 
 
 func (s *EventService) GetFileChanges(sessionID string) ([]domain.FileChangeGroup, error) {
 	return s.repo.GetFileChanges(sessionID)
-}
-
-func (s *EventService) GetTracesPage(sessionID, since string, page, size int) ([]domain.NormalizedEvent, int, error) {
-	return s.repo.GetTracesPage(sessionID, since, page, size)
 }

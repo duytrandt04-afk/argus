@@ -125,27 +125,7 @@ func (m *mockRepo) GetSessionTree(_ string) ([]domain.SessionTreeNode, error) {
 	return nil, nil
 }
 
-func (m *mockRepo) GetTraces(sessionID, since string) ([]domain.NormalizedEvent, error) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	var filtered []domain.NormalizedEvent
-	for _, event := range m.events {
-		if sessionID != "" && event.Session != sessionID {
-			continue
-		}
-		if since != "" && event.Time < since {
-			continue
-		}
-		filtered = append(filtered, event)
-	}
-	return filtered, nil
-}
-
 func (m *mockRepo) ListSessionsByCWDPage(_ string, _ string, _ int, _ int) ([]domain.Session, int, error) {
-	return nil, 0, nil
-}
-
-func (m *mockRepo) GetTracesPage(_ string, _ string, _ int, _ int) ([]domain.NormalizedEvent, int, error) {
 	return nil, 0, nil
 }
 
@@ -765,5 +745,62 @@ func TestUnsubscribeClosesChannel(t *testing.T) {
 		}
 	default:
 		t.Fatal("channel not closed after Unsubscribe")
+	}
+}
+
+func TestDiagnosticsCache(t *testing.T) {
+	repo := &mockRepo{}
+	svc := service.New(repo)
+	opts := service.DiagnosticsOptions{DBPath: ":memory:"}
+
+	_, err := svc.DiagnosticsWithOptions(opts, true)
+	if err != nil {
+		t.Fatalf("first call: %v", err)
+	}
+	repo.mu.Lock()
+	firstCalls := repo.diagnosticsCalls
+	repo.mu.Unlock()
+
+	_, err = svc.DiagnosticsWithOptions(opts, true)
+	if err != nil {
+		t.Fatalf("second call: %v", err)
+	}
+	repo.mu.Lock()
+	secondCalls := repo.diagnosticsCalls
+	repo.mu.Unlock()
+
+	if secondCalls != firstCalls {
+		t.Errorf("expected cache hit on second call: diagnosticsCalls=%d, want %d", secondCalls, firstCalls)
+	}
+}
+
+func TestDiagnosticsCacheTTL(t *testing.T) {
+	repo := &mockRepo{}
+	svc := service.New(repo)
+	opts := service.DiagnosticsOptions{DBPath: ":memory:"}
+
+	// First call — populates cache
+	if _, err := svc.DiagnosticsWithOptions(opts, true); err != nil {
+		t.Fatalf("first call: %v", err)
+	}
+
+	// Artificially expire the cache by setting diagCachedAt 31s in the past
+	svc.SetDiagCachedAt(time.Now().Add(-31 * time.Second))
+
+	repo.mu.Lock()
+	callsBefore := repo.diagnosticsCalls
+	repo.mu.Unlock()
+
+	// Second call after TTL — must hit repo again
+	if _, err := svc.DiagnosticsWithOptions(opts, true); err != nil {
+		t.Fatalf("second call: %v", err)
+	}
+
+	repo.mu.Lock()
+	callsAfter := repo.diagnosticsCalls
+	repo.mu.Unlock()
+
+	if callsAfter <= callsBefore {
+		t.Errorf("expected cache miss after TTL: diagnosticsCalls=%d, want >%d", callsAfter, callsBefore)
 	}
 }

@@ -465,36 +465,6 @@ func (d *DB) ListSessionsByCWDPage(cwd, since string, page, size int) ([]domain.
 	return sessions, total, err
 }
 
-func (d *DB) GetTracesPage(sessionID, since string, page, size int) ([]domain.NormalizedEvent, int, error) {
-	var clauses []string
-	var args []any
-	if sessionID != "" {
-		clauses = append(clauses, "session_id = ?")
-		args = append(args, sessionID)
-	}
-	if since != "" {
-		clauses = append(clauses, "datetime(created_at) >= datetime(?)")
-		args = append(args, since)
-	}
-	where := ""
-	if len(clauses) > 0 {
-		where = "WHERE " + strings.Join(clauses, " AND ")
-	}
-
-	var total int
-	countQuery := "SELECT COUNT(*) FROM hook_events"
-	if where != "" {
-		countQuery += " " + where
-	}
-	if err := d.db.QueryRow(countQuery, args...).Scan(&total); err != nil {
-		return nil, 0, err
-	}
-
-	offset := (page - 1) * size
-	events, err := d.listWithWhere(where, args, size, offset)
-	return events, total, err
-}
-
 func (d *DB) DiagnosticsStorageStats() (domain.DiagnosticsStorageStats, error) {
 	var stats domain.DiagnosticsStorageStats
 	if err := d.db.QueryRow("SELECT COUNT(*) FROM hook_events").Scan(&stats.TotalEvents); err != nil {
@@ -612,30 +582,23 @@ func (d *DB) DiagnosticsAgentStats() ([]domain.DiagnosticsAgentStats, error) {
 	}
 
 	versionRows, err := d.db.Query(`
-		WITH inferred AS (
-			SELECT
-				CASE
-					WHEN agent IN ('claudecode', 'codex') THEN agent
-					WHEN transcript_path LIKE '%/.claude/%' THEN 'claudecode'
-					WHEN source = 'codex' THEN 'codex'
-					ELSE ''
-				END AS inferred_agent,
-				normalizer_version,
-				created_at
+		SELECT * FROM (
+			SELECT 'claudecode' AS agent, normalizer_version
 			FROM hook_events
-			WHERE COALESCE(normalizer_version, '') != ''
+			WHERE (agent = 'claudecode' OR (agent = '' AND transcript_path LIKE '%/.claude/%'))
+			  AND COALESCE(normalizer_version, '') != ''
+			ORDER BY created_at DESC, id DESC
+			LIMIT 1
 		)
-		SELECT e.inferred_agent, e.normalizer_version
-		FROM inferred e
-		WHERE e.inferred_agent IN ('claudecode', 'codex')
-		  AND e.created_at = (
-		    SELECT e2.created_at
-		    FROM inferred e2
-		    WHERE e2.inferred_agent = e.inferred_agent
-		    ORDER BY datetime(e2.created_at) DESC, e2.created_at DESC
-		    LIMIT 1
-		  )
-		GROUP BY e.inferred_agent
+		UNION ALL
+		SELECT * FROM (
+			SELECT 'codex' AS agent, normalizer_version
+			FROM hook_events
+			WHERE (agent = 'codex' OR (agent = '' AND source = 'codex'))
+			  AND COALESCE(normalizer_version, '') != ''
+			ORDER BY created_at DESC, id DESC
+			LIMIT 1
+		)
 	`)
 	if err != nil {
 		return nil, fmt.Errorf("diagnostics agent normalizer versions: %w", err)
@@ -797,7 +760,7 @@ func (d *DB) GetDashboardStats(since, until string) (*domain.DashboardStats, err
 
 	// Timeline
 	if rows, err := d.db.Query(fmt.Sprintf(`
-		SELECT strftime('%s', created_at) as bucket, COUNT(*) 
+		SELECT strftime('%s', created_at, 'localtime') as bucket, COUNT(*) 
 		FROM hook_events 
 		WHERE created_at IS NOT NULL`+buildAndClause(eventClauses)+`
 		GROUP BY bucket 
@@ -817,7 +780,7 @@ func (d *DB) GetDashboardStats(since, until string) (*domain.DashboardStats, err
 
 	// Timeline By Agent
 	if rows, err := d.db.Query(fmt.Sprintf(`
-		SELECT strftime('%s', created_at) as bucket, COALESCE(NULLIF(agent, ''), 'unknown') as agent_name, COUNT(*) 
+		SELECT strftime('%s', created_at, 'localtime') as bucket, COALESCE(NULLIF(agent, ''), 'unknown') as agent_name, COUNT(*) 
 		FROM hook_events 
 		WHERE created_at IS NOT NULL`+buildAndClause(eventClauses)+`
 		GROUP BY bucket, agent_name
@@ -837,7 +800,7 @@ func (d *DB) GetDashboardStats(since, until string) (*domain.DashboardStats, err
 
 	// Token Timeline
 	if rows, err := d.db.Query(fmt.Sprintf(`
-		SELECT strftime('%s', started_at) as bucket,
+		SELECT strftime('%s', started_at, 'localtime') as bucket,
 		       SUM(input_tokens), SUM(output_tokens),
 		       SUM(cache_creation_tokens), SUM(cache_read_tokens)
 		FROM sessions
@@ -859,7 +822,7 @@ func (d *DB) GetDashboardStats(since, until string) (*domain.DashboardStats, err
 
 	// Token Timeline By Agent
 	if rows, err := d.db.Query(fmt.Sprintf(`
-		SELECT strftime('%s', started_at) as bucket,
+		SELECT strftime('%s', started_at, 'localtime') as bucket,
 		       COALESCE(NULLIF(agent, ''), 'unknown') as agent_name,
 		       SUM(input_tokens + output_tokens + cache_creation_tokens + cache_read_tokens)
 		FROM sessions
@@ -1159,25 +1122,6 @@ func (d *DB) GetSessionTree(since string) ([]domain.SessionTreeNode, error) {
 		markBuilt(node)
 	}
 	return roots, nil
-}
-
-func (d *DB) GetTraces(sessionID, since string) ([]domain.NormalizedEvent, error) {
-	var clauses []string
-	var args []any
-	if sessionID != "" {
-		clauses = append(clauses, "session_id = ?")
-		args = append(args, sessionID)
-	}
-	if since != "" {
-		clauses = append(clauses, "datetime(created_at) >= datetime(?)")
-		args = append(args, since)
-	}
-
-	where := ""
-	if len(clauses) > 0 {
-		where = "WHERE " + strings.Join(clauses, " AND ")
-	}
-	return d.listWithWhere(where, args, 0, 0)
 }
 
 const fileChangeCondition = `(

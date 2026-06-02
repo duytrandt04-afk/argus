@@ -2,13 +2,8 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ProjectsPage } from '@/features/projects/ProjectsPage'
-import { EventTimeline } from '@/features/sessions/EventTimeline'
+import { SessionFileChangesPage } from '@/features/sessions/SessionFileChangesPage'
 import { SessionListPage } from '@/features/sessions/SessionListPage'
-import { TraceInspectionPanel } from '@/features/sessions/TraceInspectionPanel'
-import { TraceViewPage } from '@/features/sessions/TraceViewPage'
-import type { TraceSpan } from '@/features/sessions/hooks/useTraces'
-import { buildTimelineTicks, formatElapsed } from '@/features/sessions/timelineScale'
-import type { EventRecord } from '@/types/events'
 import type { FileChangeGroup, Session } from '@/types/sessions'
 
 class MockES {
@@ -46,7 +41,7 @@ function renderSessionFileChanges() {
   return render(
     <MemoryRouter initialEntries={[`/sessions/${encodeURIComponent(cwd)}/${session.session_id}`]}>
       <Routes>
-        <Route path="/sessions/:encodedCwd/:sessionId" element={<TraceViewPage />} />
+        <Route path="/sessions/:encodedCwd/:sessionId" element={<SessionFileChangesPage />} />
       </Routes>
     </MemoryRouter>
   )
@@ -209,7 +204,7 @@ describe('session file-change page', () => {
               tool: 'Edit',
               action: 'UPDATE',
               start_line: 42,
-              old_string: 'const title = "Trace"',
+              old_string: 'const title = "Old heading"',
               new_string: 'const title = "File changes"',
             },
           ],
@@ -220,14 +215,13 @@ describe('session file-change page', () => {
 
     expect(await screen.findByText('1 file changed')).toBeInTheDocument()
     expect(screen.getAllByText('File changes').length).toBeGreaterThan(0)
-    expect(screen.queryByText('Trace')).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /zoom/i })).not.toBeInTheDocument()
 
     fireEvent.click(await screen.findByRole('button', { name: /App\.tsx/i }))
 
     expect(screen.getByText('Before')).toBeInTheDocument()
     expect(screen.getByText('After')).toBeInTheDocument()
-    expect(screen.getByText('const title = "Trace"')).toBeInTheDocument()
+    expect(screen.getByText('const title = "Old heading"')).toBeInTheDocument()
     expect(screen.getByText('const title = "File changes"')).toBeInTheDocument()
     expect(screen.getByText('L42')).toBeInTheDocument()
     expect(screen.getByText('edit')).toBeInTheDocument()
@@ -258,113 +252,5 @@ describe('session file-change page', () => {
     expect(await screen.findByText('26-26 of 26 files')).toBeInTheDocument()
     expect(screen.getByText('/tmp/file-25.ts')).toBeInTheDocument()
     expect(screen.queryByText('/tmp/file-00.ts')).not.toBeInTheDocument()
-  })
-})
-
-describe('trace support components', () => {
-  it('renders event type as the primary timeline label', () => {
-    const event: EventRecord = {
-      time: '2026-05-14T10:00:00Z',
-      action: 'READ',
-      path: '/tmp/a',
-      session: 'sess',
-      hook_event_name: 'PreToolUse',
-      tool: 'Read',
-      duration_ms: 25,
-    }
-    const onSelect = vi.fn()
-
-    render(
-      <EventTimeline
-        events={[event]}
-        selected={null}
-        onSelect={onSelect}
-        globalStart={new Date(event.time).getTime()}
-        globalDuration={1000}
-        timelineWidth={960}
-      />
-    )
-
-    fireEvent.click(screen.getByText('PreToolUse'))
-    expect(screen.getByText('Read')).toBeInTheDocument()
-    expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ event }))
-  })
-
-  it('formats axis labels as elapsed time with zoom-aware steps', () => {
-    expect(formatElapsed(1_000)).toBe('1s')
-    expect(formatElapsed(5 * 60_000)).toBe('5m')
-    expect(formatElapsed(15 * 60_000)).toBe('15m')
-
-    const zoomedIn = buildTimelineTicks(90 * 1_000, 90_000)
-    const zoomedOut = buildTimelineTicks(90 * 60_000, 1_440)
-
-    expect(zoomedIn.stepMs).toBe(1_000)
-    expect(zoomedOut.stepMs).toBe(10 * 60_000)
-  })
-
-  it('renders JSON as text instead of unsafe HTML', () => {
-    const span: TraceSpan = {
-      id: 'span-1',
-      name: 'Span',
-      type: 'event',
-      startTime: 0,
-      endTime: 1,
-      duration: 1,
-      children: [],
-      event: {
-        time: '2026-05-14T10:00:00Z',
-        action: '',
-        path: '',
-        prompt: '<img src=x onerror=alert(1)>',
-      },
-    }
-
-    const { container } = render(
-      <MemoryRouter>
-        <TraceInspectionPanel span={span} />
-      </MemoryRouter>
-    )
-
-    expect(screen.getByText('<img src=x onerror=alert(1)>')).toBeInTheDocument()
-    expect(container.querySelector('img')).toBeNull()
-  })
-
-  it('renders optional close control in trace inspection panel', () => {
-    const span: TraceSpan = {
-      id: 'span-close',
-      name: 'InstructionsLoaded',
-      type: 'InstructionsLoaded',
-      startTime: 0,
-      endTime: 1,
-      duration: 1,
-      children: [],
-      event: {
-        time: '2026-05-14T10:00:00Z',
-        action: 'INSTRUCT',
-        path: '/Users/duytran/.claude/CLAUDE.md',
-        session: 'sess-1',
-        hook_event_name: 'InstructionsLoaded',
-        agent: 'claudecode',
-      },
-    }
-
-    render(
-      <MemoryRouter>
-        <TraceInspectionPanel span={span} onClose={vi.fn()} />
-      </MemoryRouter>
-    )
-
-    expect(screen.getByText('Run ID')).toBeInTheDocument()
-    expect(screen.getByText('Raw Payload')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /close details/i })).toBeInTheDocument()
-    expect(screen.getByText(span.id)).toHaveClass('min-w-max')
-    expect(screen.getByText(span.id).parentElement).toHaveClass('overflow-x-auto')
-    expect(screen.getByText(/"hook_event_name": "InstructionsLoaded"/i)).toHaveClass(
-      'whitespace-pre'
-    )
-    expect(screen.getByText(/"hook_event_name": "InstructionsLoaded"/i).parentElement).toHaveClass(
-      'overflow-x-auto'
-    )
-    expect(screen.getByText('Raw Payload').closest('[data-slot="card"]')).toHaveClass('w-full')
   })
 })
