@@ -26,7 +26,7 @@ Read [docs/privacy.md](privacy.md) and [docs/security.md](security.md) before
 changing defaults.
 
 ```bash
-git clone <repo-url> hooker
+git clone https://github.com/duytrandt04-afk/hooker
 cd hooker
 ./scripts/hooker setup
 ```

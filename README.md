@@ -7,7 +7,7 @@ SQLite, and streams to a React SPA in real time.
 ## Quick start
 
 ```bash
-git clone <repo>
+git clone https://github.com/duytrandt04-afk/hooker
 cd hooker/backend
 go build -o hooker ./cmd/server
 ./hooker
