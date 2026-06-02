@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
@@ -68,6 +69,8 @@ func run() int {
 
 	svc := service.New(repo)
 
+	home, _ := os.UserHomeDir()
+
 	// Load ignore matcher. A missing default file returns an empty matcher (safe).
 	// An unreadable explicit HOOKER_IGNORE path exits with an actionable error (T-03-02-04).
 	matcher, ignoreStatus, err := ignore.LoadWithStatus(cfg.IgnorePath)
@@ -82,8 +85,10 @@ func run() int {
 		DBPath:      cfg.DBPath,
 		IgnoreFile:  domainIgnoreFile(ignoreStatus),
 		Addr:        cfg.Addr,
-		AllowRemote: cfg.AllowRemote,
-		HookConfig:  hookconfig.Detector{}.Detect(),
+		AllowRemote:        cfg.AllowRemote,
+		HookConfig:         hookconfig.Detector{}.Detect(),
+		ClaudeSettingsPath: filepath.Join(home, ".claude", "settings.json"),
+		CodexHooksPath:     filepath.Join(home, ".codex", "hooks.json"),
 	})
 
 	slog.Info("hooker", "version", version.Version, "commit", version.Commit)

@@ -33,6 +33,14 @@ type Options struct {
 	// Addr and AllowRemote describe bind posture for diagnostics display.
 	Addr        string
 	AllowRemote bool
+
+	// ClaudeSettingsPath is the full path to the Claude Code settings file.
+	// Defaults to ~/.claude/settings.json if empty.
+	ClaudeSettingsPath string
+
+	// CodexHooksPath is the full path to the Codex hooks config file.
+	// Defaults to ~/.codex/hooks.json if empty.
+	CodexHooksPath string
 }
 
 // allowNone is the default matcher used when Options.Matcher is nil.
@@ -82,6 +90,8 @@ func NewRouter(svc *service.EventService, repo repository.EventRepository, ready
 	mux.Handle("GET /api/anthropic/", handler.AnthropicProxy())
 	mux.Handle("GET /api/export/events", secFetchSite(handler.ExportEvents(repo)))
 	mux.Handle("GET /api/export/snapshot", secFetchSite(handler.ExportSnapshot(repo)))
+	mux.Handle("GET /api/hooks-config", handler.HooksConfig(opts.ClaudeSettingsPath, opts.CodexHooksPath))
+	mux.Handle("PUT /api/hooks-config", handler.HooksConfig(opts.ClaudeSettingsPath, opts.CodexHooksPath))
 	mux.Handle("GET /", ui.Handler())
 
 	return panicRecovery(hostHeader(corsAllowlist(corsOrigins)(logging(mux))))
