@@ -6,6 +6,7 @@ import {
   PanelLeft,
   Stethoscope,
   TerminalSquare,
+  Webhook,
   X,
   type LucideIcon,
 } from 'lucide-react'
@@ -96,6 +97,13 @@ const NAV_ITEMS: NavItem[] = [
     label: 'Diagnostics',
     ariaLabel: 'System Diagnostics',
     icon: Stethoscope,
+    end: false,
+  },
+  {
+    to: '/hooks-config',
+    label: 'Hooks Config',
+    ariaLabel: 'Hooks Configuration',
+    icon: Webhook,
     end: false,
   },
 ]
