@@ -46,7 +46,7 @@ export function RawPayloadModal({ dedupKey, label, open, onClose }: RawPayloadMo
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose() }}>
-      <DialogContent className="flex max-h-[80vh] max-w-3xl flex-col gap-3">
+      <DialogContent className="flex max-h-[80vh] max-w-5xl flex-col gap-3">
         <DialogHeader>
           <DialogTitle className="font-mono text-xs text-[#8b949e]">{label}</DialogTitle>
         </DialogHeader>
