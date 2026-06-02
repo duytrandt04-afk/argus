@@ -51,6 +51,7 @@ export interface EventRecord {
   normalization_status?: 'ok' | 'degraded'
   normalizer_version?: string
   agent_version?: string
+  dedup_key?: string
 }
 
 export interface SessionUsage {
