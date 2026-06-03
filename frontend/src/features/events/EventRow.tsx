@@ -142,7 +142,8 @@ export function EventRow({
             !isPatchCommand &&
             e.action !== 'ELICIT' &&
             e.action !== 'DISPLAY' &&
-            e.action !== 'INSTRUCT' && (
+            e.action !== 'INSTRUCT' &&
+            e.action !== 'WORKTREE' && (
               <CommandBlock
                 prompt={e.prompt}
                 command={e.command}
@@ -240,7 +241,11 @@ export function EventRow({
       {e.dedup_key && (
         <RawPayloadModal
           dedupKey={e.dedup_key}
-          label={[e.hook_event_name, e.action, new Date(e.time).toLocaleTimeString([], { hour12: false })]
+          label={[
+            e.hook_event_name,
+            e.action,
+            new Date(e.time).toLocaleTimeString([], { hour12: false }),
+          ]
             .filter(Boolean)
             .join(' · ')}
           open={rawModalOpen}
