@@ -139,3 +139,96 @@ func TestNormalizePostToolUseSetsMeta(t *testing.T) {
 		t.Errorf("NormalizerVersion: want 'claudecode/1', got %q", e.NormalizerVersion)
 	}
 }
+
+func TestNormalizeUserPromptExpansionFields(t *testing.T) {
+	raw := []byte(`{
+		"session_id": "s-exp-01",
+		"transcript_path": "/home/user/.claude/sessions/abc.jsonl",
+		"cwd": "/tmp",
+		"hook_event_name": "UserPromptExpansion",
+		"expansion_type": "slash_command",
+		"command_name": "/brainstorming"
+	}`)
+
+	got, err := claudecode.Normalize(raw)
+	if err != nil {
+		t.Fatalf("Normalize: %v", err)
+	}
+	if got.Action != "PROMPT" {
+		t.Errorf("Action = %q, want PROMPT", got.Action)
+	}
+	if got.ExpansionType != "slash_command" {
+		t.Errorf("ExpansionType = %q, want slash_command", got.ExpansionType)
+	}
+	if got.CommandName != "/brainstorming" {
+		t.Errorf("CommandName = %q, want /brainstorming", got.CommandName)
+	}
+}
+
+func TestNormalizeElicitationFields(t *testing.T) {
+	raw := []byte(`{
+		"session_id": "s-elicit-01",
+		"transcript_path": "/home/user/.claude/sessions/abc.jsonl",
+		"cwd": "/tmp",
+		"hook_event_name": "Elicitation",
+		"server_name": "memory",
+		"prompt": "Should I delete these files?"
+	}`)
+
+	got, err := claudecode.Normalize(raw)
+	if err != nil {
+		t.Fatalf("Normalize: %v", err)
+	}
+	if got.Action != "ELICIT" {
+		t.Errorf("Action = %q, want ELICIT", got.Action)
+	}
+	if got.ServerName != "memory" {
+		t.Errorf("ServerName = %q, want memory", got.ServerName)
+	}
+}
+
+func TestNormalizeInstructionsLoadedFields(t *testing.T) {
+	raw := []byte(`{
+		"session_id": "s-instruct-01",
+		"transcript_path": "/home/user/.claude/sessions/abc.jsonl",
+		"cwd": "/tmp",
+		"hook_event_name": "InstructionsLoaded",
+		"memory_type": "project",
+		"load_reason": "startup"
+	}`)
+
+	got, err := claudecode.Normalize(raw)
+	if err != nil {
+		t.Fatalf("Normalize: %v", err)
+	}
+	if got.Action != "INSTRUCT" {
+		t.Errorf("Action = %q, want INSTRUCT", got.Action)
+	}
+	if got.MemoryType != "project" {
+		t.Errorf("MemoryType = %q, want project", got.MemoryType)
+	}
+	if got.LoadReason != "startup" {
+		t.Errorf("LoadReason = %q, want startup", got.LoadReason)
+	}
+}
+
+func TestNormalizeWorktreeFields(t *testing.T) {
+	raw := []byte(`{
+		"session_id": "s-worktree-01",
+		"transcript_path": "/home/user/.claude/sessions/abc.jsonl",
+		"cwd": "/tmp",
+		"hook_event_name": "WorktreeCreate",
+		"branch": "feature/foo"
+	}`)
+
+	got, err := claudecode.Normalize(raw)
+	if err != nil {
+		t.Fatalf("Normalize: %v", err)
+	}
+	if got.Action != "WORKTREE" {
+		t.Errorf("Action = %q, want WORKTREE", got.Action)
+	}
+	if got.Branch != "feature/foo" {
+		t.Errorf("Branch = %q, want feature/foo", got.Branch)
+	}
+}

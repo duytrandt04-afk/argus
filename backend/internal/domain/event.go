@@ -54,6 +54,14 @@ type NormalizedEvent struct {
 	DurationMS          int    `json:"duration_ms,omitempty"`
 	Trigger             string `json:"trigger,omitempty"`
 
+	// New event type fields
+	ExpansionType string `json:"expansion_type,omitempty"`
+	CommandName   string `json:"command_name,omitempty"`
+	MemoryType    string `json:"memory_type,omitempty"`
+	LoadReason    string `json:"load_reason,omitempty"`
+	Branch        string `json:"branch,omitempty"`
+	ServerName    string `json:"server_name,omitempty"`
+
 	// Normalization metadata — set by ingestion pipeline.
 	NormalizationStatus string `json:"normalization_status,omitempty"`
 	NormalizerVersion   string `json:"normalizer_version,omitempty"`

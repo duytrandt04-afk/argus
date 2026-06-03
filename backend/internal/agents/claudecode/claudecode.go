@@ -181,6 +181,12 @@ func Normalize(raw []byte) (domain.NormalizedEvent, error) {
 		ToolResultStderr:    fileutil.ToolResultStderr(p.ToolResponse),
 		DurationMS:          p.DurationMS,
 		Trigger:             p.Trigger,
+		ExpansionType:       p.ExpansionType,
+		CommandName:         p.CommandName,
+		MemoryType:          p.MemoryType,
+		LoadReason:          p.LoadReason,
+		Branch:              p.Branch,
+		ServerName:          p.ServerName,
 		NormalizerVersion:   claudecodeNormalizerVersion,
 		NormalizationStatus: "ok",
 	}, nil
