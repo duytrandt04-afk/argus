@@ -128,6 +128,10 @@ func HookEventAction(hookName string) string {
 		return "BATCH"
 	case "InstructionsLoaded":
 		return "INSTRUCT"
+	case "MessageDisplay":
+		return "DISPLAY"
+	case "Elicitation", "ElicitationResult":
+		return "ELICIT"
 	default:
 		return ""
 	}

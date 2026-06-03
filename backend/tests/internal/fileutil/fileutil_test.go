@@ -125,6 +125,9 @@ func TestHookEventAction(t *testing.T) {
 		{"BeforeModel", "MODEL"},
 		{"AfterModel", "MODEL"},
 		{"TaskCreated", "TASK"},
+		{"MessageDisplay", "DISPLAY"},
+		{"Elicitation", "ELICIT"},
+		{"ElicitationResult", "ELICIT"},
 		{"Unknown", ""},
 	}
 	for _, c := range cases {
