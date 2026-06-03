@@ -91,6 +91,8 @@ export function EventFilters({
               <SelectItem value="CWD">CWD</SelectItem>
               <SelectItem value="BATCH">BATCH</SelectItem>
               <SelectItem value="INSTRUCT">INSTRUCT</SelectItem>
+              <SelectItem value="DISPLAY">DISPLAY</SelectItem>
+              <SelectItem value="ELICIT">ELICIT</SelectItem>
             </SelectGroup>
           </SelectContent>
         </Select>
