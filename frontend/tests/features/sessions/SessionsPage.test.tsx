@@ -78,7 +78,7 @@ describe('SessionListPage', () => {
 
     renderSessionList('/Users/dev/project')
 
-    expect(screen.getByText('Loading sessions...')).toBeInTheDocument()
+    expect(screen.getByText('Loading sessions…')).toBeInTheDocument()
   })
 
   it('renders empty state when no sessions exist', async () => {

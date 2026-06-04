@@ -11,6 +11,10 @@ const populatedConfig = {
   },
 }
 
+function stripIds<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value, (key, current) => (key === 'id' ? undefined : current)))
+}
+
 beforeEach(() => {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => emptyConfig }))
 })
@@ -30,7 +34,9 @@ describe('useHooksConfig', () => {
     )
     const { result } = renderHook(() => useHooksConfig('claudecode'))
     await waitFor(() => expect(result.current.loading).toBe(false))
-    expect(result.current.config).toEqual(populatedConfig)
+    expect(stripIds(result.current.config)).toEqual(populatedConfig)
+    expect(result.current.config?.hooks.SessionStart?.[0]?.id).toEqual(expect.any(String))
+    expect(result.current.config?.hooks.SessionStart?.[0]?.hooks[0]?.id).toEqual(expect.any(String))
     expect(result.current.isDirty).toBe(false)
     expect(result.current.error).toBeNull()
   })
@@ -77,7 +83,7 @@ describe('useHooksConfig', () => {
 
     expect(result.current.isDirty).toBe(false)
     expect(result.current.saveError).toBeNull()
-    expect(result.current.config).toEqual(populatedConfig)
+    expect(stripIds(result.current.config)).toEqual(populatedConfig)
     expect(fetchMock).toHaveBeenCalledWith(
       '/api/hooks-config?agent=claudecode',
       expect.objectContaining({ method: 'PUT' })

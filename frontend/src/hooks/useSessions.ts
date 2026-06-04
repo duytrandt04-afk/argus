@@ -29,10 +29,18 @@ export function useSessions({ enabled = true }: { enabled?: boolean } = {}) {
   }, [])
 
   useEffect(() => {
-    refresh()
-    if (!enabled) return
-    const interval = setInterval(refresh, 5000)
-    return () => clearInterval(interval)
+    const timeout = window.setTimeout(() => {
+      void refresh()
+    }, 0)
+    const interval = enabled
+      ? window.setInterval(() => {
+          void refresh()
+        }, 5000)
+      : null
+    return () => {
+      window.clearTimeout(timeout)
+      if (interval !== null) window.clearInterval(interval)
+    }
   }, [enabled, refresh])
 
   return { sessions, loading, refresh }

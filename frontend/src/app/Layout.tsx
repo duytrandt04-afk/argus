@@ -105,7 +105,11 @@ export function Layout() {
       type: 'SET_COLLAPSED_SESSIONS',
       sessions: typeof update === 'function' ? update(collapsedSessions) : update,
     })
-  const setSearchQuery = (query: string) => dispatch({ type: 'SET_SEARCH_QUERY', query })
+  const setSearchQuery = (update: SetStateAction<string>) =>
+    dispatch({
+      type: 'SET_SEARCH_QUERY',
+      query: typeof update === 'function' ? update(searchQuery) : update,
+    })
 
   const outletContext: LayoutOutletContext = {
     collapsedSessions,

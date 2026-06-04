@@ -170,7 +170,7 @@ describe('session file-change page', () => {
     stubSessionFetch(new Promise<Response>(() => {}))
     renderSessionFileChanges()
 
-    expect(await screen.findByText('Loading file changes...')).toBeInTheDocument()
+    expect(await screen.findByText('Loading file changes…')).toBeInTheDocument()
   })
 
   it('shows the file-change error state', async () => {

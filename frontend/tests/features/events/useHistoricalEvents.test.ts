@@ -35,7 +35,7 @@ describe('useHistoricalEvents', () => {
       useHistoricalEvents('2026-06-01T00:00:00Z', '2026-06-02T00:00:00Z', '', true)
     )
 
-    await waitFor(() => expect(result.current.loading).toBe(false))
+    await waitFor(() => expect(result.current.events).toHaveLength(2))
     expect(result.current.events).toHaveLength(2)
     expect(result.current.hasMore).toBe(false)
   })

@@ -45,7 +45,12 @@ export function useHistoricalEvents(
 
   const fetchPage = useCallback(
     async (cursor: number, replace: boolean) => {
+      if (replace) {
+        setEvents([])
+        setHasMore(false)
+      }
       setLoading(true)
+      setError(null)
       try {
         const res = await fetch(buildUrl(cursor))
         if (!res.ok) throw new Error(`fetch failed: ${res.status}`)
@@ -69,7 +74,6 @@ export function useHistoricalEvents(
           })
           return next
         })
-        setError(null)
       } catch {
         setError('Failed to load events.')
       } finally {
@@ -84,9 +88,10 @@ export function useHistoricalEvents(
     if (!enabled) return
     cursorRef.current = 0
     refreshCountRef.current += 1
-    setEvents([])
-    setHasMore(false)
-    fetchPage(0, true)
+    const timeout = window.setTimeout(() => {
+      void fetchPage(0, true)
+    }, 0)
+    return () => window.clearTimeout(timeout)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [since, until, sessionFilter, enabled])
 
@@ -97,9 +102,7 @@ export function useHistoricalEvents(
 
   const refresh = useCallback(() => {
     cursorRef.current = 0
-    setEvents([])
-    setHasMore(false)
-    fetchPage(0, true)
+    void fetchPage(0, true)
   }, [fetchPage])
 
   return { events, hasMore, loading, error, loadMore, refresh }

@@ -33,6 +33,17 @@ function renderDrawer(groups: FileChangeGroup[]) {
 }
 
 describe('FileChangesDrawer ChangeRow expand/collapse', () => {
+  function getExpandedCodeBlock() {
+    const codeBlock = document.querySelector('pre')
+    expect(codeBlock).not.toBeNull()
+    return codeBlock as HTMLPreElement
+  }
+
+  function expandFirstChange() {
+    fireEvent.click(screen.getByText(/foo\.ts/))
+    fireEvent.click(screen.getByRole('button', { name: /edit.*\+0s.*L5/i }))
+  }
+
   it('shows a chevron on a ChangeRow that has new_string', () => {
     renderDrawer([buildGroup()])
     // Expand the FileRow first to see ChangeRows
@@ -43,30 +54,25 @@ describe('FileChangesDrawer ChangeRow expand/collapse', () => {
 
   it('expands to show line-numbered code when ChangeRow is clicked', () => {
     renderDrawer([buildGroup()])
-    fireEvent.click(screen.getByText(/foo\.ts/))
-    // Click the ChangeRow (the edit label row)
-    const editLabel = screen.getByText('edit')
-    fireEvent.click(editLabel.closest('div') as HTMLElement)
-    // Line 5 | line one should appear
-    expect(screen.getByText(/5 │ line one/)).toBeDefined()
+    expandFirstChange()
+    expect(getExpandedCodeBlock().textContent).toContain('5 │ line one')
   })
 
   it('shows start_line as first line number', () => {
     renderDrawer([buildGroup()])
-    fireEvent.click(screen.getByText(/foo\.ts/))
-    fireEvent.click(screen.getByText('edit').closest('div') as HTMLElement)
-    expect(screen.getByText(/5 │/)).toBeDefined()
-    expect(screen.getByText(/7 │/)).toBeDefined()
+    expandFirstChange()
+    expect(getExpandedCodeBlock().textContent).toContain('5 │ line one')
+    expect(getExpandedCodeBlock().textContent).toContain('7 │ line three')
   })
 
   it('collapses code when ChangeRow is clicked again', () => {
     renderDrawer([buildGroup()])
     fireEvent.click(screen.getByText(/foo\.ts/))
-    const editDiv = screen.getByText('edit').closest('div') as HTMLElement
-    fireEvent.click(editDiv)
-    expect(screen.getByText(/5 │ line one/)).toBeDefined()
-    fireEvent.click(editDiv)
-    expect(screen.queryByText(/5 │ line one/)).toBeNull()
+    const changeButton = screen.getByRole('button', { name: /edit.*\+0s.*L5/i })
+    fireEvent.click(changeButton)
+    expect(getExpandedCodeBlock().textContent).toContain('5 │ line one')
+    fireEvent.click(changeButton)
+    expect(document.querySelector('pre')).toBeNull()
   })
 
   it('does not show chevron or expand when new_string and old_string are both absent', () => {

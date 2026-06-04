@@ -24,42 +24,6 @@ export function useEventFilters(
   const [agentFilter, setAgentFilter] = useState('all')
   const [sortOrder, setSortOrder] = useState('newest')
 
-  const [nowMs, setNowMs] = useState(() => Date.now())
-
-  useEffect(() => {
-    if (timeRange === 'custom') return
-
-    const updateNow = () => setNowMs(Date.now())
-    const timeout = window.setTimeout(updateNow, 0)
-    const interval = window.setInterval(updateNow, 1000)
-
-    return () => {
-      window.clearTimeout(timeout)
-      window.clearInterval(interval)
-    }
-  }, [timeRange])
-
-  const rangeStartMs = useMemo(() => {
-    switch (timeRange) {
-      case '5m':
-        return nowMs - 5 * 60 * 1000
-      case '15m':
-        return nowMs - 15 * 60 * 1000
-      case '1h':
-        return nowMs - 60 * 60 * 1000
-      case '6h':
-        return nowMs - 6 * 60 * 60 * 1000
-      case '24h':
-        return nowMs - 24 * 60 * 60 * 1000
-      case '7d':
-        return nowMs - 7 * 24 * 60 * 60 * 1000
-      case '30d':
-        return nowMs - 30 * 24 * 60 * 60 * 1000
-      default:
-        return null
-    }
-  }, [nowMs, timeRange])
-
   const [projectFilter, setProjectFilter] = useState('all')
 
   const availableAgents = useMemo(() => {
@@ -93,10 +57,18 @@ export function useEventFilters(
   }, [])
 
   useEffect(() => {
-    refreshProjects()
-    if (!isLive) return
-    const interval = window.setInterval(refreshProjects, 15_000)
-    return () => window.clearInterval(interval)
+    const timeout = window.setTimeout(() => {
+      void refreshProjects()
+    }, 0)
+    const interval = isLive
+      ? window.setInterval(() => {
+          void refreshProjects()
+        }, 15_000)
+      : null
+    return () => {
+      window.clearTimeout(timeout)
+      if (interval !== null) window.clearInterval(interval)
+    }
   }, [isLive, refreshProjects])
 
   const filteredEvents = useMemo(() => {
