@@ -84,6 +84,8 @@ export interface LayoutOutletContext {
 
 export interface EventsResponse {
   events?: EventRecord[]
+  has_more?: boolean
+  next_cursor?: number
 }
 
 export interface TooltipState {
