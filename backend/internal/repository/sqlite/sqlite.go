@@ -345,6 +345,7 @@ func (d *DB) ListBySessionsTimeRange(since, until string, beforeCursor int64, se
 	if err != nil {
 		return nil, 0, false, err
 	}
+	defer rows.Close()
 
 	type entry struct {
 		sessionID string
@@ -354,12 +355,11 @@ func (d *DB) ListBySessionsTimeRange(since, until string, beforeCursor int64, se
 	for rows.Next() {
 		var e entry
 		if err := rows.Scan(&e.sessionID, &e.maxID); err != nil {
-			rows.Close()
 			return nil, 0, false, err
 		}
 		sessions = append(sessions, e)
 	}
-	if err := rows.Close(); err != nil {
+	if err := rows.Err(); err != nil {
 		return nil, 0, false, err
 	}
 

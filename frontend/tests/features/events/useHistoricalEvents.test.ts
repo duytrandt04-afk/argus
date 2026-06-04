@@ -28,12 +28,10 @@ describe('useHistoricalEvents', () => {
     const events = [makeEvent(), makeEvent()]
     vi.stubGlobal(
       'fetch',
-      vi
-        .fn()
-        .mockResolvedValue({
-          ok: true,
-          json: async () => ({ events, has_more: false, next_cursor: 0 }),
-        })
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ events, has_more: false, next_cursor: 0 }),
+      })
     )
 
     const { result } = renderHook(() =>
@@ -71,12 +69,10 @@ describe('useHistoricalEvents', () => {
   })
 
   it('does not fetch on rerender when enabled=true and since is constant', async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue({
-        ok: true,
-        json: async () => ({ events: [], has_more: false, next_cursor: 0 }),
-      })
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ events: [], has_more: false, next_cursor: 0 }),
+    })
     vi.stubGlobal('fetch', fetchMock)
 
     const { rerender } = renderHook(({ since }) => useHistoricalEvents(since, '', '', true), {
@@ -122,12 +118,10 @@ describe('useHistoricalEvents', () => {
   })
 
   it('refresh resets state and re-fetches from scratch', async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue({
-        ok: true,
-        json: async () => ({ events: [makeEvent()], has_more: false, next_cursor: 0 }),
-      })
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ events: [makeEvent()], has_more: false, next_cursor: 0 }),
+    })
     vi.stubGlobal('fetch', fetchMock)
 
     const { result } = renderHook(() => useHistoricalEvents('2026-06-01T00:00:00Z', '', '', true))
