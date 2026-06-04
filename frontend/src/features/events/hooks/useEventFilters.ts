@@ -34,10 +34,6 @@ export function useEventFilters(
     return Array.from(agents).sort()
   }, [events])
 
-  const lastAgentsRef = useRef<string[]>([])
-  if (computedAgents.length > 0) lastAgentsRef.current = computedAgents
-  const availableAgents = computedAgents.length > 0 ? computedAgents : lastAgentsRef.current
-
   const [availableProjects, setAvailableProjects] = useState<string[]>([])
   const projectsMountedRef = useRef(true)
 
@@ -117,7 +113,7 @@ export function useEventFilters(
     setActionFilter,
     agentFilter,
     setAgentFilter,
-    availableAgents,
+    availableAgents: computedAgents,
     projectFilter,
     setProjectFilter,
     availableProjects,

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 
 const TIME_RANGE_STORAGE_KEY = 'events_time_range'
 const CUSTOM_START_STORAGE_KEY = 'events_custom_start'
@@ -19,6 +19,30 @@ type UseEventsTimeRangeStateOptions = {
   sessionFilter: string
 }
 
+type NowStore = {
+  getSnapshot: () => number
+  setSnapshot: (value: number) => void
+  subscribe: (listener: () => void) => () => void
+}
+
+function createNowStore(initialValue: number): NowStore {
+  let current = initialValue
+  const listeners = new Set<() => void>()
+
+  return {
+    getSnapshot: () => current,
+    setSnapshot: (value) => {
+      if (value === current) return
+      current = value
+      listeners.forEach((listener) => listener())
+    },
+    subscribe: (listener) => {
+      listeners.add(listener)
+      return () => listeners.delete(listener)
+    },
+  }
+}
+
 export function useEventsTimeRangeState({ isLive, sessionFilter }: UseEventsTimeRangeStateOptions) {
   const [timeRange, setTimeRange] = useState(
     () => localStorage.getItem(TIME_RANGE_STORAGE_KEY) ?? '15m'
@@ -29,7 +53,7 @@ export function useEventsTimeRangeState({ isLive, sessionFilter }: UseEventsTime
   const [customEnd, setCustomEnd] = useState(
     () => localStorage.getItem(CUSTOM_END_STORAGE_KEY) ?? ''
   )
-  const [nowMs, setNowMs] = useState(() => Date.now())
+  const [nowStore] = useState(() => createNowStore(Date.now()))
 
   useEffect(() => {
     localStorage.setItem(TIME_RANGE_STORAGE_KEY, timeRange)
@@ -45,18 +69,17 @@ export function useEventsTimeRangeState({ isLive, sessionFilter }: UseEventsTime
 
   useEffect(() => {
     if (timeRange === 'custom') return
-    if (isLive) {
-      // Snap once when live activates; SSE delivers new events so nowMs must not
-      // tick — a rolling sinceISO would trigger repeated historical refetches.
-      setNowMs(Date.now())
-      return
-    }
-    // Non-live: re-snap immediately then tick every minute so relative windows
-    // like "last 5 minutes" stay accurate instead of drifting from page-open time.
-    setNowMs(Date.now())
-    const id = window.setInterval(() => setNowMs(Date.now()), 60_000)
+
+    nowStore.setSnapshot(Date.now())
+    if (isLive) return
+
+    // Non-live relative windows resnap immediately on mode/range changes,
+    // then advance once per minute without refetching on unrelated renders.
+    const id = window.setInterval(() => nowStore.setSnapshot(Date.now()), 60_000)
     return () => window.clearInterval(id)
-  }, [timeRange, isLive])
+  }, [isLive, nowStore, timeRange])
+
+  const nowMs = useSyncExternalStore(nowStore.subscribe, nowStore.getSnapshot, nowStore.getSnapshot)
 
   const sinceISO = useMemo(() => {
     if (timeRange === 'custom') {

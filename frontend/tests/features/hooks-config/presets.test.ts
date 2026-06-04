@@ -88,9 +88,9 @@ describe('applyPreset', () => {
     expect(result.hooks['SessionStart']).toHaveLength(2)
     const sessionStartEntries = result.hooks['SessionStart'].flatMap((group) => group.hooks)
     expect(sessionStartEntries.some((entry) => entry.command === 'echo user')).toBe(true)
-    expect(
-      sessionStartEntries.some((entry) => entry.statusMessage === HOOKER_STATUS_MESSAGE)
-    ).toBe(true)
+    expect(sessionStartEntries.some((entry) => entry.statusMessage === HOOKER_STATUS_MESSAGE)).toBe(
+      true
+    )
   })
 
   it('medium applied over baseline replaces baseline coverage with medium coverage', () => {

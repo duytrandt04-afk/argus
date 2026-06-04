@@ -5,7 +5,11 @@ import { buildEventKey } from '../eventKey'
 
 export function useLiveEvents(
   sessionFilterOverride = '',
-  { enabled = true, since = '', until = '' }: { enabled?: boolean; since?: string; until?: string } = {}
+  {
+    enabled = true,
+    since = '',
+    until = '',
+  }: { enabled?: boolean; since?: string; until?: string } = {}
 ) {
   const [searchParams] = useSearchParams()
   const sessionFilter = sessionFilterOverride || searchParams.get('session') || ''
