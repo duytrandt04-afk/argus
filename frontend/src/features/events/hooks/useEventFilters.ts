@@ -8,7 +8,13 @@ export function useEventFilters(
   events: EventRecord[],
   searchQuery: string,
   setSearchQuery: Dispatch<SetStateAction<string>>,
-  sessionFilterOverride = ''
+  sessionFilterOverride = '',
+  timeRange: string,
+  setTimeRange: Dispatch<SetStateAction<string>>,
+  customStart: string,
+  setCustomStart: Dispatch<SetStateAction<string>>,
+  customEnd: string,
+  setCustomEnd: Dispatch<SetStateAction<string>>,
 ) {
   const [searchParams] = useSearchParams()
   const sessionFilter = sessionFilterOverride || searchParams.get('session') || ''
@@ -16,25 +22,6 @@ export function useEventFilters(
   const [actionFilter, setActionFilter] = useState('all')
   const [agentFilter, setAgentFilter] = useState('all')
   const [sortOrder, setSortOrder] = useState('newest')
-  const [timeRange, setTimeRange] = useState(
-    () => localStorage.getItem('events_time_range') ?? '15m'
-  )
-  const [customStart, setCustomStart] = useState(
-    () => localStorage.getItem('events_custom_start') ?? ''
-  )
-  const [customEnd, setCustomEnd] = useState(() => localStorage.getItem('events_custom_end') ?? '')
-
-  useEffect(() => {
-    localStorage.setItem('events_time_range', timeRange)
-  }, [timeRange])
-
-  useEffect(() => {
-    localStorage.setItem('events_custom_start', customStart)
-  }, [customStart])
-
-  useEffect(() => {
-    localStorage.setItem('events_custom_end', customEnd)
-  }, [customEnd])
 
   const [nowMs, setNowMs] = useState(() => Date.now())
 
@@ -50,11 +37,6 @@ export function useEventFilters(
       window.clearInterval(interval)
     }
   }, [timeRange])
-
-  const parseLocalDateTime = (s: string) => {
-    if (!s) return NaN
-    return new Date(s.replace(' ', 'T')).getTime()
-  }
 
   const rangeStartMs = useMemo(() => {
     switch (timeRange) {
@@ -111,19 +93,6 @@ export function useEventFilters(
 
   const filteredEvents = useMemo(() => {
     return events.filter((e) => {
-      const eventTime = new Date(e.time).getTime()
-      // When deep-linking by ?session=<id>, prioritize showing all events for that session.
-      if (!sessionFilter) {
-        if (timeRange === 'custom') {
-          const startMs = parseLocalDateTime(customStart)
-          const endMs = parseLocalDateTime(customEnd)
-          if (!Number.isNaN(startMs) && eventTime < startMs) return false
-          if (!Number.isNaN(endMs) && eventTime > endMs) return false
-        } else {
-          if (rangeStartMs !== null && eventTime < rangeStartMs) return false
-        }
-      }
-
       if (actionFilter !== 'all' && e.action !== actionFilter) return false
 
       if (agentFilter !== 'all' && e.agent !== agentFilter) return false
@@ -157,18 +126,7 @@ export function useEventFilters(
       }
       return true
     })
-  }, [
-    events,
-    actionFilter,
-    agentFilter,
-    projectFilter,
-    searchQuery,
-    timeRange,
-    customStart,
-    customEnd,
-    rangeStartMs,
-    sessionFilter,
-  ])
+  }, [events, actionFilter, agentFilter, projectFilter, searchQuery, sessionFilter])
 
   return {
     actionFilter,
