@@ -125,8 +125,10 @@ func EventsStream(svc *service.EventService) http.Handler {
 		ch := svc.Subscribe()
 		defer svc.Unsubscribe(ch)
 
-		sessionID := r.URL.Query().Get("session")
-		if backfill, _, _, err := svc.ListEventsByTimeRange("", "", sessionID, 0, sseBackfillLimit); err == nil {
+		q := r.URL.Query()
+		sessionID := q.Get("session")
+		since := q.Get("since")
+		if backfill, _, _, err := svc.ListEventsByTimeRange(since, "", sessionID, 0, sseBackfillLimit); err == nil {
 			for _, e := range backfill {
 				sendSSE(w, e)
 			}
