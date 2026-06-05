@@ -49,6 +49,12 @@ var schema008 string
 //go:embed migrations/009_new_event_fields.sql
 var schema009 string
 
+//go:embed migrations/010_add_created_at_index.sql
+var schema010 string
+
+//go:embed migrations/011_permission_fields.sql
+var schema011 string
+
 type DB struct {
 	db     *sql.DB
 	ready  atomic.Bool
@@ -114,6 +120,8 @@ func (d *DB) migrate() error {
 		{7, schema007},
 		{8, schema008},
 		{9, schema009},
+		{10, schema010},
+		{11, schema011},
 	}
 	for _, m := range migrations {
 		var count int
@@ -158,8 +166,9 @@ func (d *DB) Add(e domain.NormalizedEvent) error {
 			change_type, old_cwd, new_cwd, tool_calls_json,
 			tool_result_stdout, tool_result_stderr, duration_ms, trigger,
 			normalizer_version, agent_version, normalization_status,
-			expansion_type, command_name, memory_type, load_reason, branch, server_name
-		) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+			expansion_type, command_name, memory_type, load_reason, branch, server_name,
+			tool_input_questions_json, permission_suggestions_json
+		) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
 		e.Time, e.Agent, e.Session, e.HookEventName, e.TurnID, e.ToolUseID,
 		e.Tool, e.Model, e.Source, e.CWD, e.TranscriptPath,
 		nullStr(e.Action), nullStr(e.Path), nullStr(e.Command),
@@ -176,6 +185,7 @@ func (d *DB) Add(e domain.NormalizedEvent) error {
 		nullStr(e.NormalizerVersion), nullStr(e.AgentVersion), normalizationStatus(e.NormalizationStatus),
 		nullStr(e.ExpansionType), nullStr(e.CommandName), nullStr(e.MemoryType),
 		nullStr(e.LoadReason), nullStr(e.Branch), nullStr(e.ServerName),
+		nullStr(e.ToolInputQuestionsJSON), nullStr(e.PermissionSuggestionsJSON),
 	)
 	return err
 }
@@ -264,6 +274,7 @@ func (d *DB) listWithWhere(where string, args []any, limit, offset int) ([]domai
 		       COALESCE(expansion_type,''), COALESCE(command_name,''),
 		       COALESCE(memory_type,''), COALESCE(load_reason,''),
 		       COALESCE(branch,''), COALESCE(server_name,''),
+		       COALESCE(tool_input_questions_json,''), COALESCE(permission_suggestions_json,''),
 		       COALESCE(dedup_key,'')
 		FROM hook_events
 	`
@@ -305,6 +316,7 @@ func (d *DB) listWithWhere(where string, args []any, limit, offset int) ([]domai
 			&e.ToolResultStdout, &e.ToolResultStderr, &e.DurationMS, &e.Trigger,
 			&e.NormalizerVersion, &e.AgentVersion, &e.NormalizationStatus,
 			&e.ExpansionType, &e.CommandName, &e.MemoryType, &e.LoadReason, &e.Branch, &e.ServerName,
+			&e.ToolInputQuestionsJSON, &e.PermissionSuggestionsJSON,
 			&e.DedupKey,
 		); err != nil {
 			return nil, err
