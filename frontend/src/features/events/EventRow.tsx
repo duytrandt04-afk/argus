@@ -18,6 +18,7 @@ import { ElicitBlock } from './renderers/ElicitBlock'
 import { DisplayBlock } from './renderers/DisplayBlock'
 import { WorktreeBlock } from './renderers/WorktreeBlock'
 import { InstructBlock } from './renderers/InstructBlock'
+import { PermissionBlock } from './renderers/PermissionBlock'
 import { EventBadges } from './EventBadges'
 import { Braces } from 'lucide-react'
 import { RawPayloadModal } from './RawPayloadModal'
@@ -148,6 +149,7 @@ export function EventRow({
                 prompt={e.prompt}
                 command={e.command}
                 path={e.path}
+                description={e.description}
                 searchQuery={searchQuery}
               />
             )}
@@ -231,6 +233,13 @@ export function EventRow({
               memoryType={e.memory_type}
               loadReason={e.load_reason}
               searchQuery={searchQuery}
+            />
+          )}
+          {e.action === 'PERMISSION' && (
+            <PermissionBlock
+              toolName={e.tool}
+              toolInputQuestionsJson={e.tool_input_questions_json}
+              permissionSuggestionsJson={e.permission_suggestions_json}
             />
           )}
 
