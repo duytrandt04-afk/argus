@@ -69,3 +69,90 @@ describe('EventRow raw payload button', () => {
     expect(screen.queryByRole('button', { name: /raw payload/i })).toBeNull()
   })
 })
+
+describe('EventRow description display', () => {
+  it('shows Intent label when description is set', () => {
+    render(
+      <EventRow
+        event={buildEvent({ action: 'BASH', command: 'ls -la', description: 'List project files' })}
+        searchQuery=""
+      />
+    )
+    expect(screen.getByText('Intent:')).toBeTruthy()
+    expect(screen.getByText('List project files')).toBeTruthy()
+  })
+
+  it('does not show Intent label when description is absent', () => {
+    render(<EventRow event={buildEvent({ action: 'BASH', command: 'ls -la' })} searchQuery="" />)
+    expect(screen.queryByText('Intent:')).toBeNull()
+  })
+})
+
+describe('EventRow PermissionBlock', () => {
+  it('renders AskUserQuestion card with question text and options', () => {
+    const questionsJson = JSON.stringify([
+      {
+        question: 'What do you mean?',
+        header: 'Clarify issue',
+        multiSelect: false,
+        options: [
+          { label: 'Old session', description: 'Session is from hours ago' },
+          { label: 'Session ended', description: 'Session finished recently' },
+        ],
+      },
+    ])
+    render(
+      <EventRow
+        event={buildEvent({
+          action: 'PERMISSION',
+          tool: 'AskUserQuestion',
+          tool_input_questions_json: questionsJson,
+        })}
+        searchQuery=""
+      />
+    )
+    expect(screen.getByText('Clarify issue')).toBeTruthy()
+    expect(screen.getByText('What do you mean?')).toBeTruthy()
+    expect(screen.getByText('Old session')).toBeTruthy()
+    expect(screen.getByText('Session ended')).toBeTruthy()
+  })
+
+  it('renders permission suggestion chip with allow behavior', () => {
+    const suggestionsJson = JSON.stringify([
+      {
+        type: 'addRules',
+        rules: [{ toolName: 'Bash', ruleContent: 'xargs cat' }],
+        behavior: 'allow',
+        destination: 'localSettings',
+      },
+    ])
+    render(
+      <EventRow
+        event={buildEvent({
+          action: 'PERMISSION',
+          tool: 'Bash',
+          permission_suggestions_json: suggestionsJson,
+        })}
+        searchQuery=""
+      />
+    )
+    expect(screen.getByText('allow')).toBeTruthy()
+    expect(screen.getByText(/"xargs cat" → localSettings/)).toBeTruthy()
+  })
+
+  it('renders no question card or suggestion chip for PERMISSION event with empty data', () => {
+    render(
+      <EventRow
+        event={buildEvent({
+          action: 'PERMISSION',
+          tool: 'Bash',
+        })}
+        searchQuery=""
+      />
+    )
+    expect(screen.queryByText('allow')).toBeNull()
+    expect(screen.queryByText('deny')).toBeNull()
+    expect(screen.queryByText('○')).toBeNull()
+    expect(screen.queryByText('□')).toBeNull()
+  })
+})
