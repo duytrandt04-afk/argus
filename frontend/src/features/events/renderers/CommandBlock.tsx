@@ -6,10 +6,11 @@ type CommandBlockProps = {
   prompt?: string
   command?: string
   path?: string
+  description?: string
   searchQuery?: string
 }
 
-export function CommandBlock({ prompt, command, path, searchQuery = '' }: CommandBlockProps) {
+export function CommandBlock({ prompt, command, path, description, searchQuery = '' }: CommandBlockProps) {
   const label = prompt ? 'Prompt' : command ? 'Command' : path ? 'File' : 'Shell'
   const textToCopy = prompt || command || path || ''
 
@@ -34,6 +35,11 @@ export function CommandBlock({ prompt, command, path, searchQuery = '' }: Comman
         <pre className="mt-1 mb-0 whitespace-pre-wrap break-words text-[0.75rem] text-[#a0a0a0] max-h-[300px] overflow-y-auto font-[inherit]">
           {highlight(command || '', searchQuery) as ReactNode}
         </pre>
+      )}
+      {description && (
+        <p className="mt-1 mb-0 text-[0.7rem] text-[#777]">
+          <span className="text-[#555]">Intent:</span> {description}
+        </p>
       )}
     </div>
   )
