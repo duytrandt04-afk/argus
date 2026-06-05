@@ -33,7 +33,9 @@ type NormalizedEvent struct {
 	DedupKey       string    `json:"dedup_key,omitempty"`
 
 	// Extended fields for new hook events
-	PermissionMode      string `json:"permission_mode,omitempty"`
+	PermissionMode            string `json:"permission_mode,omitempty"`
+	ToolInputQuestionsJSON    string `json:"tool_input_questions_json,omitempty"`
+	PermissionSuggestionsJSON string `json:"permission_suggestions_json,omitempty"`
 	Response            string `json:"response,omitempty"`
 	ErrorMessage        string `json:"error_message,omitempty"`
 	ErrorType           string `json:"error_type,omitempty"`

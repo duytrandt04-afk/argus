@@ -19,7 +19,8 @@ type RawPayload struct {
 	ToolInput      ToolInput `json:"tool_input"`
 
 	// Permission / approval fields
-	PermissionMode string `json:"permission_mode"`
+	PermissionMode        string          `json:"permission_mode"`
+	PermissionSuggestions json.RawMessage `json:"permission_suggestions"`
 
 	// Error fields
 	Error        string `json:"error"`
@@ -78,14 +79,15 @@ type RawPayload struct {
 }
 
 type ToolInput struct {
-	FilePath    string `json:"file_path"`
-	Command     string `json:"command"`
-	Description string `json:"description"`
-	OldString   string `json:"old_string"`
-	NewString   string `json:"new_string"`
-	OldStr      string `json:"old_str"`
-	NewStr      string `json:"new_str"`
-	Content     string `json:"content"`
+	FilePath    string          `json:"file_path"`
+	Command     string          `json:"command"`
+	Description string          `json:"description"`
+	OldString   string          `json:"old_string"`
+	NewString   string          `json:"new_string"`
+	OldStr      string          `json:"old_str"`
+	NewStr      string          `json:"new_str"`
+	Content     string          `json:"content"`
+	Questions   json.RawMessage `json:"questions"`
 }
 
 // ToolCall is one entry in the PostToolBatch tool_calls array.
