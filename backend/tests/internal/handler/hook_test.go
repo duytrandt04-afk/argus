@@ -3,6 +3,7 @@ package handler_test
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
@@ -358,5 +359,131 @@ func TestHookIgnoredEventNoSSEBroadcast(t *testing.T) {
 		t.Fatalf("received unexpected SSE event for ignored hook: agent=%q session=%q", e.Agent, e.Session)
 	case <-time.After(50 * time.Millisecond):
 		// Pass: no broadcast received.
+	}
+}
+
+func TestHookHandlerCapturesAskUserQuestionFields(t *testing.T) {
+	svc := newTestService(t)
+	h := newHook(svc)
+
+	body := []byte(`{
+		"session_id": "s-ask",
+		"transcript_path": "/home/user/.claude/sessions/ask.jsonl",
+		"hook_event_name": "PermissionRequest",
+		"tool_name": "AskUserQuestion",
+		"tool_use_id": "tu-ask",
+		"turn_id": "t-ask",
+		"cwd": "/tmp",
+		"tool_input": {
+			"questions": [
+				{
+					"question": "What do you mean by 'not live'?",
+					"header": "Clarify issue",
+					"options": [
+						{"label": "Old session", "description": "Session is from hours/days ago"},
+						{"label": "Session ended", "description": "Session finished recently"}
+					],
+					"multiSelect": false
+				}
+			]
+		},
+		"permission_suggestions": [
+			{
+				"type": "addRules",
+				"rules": [{"toolName": "Bash", "ruleContent": "xargs cat"}],
+				"behavior": "allow",
+				"destination": "localSettings"
+			}
+		]
+	}`)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/hook", bytes.NewReader(body))
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200; body: %s", rec.Code, rec.Body.String())
+	}
+
+	events, err := svc.ListEvents(10)
+	if err != nil {
+		t.Fatalf("ListEvents: %v", err)
+	}
+	if len(events) != 1 {
+		t.Fatalf("events len = %d, want 1", len(events))
+	}
+
+	e := events[0]
+	if e.ToolInputQuestionsJSON == "" {
+		t.Error("ToolInputQuestionsJSON is empty, want non-empty")
+	}
+	var questions []struct {
+		Question string `json:"question"`
+		Header   string `json:"header"`
+	}
+	if err := json.Unmarshal([]byte(e.ToolInputQuestionsJSON), &questions); err != nil {
+		t.Fatalf("ToolInputQuestionsJSON is not valid JSON: %v", err)
+	}
+	if len(questions) != 1 {
+		t.Fatalf("questions len = %d, want 1", len(questions))
+	}
+	if questions[0].Header != "Clarify issue" {
+		t.Errorf("header = %q, want %q", questions[0].Header, "Clarify issue")
+	}
+
+	if e.PermissionSuggestionsJSON == "" {
+		t.Error("PermissionSuggestionsJSON is empty, want non-empty")
+	}
+	var suggestions []struct {
+		Behavior    string `json:"behavior"`
+		Destination string `json:"destination"`
+	}
+	if err := json.Unmarshal([]byte(e.PermissionSuggestionsJSON), &suggestions); err != nil {
+		t.Fatalf("PermissionSuggestionsJSON is not valid JSON: %v", err)
+	}
+	if len(suggestions) != 1 || suggestions[0].Behavior != "allow" {
+		t.Errorf("suggestions = %v, want [{behavior:allow ...}]", suggestions)
+	}
+}
+
+func TestHookHandlerEmptyFieldsWhenMissing(t *testing.T) {
+	svc := newTestService(t)
+	h := newHook(svc)
+
+	body := []byte(`{
+		"session_id": "s-plain",
+		"transcript_path": "/home/user/.claude/sessions/plain.jsonl",
+		"hook_event_name": "PreToolUse",
+		"tool_name": "Bash",
+		"tool_use_id": "tu-plain",
+		"turn_id": "t-plain",
+		"cwd": "/tmp",
+		"tool_input": {"command": "ls -la", "description": "List files"}
+	}`)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/hook", bytes.NewReader(body))
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", rec.Code)
+	}
+
+	events, err := svc.ListEvents(10)
+	if err != nil {
+		t.Fatalf("ListEvents: %v", err)
+	}
+	if len(events) != 1 {
+		t.Fatalf("events len = %d, want 1", len(events))
+	}
+	e := events[0]
+	if e.ToolInputQuestionsJSON != "" {
+		t.Errorf("ToolInputQuestionsJSON = %q, want empty", e.ToolInputQuestionsJSON)
+	}
+	if e.PermissionSuggestionsJSON != "" {
+		t.Errorf("PermissionSuggestionsJSON = %q, want empty", e.PermissionSuggestionsJSON)
+	}
+	if e.Description != "List files" {
+		t.Errorf("Description = %q, want %q", e.Description, "List files")
 	}
 }
