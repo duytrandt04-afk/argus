@@ -1321,6 +1321,16 @@ func (d *DB) GetFileChanges(sessionID string) ([]domain.FileChangeGroup, error) 
 		FROM hook_events
 		WHERE session_id = ?
 		  AND path != '' AND path IS NOT NULL
+		  AND NOT (
+		    hook_event_name = 'PostToolUse'
+		    AND tool_use_id != '' AND tool_use_id IS NOT NULL
+		    AND EXISTS (
+		      SELECT 1 FROM hook_events pre
+		      WHERE pre.session_id = hook_events.session_id
+		        AND pre.tool_use_id = hook_events.tool_use_id
+		        AND pre.hook_event_name = 'PreToolUse'
+		    )
+		  )
 		  AND `+fileChangeCondition+`
 		ORDER BY path, id ASC
 	`, sessionID)

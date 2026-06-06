@@ -6,7 +6,6 @@ import (
 	"hooker/internal/domain"
 	"hooker/internal/handler"
 	"hooker/internal/hookconfig"
-	"hooker/internal/notify"
 	"hooker/internal/repository"
 	"hooker/internal/service"
 	"hooker/internal/ui"
@@ -44,10 +43,6 @@ type Options struct {
 	// CodexHooksPath is the full path to the Codex hooks config file.
 	// Defaults to ~/.codex/hooks.json if empty.
 	CodexHooksPath string
-
-	// Notifier shows native OS permission dialogs for PermissionRequest hook events.
-	// If nil, permission events fall through to the terminal prompt (safe default).
-	Notifier notify.Notifier
 }
 
 // allowNone is the default matcher used when Options.Matcher is nil.
@@ -75,7 +70,7 @@ func NewRouter(svc *service.EventService, repo repository.EventRepository, ready
 
 	mux.Handle("GET /healthz", handler.Healthz())
 	mux.Handle("GET /readyz", handler.Readyz(ready))
-	mux.Handle("POST /api/hook", handler.Hook(svc, m, opts.Notifier))
+	mux.Handle("POST /api/hook", handler.Hook(svc, m))
 	mux.Handle("GET /api/events", handler.Events(svc))
 	mux.Handle("GET /api/events/stream", handler.EventsStream(svc))
 	mux.Handle("GET /api/events/raw", handler.EventRawPayload(svc))
