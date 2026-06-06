@@ -371,4 +371,3 @@ function ChangeEntry({ change, sessionStartedAt }: ChangeEntryProps) {
     </div>
   )
 }
-
