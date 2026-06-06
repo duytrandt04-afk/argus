@@ -213,11 +213,6 @@ export function detectHookConfigLabel(agent: AgentKey, config: HooksConfig): str
 
   if (hookerEventTypes.size === 0) return 'Configured'
 
-  for (const key of ['full', 'medium', 'baseline'] as const) {
-    const presetEvents = new Set(Object.keys(HOOK_PRESETS[agent][key].hooks))
-    if (setsEqual(hookerEventTypes, presetEvents)) return PRESET_LABELS[key].label
-  }
-
   const total = AGENT_EVENT_TOTALS[agent]
-  return `Custom (${hookerEventTypes.size}/${total})`
+  return `Configured (${hookerEventTypes.size}/${total})`
 }

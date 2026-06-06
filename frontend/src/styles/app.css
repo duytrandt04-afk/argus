@@ -154,33 +154,17 @@ mark {
 .agent-badge {
   font-size: 0.66rem;
   font-weight: 600;
-  padding: 2px 0;
-  border-radius: 999px;
-  border: 1px solid transparent;
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
   line-height: 1;
   vertical-align: middle;
 }
-.agent-badge svg {
+.agent-badge svg,
+.agent-badge img {
   flex-shrink: 0;
-  width: 12px;
-  height: 12px;
   display: block;
-}
-.agent-codex {
-  color: #5cceff;
-  border-color: rgba(92, 206, 255, 0.35);
-  background: rgba(92, 206, 255, 0.08);
-}
-.agent-claude {
-  color: #e8845c;
-  border-color: rgba(232, 132, 92, 0.35);
-  background: rgba(232, 132, 92, 0.08);
 }
 
 /* ─── Usage token badges ─── */

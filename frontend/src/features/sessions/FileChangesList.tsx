@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { Skeleton } from '@/components/ui/skeleton'
+import { DiffBlock } from '@/features/events/renderers/DiffBlock'
 import type { FileChangeEvent, FileChangeGroup } from '@/types/sessions'
 
 const DEFAULT_PAGE_SIZE = 25
@@ -355,9 +356,12 @@ function ChangeEntry({ change, sessionStartedAt }: ChangeEntryProps) {
       </div>
 
       {hasOld || hasNew ? (
-        <div className="mt-2 grid gap-2 lg:grid-cols-2">
-          {hasOld && <SnippetBlock label="Before" tone="old" value={change.old_string ?? ''} />}
-          {hasNew && <SnippetBlock label="After" tone="new" value={change.new_string ?? ''} />}
+        <div className="mt-2 overflow-x-auto rounded-md">
+          <DiffBlock
+            oldStr={change.old_string ?? ''}
+            newStr={change.new_string ?? ''}
+            startLine={change.start_line ?? 0}
+          />
         </div>
       ) : (
         <div className="mt-2 text-[12px] text-white/40">
@@ -368,26 +372,3 @@ function ChangeEntry({ change, sessionStartedAt }: ChangeEntryProps) {
   )
 }
 
-type SnippetBlockProps = {
-  label: 'Before' | 'After'
-  tone: 'old' | 'new'
-  value: string
-}
-
-function SnippetBlock({ label, tone, value }: SnippetBlockProps) {
-  const toneClass =
-    tone === 'old'
-      ? 'border-red-400/20 bg-red-400/[0.04] text-red-100/85'
-      : 'border-emerald-400/20 bg-emerald-400/[0.04] text-emerald-100/85'
-
-  return (
-    <div className={`min-w-0 rounded-md border ${toneClass}`}>
-      <div className="border-b border-current/10 px-2 py-1 text-[10px] font-semibold text-white/50">
-        {label}
-      </div>
-      <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-words px-2 py-1.5 font-mono text-[11px] leading-[1.45]">
-        {value}
-      </pre>
-    </div>
-  )
-}

@@ -25,6 +25,7 @@
     "@codemirror/view": "^6.43.0",
     "@fontsource-variable/geist": "^5.2.8",
     "@lezer/highlight": "^1.2.3",
+    "@lobehub/icons": "^5.10.0",
     "@tailwindcss/vite": "^4.2.4",
     "@uiw/react-codemirror": "^4.25.10",
     "class-variance-authority": "^0.7.1",

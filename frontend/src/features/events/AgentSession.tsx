@@ -98,7 +98,7 @@ export function AgentSession({
         >
           <div className="group inline-flex min-w-0 items-center gap-2 text-[0.8rem] font-bold text-[#47ff9c]">
             <span className={cn('agent-badge', `agent-${agent.badgeClass}`)}>
-              <Logo size={12} />
+              <Logo size={18} />
             </span>
             <span className="min-w-0 break-words sm:break-all">
               {highlight(firstEvent.session || shortId(transcriptPath), searchQuery)}

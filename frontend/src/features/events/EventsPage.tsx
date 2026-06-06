@@ -419,8 +419,10 @@ export function EventsPage() {
         onRefresh={() => {
           if (urlSession) {
             setSearchParams({})
-            setAgentFilter('all')
           }
+          setActionFilter('all')
+          setAgentFilter('all')
+          setProjectFilter('all')
           histState.refresh()
           refreshSessionUsage()
           refreshProjects()

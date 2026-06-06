@@ -1,12 +1,12 @@
 import { Fragment, useEffect, type AnchorHTMLAttributes, type Ref, type RefObject } from 'react'
 import {
   FishingHook,
-  GitFork,
+  FolderOpen,
   LayoutDashboard,
   PanelLeft,
+  SlidersHorizontal,
   Stethoscope,
   TerminalSquare,
-  Webhook,
   X,
   type LucideIcon,
 } from 'lucide-react'
@@ -104,7 +104,7 @@ const NAV_ITEMS: NavItem[] = [
     to: '/projects',
     label: 'Projects',
     ariaLabel: 'Projects',
-    icon: GitFork,
+    icon: FolderOpen,
     end: false,
   },
   {
@@ -118,7 +118,7 @@ const NAV_ITEMS: NavItem[] = [
     to: '/hooks-config',
     label: 'Hooks Config',
     ariaLabel: 'Hooks Configuration',
-    icon: Webhook,
+    icon: SlidersHorizontal,
     end: false,
   },
 ]
