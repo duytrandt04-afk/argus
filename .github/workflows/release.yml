@@ -39,6 +39,7 @@ jobs:
           rm -rf backend/internal/ui/dist
           mkdir -p backend/internal/ui
           cp -R frontend/dist backend/internal/ui/dist
+          touch backend/internal/ui/dist/.gitkeep
 
       - name: Release via GoReleaser
         uses: goreleaser/goreleaser-action@v6
