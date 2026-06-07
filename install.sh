@@ -1,94 +1,214 @@
 #!/bin/bash
 set -e
 
+REPO="duytrandt04-afk/hooker"
 BINARY_DIR="$HOME/.local/bin"
-BINARY="$BINARY_DIR/hooker-monitor"
-STARTUP_SCRIPT="$BINARY_DIR/start-hooker.sh"
+BINARY="$BINARY_DIR/hooker"
+START_SCRIPT="$BINARY_DIR/start-hooker.sh"
+STOP_SCRIPT="$BINARY_DIR/hooker-stop.sh"
+HOOKS_DIR="$HOME/.hooker/hooks"
+ACTIVATE_SCRIPT="$HOOKS_DIR/hooker-activate.js"
 SETTINGS="$HOME/.claude/settings.json"
-HOOKER_PORT=8765
+HOOKER_PORT=10804
 
-# ── 1. build ────────────────────────────────────────────────────────────────
+# ── 1. OS/arch detection ────────────────────────────────────────────────────
 
-if ! command -v go &>/dev/null; then
-    echo "error: go not found — install Go 1.25+ first" >&2
+OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
+ARCH="$(uname -m)"
+case "$ARCH" in
+  x86_64) ARCH="amd64" ;;
+  arm64|aarch64) ARCH="arm64" ;;
+  *)
+    echo "error: unsupported architecture: $ARCH" >&2
+    echo "Download manually from: https://github.com/$REPO/releases/latest" >&2
     exit 1
-fi
+    ;;
+esac
+case "$OS" in
+  linux|darwin) ;;
+  *)
+    echo "error: unsupported OS: $OS" >&2
+    echo "Download manually from: https://github.com/$REPO/releases/latest" >&2
+    exit 1
+    ;;
+esac
 
-echo "Building hooker-monitor..."
+# ── 2. Fetch latest release tag ─────────────────────────────────────────────
+
+echo "Fetching latest hooker release..."
+VERSION="$(curl -fsSL "https://api.github.com/repos/$REPO/releases/latest" \
+  | grep '"tag_name"' \
+  | grep -o '"tag_name": *"[^"]*"' | sed 's/.*"tag_name": *"\([^"]*\)".*/\1/')"
+
+if [ -z "$VERSION" ]; then
+  echo "error: could not fetch latest release from GitHub API" >&2
+  echo "Download manually from: https://github.com/$REPO/releases/latest" >&2
+  exit 1
+fi
+echo "  version: $VERSION"
+
+# ── 3. Download archive + checksums, verify SHA256 ───────────────────────────
+
+ARCHIVE="hooker_${VERSION#v}_${OS}_${ARCH}.tar.gz"
+BASE_URL="https://github.com/$REPO/releases/download/$VERSION"
+WORK_DIR="$(mktemp -d)"
+trap 'rm -rf "$WORK_DIR"' EXIT
+
+echo "Downloading $ARCHIVE..."
+curl -fsSL "$BASE_URL/$ARCHIVE" -o "$WORK_DIR/$ARCHIVE"
+curl -fsSL "$BASE_URL/checksums.txt" -o "$WORK_DIR/checksums.txt"
+
+echo "Verifying checksum..."
+cd "$WORK_DIR"
+if command -v sha256sum &>/dev/null; then
+  grep -F "  $ARCHIVE" checksums.txt | sha256sum --check --status
+elif command -v shasum &>/dev/null; then
+  grep -F "  $ARCHIVE" checksums.txt | shasum -a 256 --check --status
+else
+  echo "warning: no sha256sum or shasum found — skipping checksum verification" >&2
+fi
+cd - >/dev/null
+
+# ── 4. Extract and install binary ──────────────────────────────────────────
+
+echo "Installing hooker..."
 mkdir -p "$BINARY_DIR"
-(cd "$(dirname "$0")/backend" && go build -o "$BINARY" ./cmd/server)
+tar -xzf "$WORK_DIR/$ARCHIVE" -C "$WORK_DIR"
+[ -f "$WORK_DIR/hooker" ] || { echo "error: binary not found in archive — check release assets" >&2; exit 1; }
+mv "$WORK_DIR/hooker" "$BINARY"
+chmod +x "$BINARY"
 echo "  → $BINARY"
 
-# ── 2. startup script ────────────────────────────────────────────────────────
+# ── 5. Write start-hooker.sh ───────────────────────────────────────────────
 
-cat > "$STARTUP_SCRIPT" << EOF
+cat > "$START_SCRIPT" << EOF
 #!/bin/bash
-# Start hooker-monitor if not already running on port $HOOKER_PORT.
-
+BINARY_PATH="$BINARY"
 HOOKER_PORT=$HOOKER_PORT
 DB_DIR="\$HOME/.hooker"
 DB_PATH="\$DB_DIR/hooker.db"
 LOG_PATH="\$DB_DIR/hooker.log"
-BINARY="$BINARY"
 
 mkdir -p "\$DB_DIR"
 
 if lsof -ti:"\$HOOKER_PORT" > /dev/null 2>&1; then
-    echo '{"continue":true,"suppressOutput":true}'
-    exit 0
+  echo '{"continue":true,"suppressOutput":true}'
+  exit 0
 fi
 
 DB_PATH="\$DB_PATH" ADDR="127.0.0.1:\$HOOKER_PORT" \\
-    nohup "\$BINARY" >> "\$LOG_PATH" 2>&1 &
+  nohup "\$BINARY_PATH" >> "\$LOG_PATH" 2>&1 &
 
 echo '{"continue":true,"suppressOutput":true}'
 EOF
-chmod +x "$STARTUP_SCRIPT"
-echo "  → $STARTUP_SCRIPT"
+chmod +x "$START_SCRIPT"
+echo "  → $START_SCRIPT"
 
-# ── 3. wire Claude Code SessionStart hook ────────────────────────────────────
+# ── 6. Write hooker-stop.sh ────────────────────────────────────────────────
+
+cat > "$STOP_SCRIPT" << EOF
+#!/bin/bash
+PID=\$(lsof -ti:$HOOKER_PORT)
+if [ -z "\$PID" ]; then
+  echo "hooker not running"
+  exit 0
+fi
+echo "\$PID" | xargs kill && echo "hooker stopped"
+EOF
+chmod +x "$STOP_SCRIPT"
+echo "  → $STOP_SCRIPT"
+
+# ── 7. Write hooker-activate.js ────────────────────────────────────────────
+
+mkdir -p "$HOOKS_DIR"
+cat > "$ACTIVATE_SCRIPT" << 'EOF'
+#!/usr/bin/env node
+const { execSync } = require('child_process');
+const os = require('os');
+const path = require('path');
+const db = path.join(os.homedir(), '.hooker', 'hooker.db');
+const url = 'http://127.0.0.1:10804';
+let output;
+try {
+  const result = execSync(
+    `sqlite3 "${db}" "SELECT COUNT(*), COUNT(DISTINCT session_id) FROM events"`,
+    { encoding: 'utf8', timeout: 3000, stdio: ['pipe', 'pipe', 'ignore'] }
+  ).trim();
+  const [events, sessions] = result.split('|');
+  output = `HOOKER live @ ${url} | ${parseInt(events, 10).toLocaleString()} events · ${sessions.trim()} sessions`;
+} catch (_) {
+  output = `HOOKER live @ ${url}`;
+}
+process.stdout.write(output);
+EOF
+chmod +x "$ACTIVATE_SCRIPT"
+echo "  → $ACTIVATE_SCRIPT"
+
+# ── 8. Wire SessionStart hooks in ~/.claude/settings.json ───────────────────
 
 if ! command -v python3 &>/dev/null; then
-    echo "warning: python3 not found — add this to ~/.claude/settings.json manually:"
-    echo '  "hooks": { "SessionStart": [{ "hooks": [{ "type": "command", "command": "'"$STARTUP_SCRIPT"'" }] }] }'
-    exit 0
-fi
-
-python3 - "$SETTINGS" "$STARTUP_SCRIPT" << 'PYEOF'
+  echo "warning: python3 not found — add hooks manually to ~/.claude/settings.json"
+  echo "  start: $START_SCRIPT"
+  echo "  notify: node $ACTIVATE_SCRIPT"
+else
+  python3 - "$SETTINGS" "$START_SCRIPT" "$ACTIVATE_SCRIPT" << 'PYEOF'
 import json, sys, os
 
-settings_path = sys.argv[1]
-startup_script = sys.argv[2]
+settings_path, start_script, activate_script = sys.argv[1], sys.argv[2], sys.argv[3]
 
 settings = {}
 if os.path.exists(settings_path):
     with open(settings_path) as f:
         try:
             settings = json.load(f)
-        except json.JSONDecodeError:
-            pass
-
-new_hook = {"type": "command", "command": startup_script}
+        except json.JSONDecodeError as e:
+            print(f"error: {settings_path} contains invalid JSON: {e}", file=sys.stderr)
+            print("Fix the JSON manually, then re-run install.sh", file=sys.stderr)
+            sys.exit(1)
 
 hooks = settings.setdefault("hooks", {})
 session_start = hooks.setdefault("SessionStart", [])
 
-# Check if our script is already registered.
-for entry in session_start:
-    for h in entry.get("hooks", []):
-        if h.get("command") == startup_script:
-            print(f"  → hook already registered in {settings_path}")
-            sys.exit(0)
+def already_registered(cmd):
+    for entry in session_start:
+        for h in entry.get("hooks", []):
+            if h.get("command") == cmd:
+                return True
+    return False
 
-session_start.append({"hooks": [new_hook]})
+added = []
+if not already_registered(start_script):
+    session_start.append({"hooks": [{"type": "command", "command": start_script}]})
+    added.append("start")
 
-os.makedirs(os.path.dirname(settings_path), exist_ok=True)
-with open(settings_path, "w") as f:
-    json.dump(settings, f, indent=2)
+activate_cmd = f'node "{activate_script}"'
+if not already_registered(activate_cmd):
+    session_start.append({"hooks": [{"type": "command", "command": activate_cmd}]})
+    added.append("notify")
 
-print(f"  → hook registered in {settings_path}")
+if added:
+    os.makedirs(os.path.dirname(settings_path), exist_ok=True)
+    with open(settings_path, "w") as f:
+        json.dump(settings, f, indent=2)
+    print(f"  → hooks registered in {settings_path}: {', '.join(added)}")
+else:
+    print(f"  → hooks already registered in {settings_path}")
 PYEOF
+fi
+
+# ── 9. PATH warning + completion message ──────────────────────────────────
+
+if ! echo "$PATH" | grep -qF "$BINARY_DIR"; then
+  echo ""
+  echo "warning: $BINARY_DIR is not in your PATH."
+  echo "  Add to your shell profile (~/.zshrc or ~/.bashrc):"
+  echo "  export PATH=\"$BINARY_DIR:\$PATH\""
+fi
 
 echo ""
-echo "Done. hooker-monitor will start automatically on 'claude'."
-echo "UI: http://127.0.0.1:$HOOKER_PORT"
+echo "hooker $VERSION installed."
+echo "Start:  $START_SCRIPT"
+echo "Stop:   $STOP_SCRIPT"
+echo "UI:     http://127.0.0.1:$HOOKER_PORT"
+echo ""
+echo "Restart Claude Code or Codex — hooker starts automatically."
