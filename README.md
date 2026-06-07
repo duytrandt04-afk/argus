@@ -19,6 +19,14 @@ Open **http://127.0.0.1:10804** after your next Claude Code or Codex session sta
 
 Then follow [docs/quickstart.md](docs/quickstart.md) to verify your first event.
 
+## Uninstall
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/duytrandt04-afk/hooker/main/uninstall.sh | bash
+```
+
+Stops the server, removes binaries and scripts, unwires hooks from `~/.claude/settings.json`, and optionally deletes your data.
+
 ## Documentation
 
 - [docs/quickstart.md](docs/quickstart.md) - first-event walkthrough (under 10 minutes)
