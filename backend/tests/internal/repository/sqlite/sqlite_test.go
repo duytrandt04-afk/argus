@@ -1269,14 +1269,14 @@ func TestMigrationRunner_Idempotent(t *testing.T) {
 	db := newTestDB(t)
 
 	// A second call to New on the same DB would re-run migrate(). Instead,
-	// verify idempotency by checking schema_migrations has exactly 11 versions.
+	// verify idempotency by checking schema_migrations has exactly 12 versions.
 	rawDB := db.RawDB()
 	var count int
 	if err := rawDB.QueryRow(`SELECT COUNT(*) FROM schema_migrations`).Scan(&count); err != nil {
 		t.Fatalf("count schema_migrations: %v", err)
 	}
-	if count != 11 {
-		t.Errorf("schema_migrations has %d rows, want 11 (migrations 1–11)", count)
+	if count != 12 {
+		t.Errorf("schema_migrations has %d rows, want 12 (migrations 1–12)", count)
 	}
 }
 

@@ -55,6 +55,9 @@ var schema010 string
 //go:embed migrations/011_permission_fields.sql
 var schema011 string
 
+//go:embed migrations/012_repair_normalization_fields.sql
+var schema012 string
+
 type DB struct {
 	db     *sql.DB
 	ready  atomic.Bool
@@ -122,6 +125,7 @@ func (d *DB) migrate() error {
 		{9, schema009},
 		{10, schema010},
 		{11, schema011},
+		{12, schema012},
 	}
 	for _, m := range migrations {
 		var count int
@@ -135,6 +139,17 @@ func (d *DB) migrate() error {
 		}
 		if _, err := tx.Exec(m.sql); err != nil {
 			_ = tx.Rollback()
+			// ALTER TABLE ADD COLUMN on a column that already exists means the schema is
+			// already correct (repair migration ran manually or column was added another way).
+			// Record the migration as applied and continue rather than aborting startup.
+			if strings.Contains(err.Error(), "duplicate column name") {
+				tx2, err2 := d.db.Begin()
+				if err2 == nil {
+					_, _ = tx2.Exec(`INSERT OR IGNORE INTO schema_migrations (version) VALUES (?)`, m.version)
+					_ = tx2.Commit()
+				}
+				continue
+			}
 			return fmt.Errorf("migration %d: %w", m.version, err)
 		}
 		if _, err := tx.Exec(`INSERT INTO schema_migrations (version) VALUES (?)`, m.version); err != nil {
