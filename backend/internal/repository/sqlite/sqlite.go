@@ -58,6 +58,9 @@ var schema011 string
 //go:embed migrations/012_repair_normalization_fields.sql
 var schema012 string
 
+//go:embed migrations/013_repair_new_event_fields.sql
+var schema013 string
+
 type DB struct {
 	db     *sql.DB
 	ready  atomic.Bool
@@ -126,6 +129,7 @@ func (d *DB) migrate() error {
 		{10, schema010},
 		{11, schema011},
 		{12, schema012},
+		{13, schema013},
 	}
 	for _, m := range migrations {
 		var count int
@@ -133,34 +137,56 @@ func (d *DB) migrate() error {
 		if count > 0 {
 			continue
 		}
-		tx, err := d.db.Begin()
-		if err != nil {
-			return fmt.Errorf("migration %d begin: %w", m.version, err)
-		}
-		if _, err := tx.Exec(m.sql); err != nil {
-			_ = tx.Rollback()
-			// ALTER TABLE ADD COLUMN on a column that already exists means the schema is
-			// already correct (repair migration ran manually or column was added another way).
-			// Record the migration as applied and continue rather than aborting startup.
-			if strings.Contains(err.Error(), "duplicate column name") {
-				tx2, err2 := d.db.Begin()
-				if err2 == nil {
-					_, _ = tx2.Exec(`INSERT OR IGNORE INTO schema_migrations (version) VALUES (?)`, m.version)
-					_ = tx2.Commit()
-				}
-				continue
-			}
-			return fmt.Errorf("migration %d: %w", m.version, err)
-		}
-		if _, err := tx.Exec(`INSERT INTO schema_migrations (version) VALUES (?)`, m.version); err != nil {
-			_ = tx.Rollback()
-			return fmt.Errorf("record migration %d: %w", m.version, err)
-		}
-		if err := tx.Commit(); err != nil {
-			return fmt.Errorf("migration %d commit: %w", m.version, err)
+		if err := d.applyMigration(m.version, m.sql); err != nil {
+			return err
 		}
 	}
 	return nil
+}
+
+// applyMigration executes each semicolon-separated statement individually within a
+// single transaction. "duplicate column name" errors are silently skipped so repair
+// migrations are idempotent on DBs that already have the column from a manual fix or
+// a prior migration run.
+func (d *DB) applyMigration(version int, sql string) error {
+	tx, err := d.db.Begin()
+	if err != nil {
+		return fmt.Errorf("migration %d begin: %w", version, err)
+	}
+	for _, stmt := range splitSQL(sql) {
+		if _, err := tx.Exec(stmt); err != nil {
+			if strings.Contains(err.Error(), "duplicate column name") {
+				// Column already present — schema already correct for this statement.
+				continue
+			}
+			_ = tx.Rollback()
+			return fmt.Errorf("migration %d: %w", version, err)
+		}
+	}
+	if _, err := tx.Exec(`INSERT INTO schema_migrations (version) VALUES (?)`, version); err != nil {
+		_ = tx.Rollback()
+		return fmt.Errorf("record migration %d: %w", version, err)
+	}
+	return tx.Commit()
+}
+
+// splitSQL splits a migration file into individual statements, stripping -- comments
+// so semicolons inside comment text are not treated as statement delimiters.
+func splitSQL(sql string) []string {
+	var lines []string
+	for _, line := range strings.Split(sql, "\n") {
+		if !strings.HasPrefix(strings.TrimSpace(line), "--") {
+			lines = append(lines, line)
+		}
+	}
+	var stmts []string
+	for _, s := range strings.Split(strings.Join(lines, "\n"), ";") {
+		s = strings.TrimSpace(s)
+		if s != "" {
+			stmts = append(stmts, s)
+		}
+	}
+	return stmts
 }
 
 func (d *DB) Add(e domain.NormalizedEvent) error {
