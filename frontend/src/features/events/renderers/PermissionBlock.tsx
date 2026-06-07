@@ -27,21 +27,28 @@ function parseJSON<T>(raw: string | undefined): T | null {
   }
 }
 
+function asArray<T>(value: T[] | undefined): T[] {
+  return Array.isArray(value) ? value : []
+}
+
 export function PermissionBlock({
   toolName,
   toolInputQuestionsJson,
   permissionSuggestionsJson,
 }: PermissionBlockProps) {
-  const questions =
+  const questionsRaw =
     toolName === 'AskUserQuestion' ? parseJSON<Question[]>(toolInputQuestionsJson) : null
+  const questions = asArray(questionsRaw ?? undefined)
 
-  const suggestions = parseJSON<PermissionSuggestion[]>(permissionSuggestionsJson)
+  const suggestions = asArray(
+    parseJSON<PermissionSuggestion[]>(permissionSuggestionsJson) ?? undefined
+  )
 
-  if (!questions && !suggestions) return null
+  if (questions.length === 0 && suggestions.length === 0) return null
 
   return (
     <div className="mt-2 flex flex-col gap-2">
-      {questions &&
+      {questions.length > 0 &&
         questions.map((q, qi) => (
           <div
             key={qi}
@@ -51,7 +58,7 @@ export function PermissionBlock({
             <strong className="text-[#aaa] text-[0.7rem]">{q.header}</strong>
             <p className="mt-1 mb-2 text-[0.75rem] text-[#c8c8c8]">{q.question}</p>
             <ul className="m-0 flex flex-col gap-1 p-0 list-none">
-              {q.options.map((opt, oi) => (
+              {asArray(q.options).map((opt, oi) => (
                 <li key={oi} className="flex gap-2">
                   <span className="mt-[2px] shrink-0 text-[0.65rem] text-[#555]">
                     {q.multiSelect ? '□' : '○'}
@@ -68,10 +75,10 @@ export function PermissionBlock({
           </div>
         ))}
 
-      {suggestions && suggestions.length > 0 && (
+      {suggestions.length > 0 && (
         <div className="flex flex-wrap gap-1" data-event-drag-ignore>
           {suggestions.map((s, si) =>
-            s.rules.map((r, ri) => (
+            asArray(s.rules).map((r, ri) => (
               <span
                 key={`${si}-${ri}`}
                 className="inline-flex items-center gap-1 rounded-full border border-white/[0.08] bg-black/20 px-2 py-0.5 text-[0.68rem]"

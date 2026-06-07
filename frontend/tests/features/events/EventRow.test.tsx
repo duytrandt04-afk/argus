@@ -155,4 +155,47 @@ describe('EventRow PermissionBlock', () => {
     expect(screen.queryByText('○')).toBeNull()
     expect(screen.queryByText('□')).toBeNull()
   })
+
+  it('renders AskUserQuestion card when options are missing', () => {
+    const questionsJson = JSON.stringify([
+      {
+        question: 'What do you mean?',
+        header: 'Clarify issue',
+      },
+    ])
+    render(
+      <EventRow
+        event={buildEvent({
+          action: 'PERMISSION',
+          tool: 'AskUserQuestion',
+          tool_input_questions_json: questionsJson,
+        })}
+        searchQuery=""
+      />
+    )
+    expect(screen.getByText('Clarify issue')).toBeTruthy()
+    expect(screen.getByText('What do you mean?')).toBeTruthy()
+    expect(screen.queryByText('○')).toBeNull()
+  })
+
+  it('ignores malformed permission suggestions', () => {
+    const suggestionsJson = JSON.stringify([
+      {
+        type: 'addRules',
+        behavior: 'allow',
+        destination: 'localSettings',
+      },
+    ])
+    render(
+      <EventRow
+        event={buildEvent({
+          action: 'PERMISSION',
+          tool: 'Bash',
+          permission_suggestions_json: suggestionsJson,
+        })}
+        searchQuery=""
+      />
+    )
+    expect(screen.queryByText('allow')).toBeNull()
+  })
 })
