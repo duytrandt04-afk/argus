@@ -7,19 +7,17 @@ SQLite, and streams to a React SPA in real time.
 ## Quick start
 
 ```bash
-git clone https://github.com/duytrandt04-afk/hooker
-cd hooker
-make build   # builds frontend, copies dist/, compiles Go binary
-~/.local/bin/hooker-monitor
+curl -fsSL https://raw.githubusercontent.com/duytrandt04-afk/hooker/main/install.sh | bash
 ```
 
-> **Requirements:** Go 1.25+, Node.js 18+, pnpm 10.x
+> **Requirements:** Node.js 18+, curl, tar — no Go or pnpm needed.
 >
-> The Go binary embeds the React SPA at compile time (`//go:embed all:dist`), so the
-> frontend must be built before `go build`. `make build` handles this in one step.
+> The installer downloads a pre-built binary for your OS and arch, wires the Claude Code
+> `SessionStart` hook, and places `hooker` in `~/.local/bin`.
 
-Then follow [docs/quickstart.md](docs/quickstart.md) to configure agent hooks and verify
-your first event.
+Open **http://127.0.0.1:10804** after your next Claude Code or Codex session starts.
+
+Then follow [docs/quickstart.md](docs/quickstart.md) to verify your first event.
 
 ## Documentation
 
