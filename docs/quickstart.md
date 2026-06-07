@@ -2,62 +2,37 @@
 
 Target: first successful local run in 5 to 10 minutes.
 
-## 1. Install source dependencies
+## 1. Install hooker
 
 ```bash
-git clone https://github.com/duytrandt04-afk/hooker
-cd hooker
-./scripts/hooker setup
+curl -fsSL https://raw.githubusercontent.com/duytrandt04-afk/hooker/main/install.sh | bash
 ```
 
-The setup command checks `go`, `node`, and `pnpm`, downloads Go modules, and
-installs frontend dependencies from `pnpm-lock.yaml`.
+Installs the hooker binary to `~/.local/bin/hooker`, wires the `SessionStart` hook in
+`~/.claude/settings.json`, and creates `~/.local/bin/start-hooker.sh`.
 
 Before you send the first hook event, know what hooker captures: prompts, diffs,
 file paths, tool outputs, raw payloads, and exports are sensitive local data.
 See [privacy controls](privacy.md) and the [local security model](security.md).
 
-## 2. Start backend
+## 2. Start hooker
 
-Build and run the server binary:
+Open a new Claude Code or Codex session — hooker starts automatically via the
+`SessionStart` hook. You will see:
 
+```
+SessionStart hook (completed)
+  hook context: HOOKER live @ http://127.0.0.1:10804
+```
+
+Or start manually:
 ```bash
-cd backend
-go build -o hooker ./cmd/server
-./hooker
+~/.local/bin/start-hooker.sh
 ```
 
-Or use the setup script which builds the binary automatically:
+Open **http://127.0.0.1:10804**.
 
-```bash
-./scripts/hooker setup
-cd backend
-./hooker
-```
-
-Expected startup output includes:
-
-```text
-hooker version -> 0.0.0-dev (none)
-hook endpoint -> POST http://127.0.0.1:10804/api/hook
-events SSE -> GET http://127.0.0.1:10804/api/events/stream
-db -> .../backend/hooker.db
-```
-
-Keep this process running.
-
-## 3. Start frontend
-
-Open a second terminal:
-
-```bash
-cd frontend
-pnpm run dev
-```
-
-Open <http://localhost:5173>.
-
-## 4. Configure agent hooks
+## 3. Configure agent hooks
 
 The setup script patches Claude Code and Codex hook configs automatically:
 
@@ -70,7 +45,7 @@ Or configure manually using the hook guide for your agent:
 - [Codex](hooks.md#codex)
 - [Claude Code](hooks.md#claude-code)
 
-## 5. Verify one event
+## 4. Verify one event
 
 1. Start Codex or Claude Code in any repo.
 2. Send one prompt or run one tool command.

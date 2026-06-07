@@ -1,7 +1,15 @@
 # Install
 
-Source install from this repo is the primary install story. Docker is an
-official secondary path for the backend. Prebuilt binaries are planned later.
+## Binary install (recommended)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/duytrandt04-afk/hooker/main/install.sh | bash
+```
+
+Requires: Node.js 18+, curl, tar. No Go or pnpm needed.
+
+The installer places the binary at `~/.local/bin/hooker` and wires a `SessionStart` hook
+in `~/.claude/settings.json` so hooker starts automatically with each Claude Code session.
 
 ## Support matrix
 
@@ -18,6 +26,8 @@ official secondary path for the backend. Prebuilt binaries are planned later.
 | Supported agents         | Codex, Claude Code                       |
 
 ## Source install
+
+> **Note:** Source install is for contributors and development only. For end users, use the binary install above.
 
 Before enabling hooks, treat captured data as sensitive. Hooker can store prompts,
 diffs, file paths, tool outputs, raw payloads, and exports on this machine.
