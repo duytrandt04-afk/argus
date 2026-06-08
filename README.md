@@ -35,6 +35,42 @@ Stops the server, removes binaries and scripts, unwires hooks from `~/.claude/se
 - [docs/security.md](docs/security.md) - local threat model and remote-sharing posture
 - [docs/releases.md](docs/releases.md) - release runbook and conventional commit format
 
+## Contributing
+
+**Requirements:** Go 1.25+, Node.js 18+, pnpm 10+
+
+```bash
+git clone https://github.com/duytrandt04-afk/hooker
+cd hooker
+```
+
+**Backend:**
+
+```bash
+cd backend
+go test ./...            # run tests
+golangci-lint run ./...  # lint
+go run ./cmd/server      # start API on :10804
+```
+
+**Frontend (hot reload):**
+
+```bash
+cd frontend
+pnpm install
+pnpm dev                 # dev server on :5173, proxies /api → :10804
+```
+
+**Build + deploy locally** (rebuilds frontend, embeds into binary, restarts service):
+
+```bash
+make build-local
+```
+
+Version from `git describe` — e.g. `v0.1.1-11-g2024038`. `dirty` suffix = uncommitted changes.
+
+See [CLAUDE.md](CLAUDE.md) for architecture, layer rules, and conventions.
+
 ## License
 
 [LICENSE](LICENSE)
