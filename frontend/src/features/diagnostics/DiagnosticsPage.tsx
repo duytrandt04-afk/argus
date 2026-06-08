@@ -21,6 +21,7 @@ import type { HooksConfig } from '@/features/hooks-config/types'
 import type { AgentKey } from '@/features/hooks-config/types'
 import { useDiagnostics } from './hooks/useDiagnostics'
 import type { Diagnostics, DiagnosticsAgent } from './types'
+import { formatBytes } from './utils'
 
 const PRESET_AGENT_IDS = new Set<string>(['claudecode', 'codex'])
 
@@ -62,14 +63,6 @@ function useHookConfigLabels(agents: DiagnosticsAgent[] | undefined): Record<str
 const BADGE_RED = 'border-[var(--destructive)] text-[var(--destructive)] bg-[rgba(255,95,86,0.1)]'
 const BADGE_AMBER = 'border-[var(--cwd)] text-[var(--cwd)] bg-transparent'
 const BADGE_GREEN = 'border-[var(--worktree)] text-[var(--worktree)] bg-transparent'
-
-function formatBytes(bytes: number): string {
-  if (!Number.isFinite(bytes) || bytes < 0) return 'Unknown'
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-  return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`
-}
 
 function MonoPath({ path, ariaLabel }: { path: string; ariaLabel: string }) {
   return (
