@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { json } from '@codemirror/lang-json'
 import CodeMirror from '@uiw/react-codemirror'
-import { RefreshCw, Terminal } from 'lucide-react'
+import { Check, RefreshCw, Terminal } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   Select,
@@ -13,8 +14,10 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { hookerEditorTheme, hookerHighlighting, editableExtensions } from '@/lib/editorTheme'
-import { getTemplate } from './hookTemplates'
+import { getTemplate, HOOK_TEMPLATES } from './hookTemplates'
 import type { AgentKey, HooksConfig } from './types'
+
+const CUSTOM_VALUE = '__custom__'
 
 type SimulateResult = {
   stdout: string
@@ -26,63 +29,76 @@ type SimulateResult = {
 export type SimulatorTabProps = {
   agent: AgentKey
   config: HooksConfig | null
-}
-
-type CommandOption = {
-  label: string
-  command: string
+  // Lifted state — persists across tab switches
+  eventType: string
+  onEventTypeChange: (et: string) => void
+  commandValue: string
+  onCommandValueChange: (v: string) => void
+  payloadJSON: string
+  onPayloadJSONChange: (json: string) => void
+  onApply: (eventType: string, command: string) => Promise<void>
+  applying: boolean
 }
 
 function truncate(s: string, n: number): string {
   return s.length > n ? s.slice(0, n) + '…' : s
 }
 
-export function SimulatorTab({ agent, config }: SimulatorTabProps) {
-  const [eventType, setEventType] = useState<string>('')
-  const [command, setCommand] = useState<string>('')
-  const [payloadJSON, setPayloadJSON] = useState<string>('')
+export function SimulatorTab({
+  agent,
+  config,
+  eventType,
+  onEventTypeChange,
+  commandValue,
+  onCommandValueChange,
+  payloadJSON,
+  onPayloadJSONChange,
+  onApply,
+  applying,
+}: SimulatorTabProps) {
+  const [customCommandText, setCustomCommandText] = useState('')
   const [running, setRunning] = useState(false)
   const [result, setResult] = useState<SimulateResult | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [applied, setApplied] = useState(false)
 
-  const eventTypes: string[] = config
-    ? Object.entries(config.hooks)
-        .filter(([, groups]) => groups.some((g) => g.hooks.length > 0))
-        .map(([et]) => et)
-        .sort()
-    : []
+  const eventTypes = Object.keys(HOOK_TEMPLATES[agent]).sort()
 
-  const commandOptions: CommandOption[] = (() => {
-    if (!config || !eventType) return []
-    const groups = config.hooks[eventType] ?? []
-    const opts: CommandOption[] = []
+  const commandOptions = (() => {
+    if (!eventType) return []
+    const groups = config?.hooks[eventType] ?? []
+    const opts: { label: string; value: string }[] = []
     groups.forEach((g, gi) => {
       g.hooks.forEach((h, hi) => {
         opts.push({
           label: `group ${gi + 1} hook ${hi + 1} → ${truncate(h.command, 60)}`,
-          command: h.command,
+          value: h.command,
         })
       })
     })
     return opts
   })()
 
+  const effectiveCommand = commandValue === CUSTOM_VALUE ? customCommandText.trim() : commandValue
+  const canRun = effectiveCommand.length > 0 && !running
+  const canApply = commandValue === CUSTOM_VALUE && customCommandText.trim().length > 0 && !applying
+
   function handleEventTypeChange(et: string) {
-    setEventType(et)
-    setCommand('')
+    onEventTypeChange(et)
+    onCommandValueChange('')
+    onPayloadJSONChange(JSON.stringify(getTemplate(agent, et), null, 2))
     setResult(null)
     setError(null)
-    setPayloadJSON(JSON.stringify(getTemplate(agent, et), null, 2))
   }
 
-  function handleCommandChange(cmd: string) {
-    setCommand(cmd)
+  function handleCommandValueChange(v: string) {
+    onCommandValueChange(v)
     setResult(null)
     setError(null)
   }
 
   async function handleRun() {
-    if (!command) return
+    if (!effectiveCommand) return
     let payload: unknown
     try {
       payload = JSON.parse(payloadJSON)
@@ -97,7 +113,7 @@ export function SimulatorTab({ agent, config }: SimulatorTabProps) {
       const resp = await fetch('/api/hooks/simulate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ command, payload }),
+        body: JSON.stringify({ command: effectiveCommand, payload }),
       })
       if (!resp.ok) {
         const msg = await resp.text()
@@ -112,15 +128,12 @@ export function SimulatorTab({ agent, config }: SimulatorTabProps) {
     }
   }
 
-  if (!config || eventTypes.length === 0) {
-    return (
-      <div className="flex flex-col items-center gap-3 py-12 text-center">
-        <p className="text-sm text-foreground">No hooks configured</p>
-        <p className="text-xs text-muted-foreground">
-          Add hooks in the Structured or JSON view first
-        </p>
-      </div>
-    )
+  async function handleApply() {
+    const cmd = customCommandText.trim()
+    if (!cmd || !eventType) return
+    await onApply(eventType, cmd)
+    setApplied(true)
+    setTimeout(() => setApplied(false), 1500)
   }
 
   return (
@@ -128,7 +141,7 @@ export function SimulatorTab({ agent, config }: SimulatorTabProps) {
       <div className="flex gap-3">
         <Select value={eventType} onValueChange={handleEventTypeChange}>
           <SelectTrigger className="flex-1">
-            <SelectValue placeholder="Select event type" />
+            <SelectValue placeholder="Select hook event" />
           </SelectTrigger>
           <SelectContent>
             {eventTypes.map((et) => (
@@ -139,29 +152,35 @@ export function SimulatorTab({ agent, config }: SimulatorTabProps) {
           </SelectContent>
         </Select>
 
-        <Select
-          value={command}
-          onValueChange={handleCommandChange}
-          disabled={commandOptions.length === 0}
-        >
+        <Select value={commandValue} onValueChange={handleCommandValueChange} disabled={!eventType}>
           <SelectTrigger className="flex-1">
             <SelectValue placeholder="Select hook command" />
           </SelectTrigger>
           <SelectContent>
             {commandOptions.map((opt) => (
-              <SelectItem key={opt.command} value={opt.command}>
+              <SelectItem key={opt.value} value={opt.value}>
                 {opt.label}
               </SelectItem>
             ))}
+            <SelectItem value={CUSTOM_VALUE}>Custom command…</SelectItem>
           </SelectContent>
         </Select>
       </div>
+
+      {commandValue === CUSTOM_VALUE && (
+        <Input
+          value={customCommandText}
+          onChange={(e) => setCustomCommandText(e.target.value)}
+          placeholder="Enter shell command, e.g. curl -s http://127.0.0.1:10804/api/hook -d @-"
+          className="font-mono text-[13px]"
+        />
+      )}
 
       {eventType && (
         <div className="rounded-md border overflow-hidden">
           <CodeMirror
             value={payloadJSON}
-            onChange={setPayloadJSON}
+            onChange={onPayloadJSONChange}
             extensions={[json(), hookerEditorTheme, hookerHighlighting, ...editableExtensions]}
             theme="none"
             height="280px"
@@ -176,21 +195,33 @@ export function SimulatorTab({ agent, config }: SimulatorTabProps) {
         </div>
       )}
 
-      <div className="flex justify-end">
-        <Button
-          variant="default"
-          size="sm"
-          onClick={() => void handleRun()}
-          disabled={!command || running}
-        >
-          {running ? (
-            <RefreshCw className="size-3.5 mr-1.5 animate-spin" />
-          ) : (
-            <Terminal className="size-3.5 mr-1.5" />
+      {eventType && (
+        <div className="flex items-center justify-end gap-2">
+          {commandValue === CUSTOM_VALUE && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void handleApply()}
+              disabled={!canApply}
+            >
+              {applying ? (
+                <RefreshCw className="size-3.5 mr-1.5 animate-spin" />
+              ) : applied ? (
+                <Check className="size-3.5 mr-1.5 text-green-400" />
+              ) : null}
+              Apply to config
+            </Button>
           )}
-          Run
-        </Button>
-      </div>
+          <Button variant="default" size="sm" onClick={() => void handleRun()} disabled={!canRun}>
+            {running ? (
+              <RefreshCw className="size-3.5 mr-1.5 animate-spin" />
+            ) : (
+              <Terminal className="size-3.5 mr-1.5" />
+            )}
+            Run
+          </Button>
+        </div>
+      )}
 
       {error !== null && <p className="text-[12px] text-destructive">{error}</p>}
 

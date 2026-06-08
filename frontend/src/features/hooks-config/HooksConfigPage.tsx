@@ -21,17 +21,29 @@ import { hookerEditorTheme, hookerHighlighting, editableExtensions } from '@/lib
 import { StructuredEditor } from './StructuredEditor'
 import { SimulatorTab } from './SimulatorTab'
 import { useHooksConfig } from './hooks/useHooksConfig'
-import type { AgentKey, HooksConfig, HooksConfigState } from './types'
+import type { AgentKey, HookEntry, HookGroup, HooksConfig, HooksConfigState } from './types'
 
 type ViewMode = 'structured' | 'json' | 'simulator'
+
+type SimulatorCacheProps = {
+  eventType: string
+  onEventTypeChange: (et: string) => void
+  commandValue: string
+  onCommandValueChange: (v: string) => void
+  payloadJSON: string
+  onPayloadJSONChange: (json: string) => void
+  onApply: (eventType: string, command: string) => Promise<void>
+  applying: boolean
+}
 
 type AgentTabContentProps = {
   agent: AgentKey
   state: HooksConfigState
   viewMode: ViewMode
+  sim: SimulatorCacheProps
 }
 
-function AgentTabContent({ agent, state, viewMode }: AgentTabContentProps) {
+function AgentTabContent({ agent, state, viewMode, sim }: AgentTabContentProps) {
   const [copied, setCopied] = useState(false)
   const { config, draftJSON, loading, error, saveError, setDraftJSON, setConfig, reload } = state
 
@@ -127,7 +139,20 @@ function AgentTabContent({ agent, state, viewMode }: AgentTabContentProps) {
         </div>
       )}
 
-      {viewMode === 'simulator' && <SimulatorTab agent={agent} config={config} />}
+      {viewMode === 'simulator' && (
+        <SimulatorTab
+          agent={agent}
+          config={config}
+          eventType={sim.eventType}
+          onEventTypeChange={sim.onEventTypeChange}
+          commandValue={sim.commandValue}
+          onCommandValueChange={sim.onCommandValueChange}
+          payloadJSON={sim.payloadJSON}
+          onPayloadJSONChange={sim.onPayloadJSONChange}
+          onApply={sim.onApply}
+          applying={sim.applying}
+        />
+      )}
 
       {saveError !== null && (
         <Alert className="border-destructive bg-[rgba(255,95,86,0.08)]">
@@ -142,10 +167,60 @@ export function HooksConfigPage() {
   const [activeAgent, setActiveAgent] = useState<AgentKey>('claudecode')
   const [viewMode, setViewMode] = useState<ViewMode>('structured')
 
+  // Simulator cached state — lifted so it survives tab switches
+  const [simEventType, setSimEventType] = useState<string>('')
+  const [simCommandValue, setSimCommandValue] = useState<string>('')
+  const [simPayloadJSON, setSimPayloadJSON] = useState<string>('')
+  const [applying, setApplying] = useState(false)
+
   const claudeState = useHooksConfig('claudecode')
   const codexState = useHooksConfig('codex')
 
   const activeState = activeAgent === 'claudecode' ? claudeState : codexState
+
+  async function handleSimulatorApply(eventType: string, command: string) {
+    const state = activeAgent === 'claudecode' ? claudeState : codexState
+    const currentConfig = state.config ?? { hooks: {} }
+    const newGroup: HookGroup = {
+      id: crypto.randomUUID(),
+      hooks: [{ id: crypto.randomUUID(), type: 'command', command } satisfies HookEntry],
+    }
+    const updatedConfig: HooksConfig = {
+      ...currentConfig,
+      hooks: {
+        ...currentConfig.hooks,
+        [eventType]: [...(currentConfig.hooks[eventType] ?? []), newGroup],
+      },
+    }
+    // Update in-memory state immediately so Structured/JSON views reflect the change
+    state.setConfig(updatedConfig)
+    setApplying(true)
+    try {
+      // Save directly — can't use state.save() here due to stale draftJSON closure
+      const body = JSON.stringify(updatedConfig, (k, v: unknown) => (k === 'id' ? undefined : v))
+      const res = await fetch(`/api/hooks-config?agent=${activeAgent}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+      })
+      if (res.ok) {
+        state.reload()
+      }
+    } finally {
+      setApplying(false)
+    }
+  }
+
+  const simProps: SimulatorCacheProps = {
+    eventType: simEventType,
+    onEventTypeChange: setSimEventType,
+    commandValue: simCommandValue,
+    onCommandValueChange: setSimCommandValue,
+    payloadJSON: simPayloadJSON,
+    onPayloadJSONChange: setSimPayloadJSON,
+    onApply: handleSimulatorApply,
+    applying,
+  }
 
   const jsonIsValid = (() => {
     try {
@@ -255,10 +330,15 @@ export function HooksConfigPage() {
             </Tabs>
           </div>
           <TabsContent value="claudecode">
-            <AgentTabContent agent="claudecode" state={claudeState} viewMode={viewMode} />
+            <AgentTabContent
+              agent="claudecode"
+              state={claudeState}
+              viewMode={viewMode}
+              sim={simProps}
+            />
           </TabsContent>
           <TabsContent value="codex">
-            <AgentTabContent agent="codex" state={codexState} viewMode={viewMode} />
+            <AgentTabContent agent="codex" state={codexState} viewMode={viewMode} sim={simProps} />
           </TabsContent>
         </Tabs>
       </div>
