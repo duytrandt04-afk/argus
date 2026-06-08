@@ -29,7 +29,7 @@ func TestDiagnosticsHandlerReturnsGroupedShape(t *testing.T) {
 	if err := json.NewDecoder(rec.Body).Decode(&payload); err != nil {
 		t.Fatalf("decode diagnostics: %v", err)
 	}
-	for _, key := range []string{"version", "health", "storage", "agents", "privacy", "security"} {
+	for _, key := range []string{"version", "health", "storage", "agents", "privacy", "security", "fileSystem"} {
 		if _, ok := payload[key]; !ok {
 			t.Fatalf("payload missing %q: %#v", key, payload)
 		}
@@ -57,6 +57,22 @@ func TestDiagnosticsHandlerReturnsGroupedShape(t *testing.T) {
 	}
 	if storage["latestEventAt"] != nil {
 		t.Fatalf("storage.latestEventAt = %#v, want nil", storage["latestEventAt"])
+	}
+	fileSystem, ok := payload["fileSystem"].(map[string]any)
+	if !ok {
+		t.Fatalf("fileSystem = %#v, want object", payload["fileSystem"])
+	}
+	for _, key := range []string{"hookerDir", "binary", "logs", "hooks"} {
+		if _, ok := fileSystem[key]; !ok {
+			t.Fatalf("fileSystem missing %q: %#v", key, fileSystem)
+		}
+	}
+	logs, ok := fileSystem["logs"].([]any)
+	if !ok {
+		t.Fatalf("fileSystem.logs = %#v, want array", fileSystem["logs"])
+	}
+	if len(logs) != 2 {
+		t.Fatalf("len(fileSystem.logs) = %d, want 2", len(logs))
 	}
 	privacy, ok := payload["privacy"].(map[string]any)
 	if !ok {
