@@ -38,6 +38,16 @@ pnpm run dev
 
 Open `http://localhost:5173`. The Vite dev server proxies `/api` to the backend.
 
+Build, embed frontend into binary, and hot-swap the running local service:
+
+```bash
+make build-local
+```
+
+This rebuilds the frontend, embeds `dist/` into the Go binary, injects the version from
+`git describe` (e.g. `v0.1.1-11-g2024038`), and restarts the service on `:10804`.
+Use this instead of `go run` when you need a production-like build locally.
+
 Run checks before opening a PR:
 
 ```bash
