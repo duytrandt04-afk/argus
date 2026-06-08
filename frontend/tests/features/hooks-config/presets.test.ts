@@ -200,37 +200,48 @@ describe('detectHookConfigLabel', () => {
     expect(detectHookConfigLabel('claudecode', config)).toBe('Configured')
   })
 
-  it('returns Baseline for exact claudecode baseline preset', () => {
+  it('returns Configured (n/Y) for exact claudecode baseline preset — not preset name', () => {
     const config = applyPreset({ hooks: {} }, HOOK_PRESETS.claudecode.baseline)
-    expect(detectHookConfigLabel('claudecode', config)).toBe('Baseline')
+    const label = detectHookConfigLabel('claudecode', config)
+    expect(label).toMatch(/^Configured \(\d+\/30\)$/)
+    expect(label).not.toBe('Baseline')
   })
 
-  it('returns Medium for exact claudecode medium preset', () => {
+  it('returns Configured (n/Y) for exact claudecode medium preset — not preset name', () => {
     const config = applyPreset({ hooks: {} }, HOOK_PRESETS.claudecode.medium)
-    expect(detectHookConfigLabel('claudecode', config)).toBe('Medium')
+    const label = detectHookConfigLabel('claudecode', config)
+    expect(label).toMatch(/^Configured \(\d+\/30\)$/)
+    expect(label).not.toBe('Medium')
   })
 
-  it('returns Full for exact claudecode full preset', () => {
+  it('returns Configured (30/30) for exact claudecode full preset', () => {
     const config = applyPreset({ hooks: {} }, HOOK_PRESETS.claudecode.full)
-    expect(detectHookConfigLabel('claudecode', config)).toBe('Full')
+    expect(detectHookConfigLabel('claudecode', config)).toBe('Configured (30/30)')
   })
 
-  it('returns Baseline for exact codex baseline preset', () => {
+  it('returns Configured (n/Y) for exact codex baseline preset — not preset name', () => {
     const config = applyPreset({ hooks: {} }, HOOK_PRESETS.codex.baseline)
-    expect(detectHookConfigLabel('codex', config)).toBe('Baseline')
+    const label = detectHookConfigLabel('codex', config)
+    expect(label).toMatch(/^Configured \(\d+\/10\)$/)
+    expect(label).not.toBe('Baseline')
   })
 
-  it('returns Custom (X/30) when hooker events do not match any preset', () => {
+  it('returns Configured (10/10) for codex full preset', () => {
+    const config = applyPreset({ hooks: {} }, HOOK_PRESETS.codex.full)
+    expect(detectHookConfigLabel('codex', config)).toBe('Configured (10/10)')
+  })
+
+  it('returns Configured (X/30) for partial hooker coverage', () => {
     // Apply baseline then add one extra hooker event manually
     const config = applyPreset({ hooks: {} }, HOOK_PRESETS.claudecode.baseline)
     config.hooks['StopFailure'] = [{ hooks: [hookerEntry()] }]
     const label = detectHookConfigLabel('claudecode', config)
-    expect(label).toMatch(/^Custom \(\d+\/30\)$/)
+    expect(label).toMatch(/^Configured \(\d+\/30\)$/)
     // 5 baseline events + 1 extra = 6
-    expect(label).toBe('Custom (6/30)')
+    expect(label).toBe('Configured (6/30)')
   })
 
-  it('Custom label uses hooker-event count, not total event count', () => {
+  it('Configured label uses hooker-event count, not total event count', () => {
     // One hooker event + one user event — only hooker event counts toward X
     const config: HooksConfig = {
       hooks: {
@@ -239,23 +250,24 @@ describe('detectHookConfigLabel', () => {
       },
     }
     const label = detectHookConfigLabel('claudecode', config)
-    expect(label).toBe('Custom (1/30)')
+    expect(label).toBe('Configured (1/30)')
   })
 
-  it('returns Custom (X/10) for codex agent', () => {
+  it('returns Configured (X/10) for codex agent with partial coverage', () => {
     const config: HooksConfig = {
       hooks: {
         SessionStart: [{ hooks: [hookerEntry()] }],
         Stop: [{ hooks: [hookerEntry()] }],
       },
     }
-    expect(detectHookConfigLabel('codex', config)).toBe('Custom (2/10)')
+    expect(detectHookConfigLabel('codex', config)).toBe('Configured (2/10)')
   })
 
-  it('preset match ignores non-hooker entries in same config', () => {
-    // Baseline hooker events + a user entry on a different event — still Baseline
+  it('non-hooker entries in same config do not affect Configured (X/Y) count', () => {
+    // Baseline hooker events + a user entry on a different event
     const config = applyPreset({ hooks: {} }, HOOK_PRESETS.claudecode.baseline)
     config.hooks['PreToolUse'] = [{ hooks: [userEntry()] }]
-    expect(detectHookConfigLabel('claudecode', config)).toBe('Baseline')
+    const label = detectHookConfigLabel('claudecode', config)
+    expect(label).toMatch(/^Configured \(\d+\/30\)$/)
   })
 })

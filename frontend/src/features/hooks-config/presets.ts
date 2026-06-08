@@ -191,8 +191,7 @@ function setsEqual(a: Set<string>, b: Set<string>): boolean {
 
 /**
  * Returns a human-readable label for the hook config status of an agent.
- * - Preset name when hooker-marked events exactly equal a preset's event set.
- * - "Custom (X/Y)" when hooker-marked events exist but don't match any preset.
+ * - "Configured (X/Y)" when hooker-managed hooks exist.
  *   X = hooker-managed event count; Y = total available events for this agent.
  * - "Configured" when hooks exist but none are hooker-managed (manual setup).
  * - "Missing" when no hooks are configured at all.
@@ -213,13 +212,6 @@ export function detectHookConfigLabel(agent: AgentKey, config: HooksConfig): str
 
   if (hookerEventTypes.size === 0) return 'Configured'
 
-  for (const presetKey of PRESET_KEYS) {
-    const presetEventTypes = new Set(Object.keys(HOOK_PRESETS[agent][presetKey].hooks))
-    if (setsEqual(hookerEventTypes, presetEventTypes)) {
-      return PRESET_LABELS[presetKey].label
-    }
-  }
-
   const total = AGENT_EVENT_TOTALS[agent]
-  return `Custom (${hookerEventTypes.size}/${total})`
+  return `Configured (${hookerEventTypes.size}/${total})`
 }

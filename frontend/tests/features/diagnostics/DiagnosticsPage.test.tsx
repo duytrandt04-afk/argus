@@ -148,7 +148,7 @@ describe('DiagnosticsPage', () => {
     expect(screen.getByText(/Exported data may contain prompts/)).toBeInTheDocument()
   })
 
-  it('shows preset label in hook config column when config matches a known preset', async () => {
+  it('shows Configured (X/Y) label in hook config column when config has hooker hooks', async () => {
     const fullConfig = applyPreset({ hooks: {} }, HOOK_PRESETS.claudecode.full)
     vi.stubGlobal(
       'fetch',
@@ -164,7 +164,7 @@ describe('DiagnosticsPage', () => {
     )
     renderPage()
     await screen.findByText('Agent Connectivity')
-    expect(await screen.findByText('Full')).toBeInTheDocument()
+    expect(await screen.findByText('Configured (30/30)')).toBeInTheDocument()
   })
 
   it('shows Configured label when hooks exist but none are hooker-managed', async () => {
