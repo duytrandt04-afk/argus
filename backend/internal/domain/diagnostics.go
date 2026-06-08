@@ -5,8 +5,9 @@ type Diagnostics struct {
 	Health   DiagnosticsHealth   `json:"health"`
 	Storage  DiagnosticsStorage  `json:"storage"`
 	Agents   []DiagnosticsAgent  `json:"agents"`
-	Privacy  DiagnosticsPrivacy  `json:"privacy"`
-	Security DiagnosticsSecurity `json:"security"`
+	Privacy    DiagnosticsPrivacy    `json:"privacy"`
+	Security   DiagnosticsSecurity   `json:"security"`
+	FileSystem DiagnosticsFileSystem `json:"fileSystem"`
 }
 
 type DiagnosticsVersion struct {
@@ -90,4 +91,19 @@ type DiagnosticsCORS struct {
 	TotalOrigins int `json:"totalOrigins"`
 	LocalOrigins int `json:"localOrigins"`
 	ExtraOrigins int `json:"extraOrigins"`
+}
+
+type DiagnosticsFileSystem struct {
+	HookerDir string                 `json:"hookerDir"`
+	Binary    DiagnosticsFileEntry   `json:"binary"`
+	Logs      []DiagnosticsFileEntry `json:"logs"`
+	Hooks     []DiagnosticsFileEntry `json:"hooks"`
+}
+
+type DiagnosticsFileEntry struct {
+	Name         string  `json:"name"`
+	Path         string  `json:"path"`
+	SizeBytes    *int64  `json:"sizeBytes"`
+	LastModified *string `json:"lastModified"`
+	Exists       bool    `json:"exists"`
 }
