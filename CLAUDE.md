@@ -50,7 +50,6 @@ hooker/
 │   └── plans/               # Implementation plans
 │
 ├── .planning/codebase/      # Codebase intel — STACK.md, ARCHITECTURE.md, CONVENTIONS.md, TESTING.md
-├── docker-compose.yml
 └── plan.md                  # Current in-flight planning doc
 ```
 
@@ -284,14 +283,13 @@ hooker is a local-first monitoring dashboard for AI coding agent activity. It re
 - Frontend uses Vite dev server proxy to backend (`frontend/vite.config.ts`)
 - `.env*` files: Not detected in repository scan
 - Frontend: `frontend/vite.config.ts`, `frontend/tsconfig.json`, `frontend/eslint.config.js`
-- Backend build/runtime: `backend/go.mod`, `Dockerfile`, `docker-compose.yml`, `Makefile`
+- Backend build/runtime: `backend/go.mod`, `Makefile`
 
 ## Platform Requirements
 
 - Go 1.25.0+, Node.js 18+, pnpm 10.x, curl (`README.md`)
 - macOS/Linux/WSL preferred (`README.md`)
 - Local-first single-binary backend serving API + UI on `127.0.0.1:10804` (`README.md`, `backend/cmd/server/main.go`)
-- Optional container runtime via `Dockerfile` + `docker-compose.yml`
 <!-- GSD:stack-end -->
 
 <!-- GSD:conventions-start source:CONVENTIONS.md -->

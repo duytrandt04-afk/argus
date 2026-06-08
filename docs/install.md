@@ -109,16 +109,6 @@ Doctor checks toolchain availability, confirms pnpm is the only frontend
 lockfile, runs Go tests, runs frontend typecheck/lint/format checks, and probes
 the live backend if it is running.
 
-## Docker backend
-
-Docker runs the backend only. Use source frontend commands for local UI work.
-
-```bash
-docker compose up --build
-```
-
-The compose file publishes the backend on `127.0.0.1:10804`.
-
 ## Common failures
 
 ### `pnpm: command not found`
