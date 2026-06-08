@@ -134,6 +134,7 @@ const path = require('path');
 const db = path.join(os.homedir(), '.hooker', 'hooker.db');
 const url = 'http://127.0.0.1:10804';
 const startScript = '${START_SCRIPT}';
+const isClaudeCode = process.env.CLAUDECODE === '1';
 
 function isServerUp() {
   return new Promise(resolve => {
@@ -149,6 +150,14 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+function emit(msg) {
+  if (isClaudeCode) {
+    process.stdout.write(JSON.stringify({ systemMessage: msg }));
+  } else {
+    process.stdout.write(msg);
+  }
+}
+
 async function main() {
   let up = await isServerUp();
   if (!up) {
@@ -157,21 +166,21 @@ async function main() {
     up = await isServerUp();
   }
   if (!up) {
-    process.stdout.write('HOOKER offline');
+    emit(isClaudeCode ? '\x1b[1m\x1b[31mHOOKER offline\x1b[0m' : 'HOOKER offline');
     return;
   }
-  let output;
+  let msg;
   try {
     const result = execSync(
       \`sqlite3 "\${db}" "SELECT COUNT(*), COUNT(DISTINCT session_id) FROM hook_events"\`,
       { encoding: 'utf8', timeout: 3000, stdio: ['pipe', 'pipe', 'ignore'] }
     ).trim();
     const [events, sessions] = result.split('|');
-    output = \`HOOKER live @ \${url} | \${parseInt(events, 10).toLocaleString()} events · \${sessions.trim()} sessions\`;
+    msg = \`HOOKER live @ \${url} | \${parseInt(events, 10).toLocaleString()} events · \${sessions.trim()} sessions\`;
   } catch (_) {
-    output = \`HOOKER live @ \${url}\`;
+    msg = \`HOOKER live @ \${url}\`;
   }
-  process.stdout.write(output);
+  emit(isClaudeCode ? '\x1b[1m\x1b[32m' + msg + '\x1b[0m' : msg);
 }
 
 main();
