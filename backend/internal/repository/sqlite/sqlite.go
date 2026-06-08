@@ -512,7 +512,11 @@ func mergeChildProjects(projects []domain.Project) []domain.Project {
 	for _, p := range projects {
 		parentIdx := -1
 		for i := range merged {
-			if merged[i].CWD != "" && strings.HasPrefix(p.CWD, merged[i].CWD+"/") {
+			// Require parent to have ≥4 path components so home dirs like
+			// /Users/foo don't absorb all projects as a side-effect of prefix matching.
+			if merged[i].CWD != "" &&
+				len(strings.Split(merged[i].CWD, "/")) >= 4 &&
+				strings.HasPrefix(p.CWD, merged[i].CWD+"/") {
 				parentIdx = i // keep updating to get deepest match
 			}
 		}
