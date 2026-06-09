@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useReducer, useState } from 'react'
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { buildEventKey } from '@/features/events/eventKey'
@@ -206,6 +206,7 @@ export function useSplitViewInteractions({
   sortOrder,
 }: UseSplitViewInteractionsOptions) {
   const [panelDrag, dispatchPanelDrag] = useReducer(panelDragReducer, initialPanelDragState)
+  const lastDragOverPanelRef = useRef<1 | 2 | null>(null)
   const { splitView, panel2Sessions, panel2EventKeys, isDragging, dragOverPanel, edgeZoneHover } =
     panelDrag
 
@@ -244,6 +245,7 @@ export function useSplitViewInteractions({
       if (!data) return
       if (targetPanel === 2) dispatchPanelDrag({ type: 'ADD_TO_PANEL2', data })
       else dispatchPanelDrag({ type: 'REMOVE_FROM_PANEL2', data })
+      lastDragOverPanelRef.current = null
       dispatchPanelDrag({ type: 'SET_DRAG_OVER', panel: null })
       dispatchPanelDrag({ type: 'SET_DRAGGING', isDragging: false })
     },
@@ -267,13 +269,17 @@ export function useSplitViewInteractions({
     (panel: 1 | 2) => (ev: React.DragEvent) => {
       ev.preventDefault()
       ev.dataTransfer.dropEffect = 'move'
-      dispatchPanelDrag({ type: 'SET_DRAG_OVER', panel })
+      if (lastDragOverPanelRef.current !== panel) {
+        lastDragOverPanelRef.current = panel
+        dispatchPanelDrag({ type: 'SET_DRAG_OVER', panel })
+      }
     },
     []
   )
 
   const handleDragLeave = useCallback((ev: React.DragEvent) => {
     if (!ev.currentTarget.contains(ev.relatedTarget as Node)) {
+      lastDragOverPanelRef.current = null
       dispatchPanelDrag({ type: 'SET_DRAG_OVER', panel: null })
     }
   }, [])
