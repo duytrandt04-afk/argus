@@ -1,15 +1,5 @@
 package domain
 
-type Diagnostics struct {
-	Version  DiagnosticsVersion  `json:"version"`
-	Health   DiagnosticsHealth   `json:"health"`
-	Storage  DiagnosticsStorage  `json:"storage"`
-	Agents   []DiagnosticsAgent  `json:"agents"`
-	Privacy    DiagnosticsPrivacy    `json:"privacy"`
-	Security   DiagnosticsSecurity   `json:"security"`
-	FileSystem DiagnosticsFileSystem `json:"fileSystem"`
-}
-
 type DiagnosticsVersion struct {
 	Version   string `json:"version"`
 	Commit    string `json:"commit"`
@@ -22,6 +12,12 @@ type DiagnosticsHealth struct {
 	Reason string `json:"reason,omitempty"`
 }
 
+type DiagnosticsStorageStats struct {
+	TotalEvents   int
+	TotalSessions int
+	LatestEventAt *string
+}
+
 type DiagnosticsStorage struct {
 	DBPath        string  `json:"dbPath"`
 	DBSizeBytes   *int64  `json:"dbSizeBytes"`
@@ -31,10 +27,19 @@ type DiagnosticsStorage struct {
 	LatestEventAt *string `json:"latestEventAt"`
 }
 
-type DiagnosticsStorageStats struct {
-	TotalEvents   int
-	TotalSessions int
-	LatestEventAt *string
+type DiagnosticsRuntime struct {
+	StartedAt       string `json:"startedAt"`
+	UptimeSeconds   int64  `json:"uptimeSeconds"`
+	HookRequests    int64  `json:"hookRequests"`
+	IngestionErrors int64  `json:"ingestionErrors"`
+}
+
+type DiagnosticsDBHealth struct {
+	JournalMode      string `json:"journalMode"`
+	PageCount        int64  `json:"pageCount"`
+	PageSizeBytes    int64  `json:"pageSizeBytes"`
+	WALSizeBytes     *int64 `json:"walSizeBytes"`
+	MigrationVersion int    `json:"migrationVersion"`
 }
 
 type DiagnosticsAgent struct {
@@ -48,6 +53,8 @@ type DiagnosticsAgent struct {
 	HookConfigReason  string   `json:"hookConfigReason,omitempty"`
 	Status            string   `json:"status"`
 	Warnings          []string `json:"warnings"`
+	EventsLastHour    int      `json:"eventsLastHour"`
+	EventsLast24h     int      `json:"eventsLast24h"`
 }
 
 type DiagnosticsAgentStats struct {
@@ -56,6 +63,8 @@ type DiagnosticsAgentStats struct {
 	LastSeenAt        *string
 	DegradedCount     int
 	NormalizerVersion *string
+	EventsLastHour    int
+	EventsLast24h     int
 }
 
 type DiagnosticsHookConfig struct {
@@ -76,11 +85,6 @@ type DiagnosticsIgnoreFile struct {
 	ActivePatternCount int    `json:"activePatternCount"`
 }
 
-type DiagnosticsSecurity struct {
-	RemoteBind DiagnosticsRemoteBind `json:"remoteBind"`
-	CORS       DiagnosticsCORS       `json:"cors"`
-}
-
 type DiagnosticsRemoteBind struct {
 	Addr        string `json:"addr"`
 	Status      string `json:"status"`
@@ -93,11 +97,9 @@ type DiagnosticsCORS struct {
 	ExtraOrigins int `json:"extraOrigins"`
 }
 
-type DiagnosticsFileSystem struct {
-	HookerDir string                 `json:"hookerDir"`
-	Binary    DiagnosticsFileEntry   `json:"binary"`
-	Logs      []DiagnosticsFileEntry `json:"logs"`
-	Hooks     []DiagnosticsFileEntry `json:"hooks"`
+type DiagnosticsSecurity struct {
+	RemoteBind DiagnosticsRemoteBind `json:"remoteBind"`
+	CORS       DiagnosticsCORS       `json:"cors"`
 }
 
 type DiagnosticsFileEntry struct {
@@ -106,4 +108,31 @@ type DiagnosticsFileEntry struct {
 	SizeBytes    *int64  `json:"sizeBytes"`
 	LastModified *string `json:"lastModified"`
 	Exists       bool    `json:"exists"`
+	LineCount    *int64  `json:"lineCount,omitempty"`
+}
+
+type DiagnosticsFileSystem struct {
+	HookerDir            string                 `json:"hookerDir"`
+	Binary               DiagnosticsFileEntry   `json:"binary"`
+	Logs                 []DiagnosticsFileEntry `json:"logs"`
+	Hooks                []DiagnosticsFileEntry `json:"hooks"`
+	ClaudeHooks          []DiagnosticsFileEntry `json:"claudeHooks"`
+	ClaudeHooksDirExists bool                   `json:"claudeHooksDirExists"`
+	ClaudeHistory        DiagnosticsFileEntry   `json:"claudeHistory"`
+	CodexHooks           []DiagnosticsFileEntry `json:"codexHooks"`
+	CodexHooksDirExists  bool                   `json:"codexHooksDirExists"`
+	CodexDBs             []DiagnosticsFileEntry `json:"codexDBs"`
+	CodexDBsDirExists    bool                   `json:"codexDBsDirExists"`
+}
+
+type Diagnostics struct {
+	Version    DiagnosticsVersion    `json:"version"`
+	Health     DiagnosticsHealth     `json:"health"`
+	Storage    DiagnosticsStorage    `json:"storage"`
+	Agents     []DiagnosticsAgent    `json:"agents"`
+	Privacy    DiagnosticsPrivacy    `json:"privacy"`
+	Security   DiagnosticsSecurity   `json:"security"`
+	FileSystem DiagnosticsFileSystem `json:"fileSystem"`
+	Runtime    DiagnosticsRuntime    `json:"runtime"`
+	DBHealth   DiagnosticsDBHealth   `json:"dbHealth"`
 }
