@@ -1,12 +1,14 @@
 package service
 
 import (
+	"bufio"
 	"log/slog"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"hooker/internal/agents/claudecode"
@@ -17,8 +19,11 @@ import (
 )
 
 type EventService struct {
-	repo        repository.EventRepository
-	subscribers sync.Map
+	repo            repository.EventRepository
+	subscribers     sync.Map
+	startTime       time.Time
+	hookRequests    atomic.Int64
+	ingestionErrors atomic.Int64
 
 	diagMu         sync.RWMutex
 	diagCache      *domain.Diagnostics
@@ -39,7 +44,27 @@ type DiagnosticsOptions struct {
 const exportSensitivityWarning = "Exports may include prompts, diffs, file paths, tool outputs, raw payloads, and exports; handle exported data as sensitive."
 
 func New(repo repository.EventRepository) *EventService {
-	return &EventService{repo: repo}
+	return &EventService{
+		repo:      repo,
+		startTime: time.Now(),
+	}
+}
+
+func (s *EventService) IncrementHookRequests() {
+	s.hookRequests.Add(1)
+}
+
+func (s *EventService) IncrementIngestionErrors() {
+	s.ingestionErrors.Add(1)
+}
+
+func (s *EventService) buildRuntime() domain.DiagnosticsRuntime {
+	return domain.DiagnosticsRuntime{
+		StartedAt:       s.startTime.UTC().Format(time.RFC3339),
+		UptimeSeconds:   int64(time.Since(s.startTime).Seconds()),
+		HookRequests:    s.hookRequests.Load(),
+		IngestionErrors: s.ingestionErrors.Load(),
+	}
 }
 
 func (s *EventService) AddEvent(e domain.NormalizedEvent) error {
@@ -123,6 +148,7 @@ func (s *EventService) DiagnosticsWithOptions(opts DiagnosticsOptions, ready boo
 		result := *s.diagCache // shallow copy — safe, cached value is never mutated after store
 		// Overlay fresh hook config statuses onto the cached agent rows.
 		result.Agents = diagnosticsAgents(s.diagAgentStats, hookConfigs)
+		result.Runtime = s.buildRuntime()
 		s.diagMu.RUnlock()
 		return result, nil
 	}
@@ -160,6 +186,15 @@ func (s *EventService) DiagnosticsWithOptions(opts DiagnosticsOptions, ready boo
 		storage.DBSizeReason = "unavailable"
 	}
 
+	dbHealth, _ := s.repo.DBHealth()
+	if opts.DBPath != "" && opts.DBPath != ":memory:" {
+		walPath := opts.DBPath + "-wal"
+		if info, err := os.Stat(walPath); err == nil {
+			size := info.Size()
+			dbHealth.WALSizeBytes = &size
+		}
+	}
+
 	result := domain.Diagnostics{
 		Version: domain.DiagnosticsVersion{
 			Version:   version.Version,
@@ -178,6 +213,8 @@ func (s *EventService) DiagnosticsWithOptions(opts DiagnosticsOptions, ready boo
 			CORS:       diagnosticsCORS(opts.CORSOrigins),
 		},
 		FileSystem: scanFileSystem(opts.HookerDir),
+		Runtime:    s.buildRuntime(),
+		DBHealth:   dbHealth,
 	}
 
 	s.diagMu.Lock()
@@ -269,6 +306,8 @@ func diagnosticsAgents(stats []domain.DiagnosticsAgentStats, hookConfigs []domai
 			HookConfigStatus:  "unknown",
 			Status:            "healthy",
 			Warnings:          []string{},
+			EventsLastHour:    stat.EventsLastHour,
+			EventsLast24h:     stat.EventsLast24h,
 		}
 		if hookConfig, ok := hookByAgent[def.id]; ok {
 			row.HookConfigStatus = hookConfig.Status
@@ -617,6 +656,94 @@ func (s *EventService) GetFileChanges(sessionID string) ([]domain.FileChangeGrou
 	return s.repo.GetFileChanges(sessionID)
 }
 
+func pathExists(p string) bool {
+	_, err := os.Stat(p)
+	return err == nil
+}
+
+func countLines(path string) *int64 {
+	f, err := os.Open(path) //nolint:gosec
+	if err != nil {
+		return nil
+	}
+	defer f.Close()
+	var count int64
+	scanner := bufio.NewScanner(f)
+	buf := make([]byte, 0, 64*1024)
+	scanner.Buffer(buf, 2*1024*1024)
+	for scanner.Scan() {
+		if scanner.Text() != "" {
+			count++
+		}
+	}
+	if scanner.Err() != nil {
+		return nil
+	}
+	return &count
+}
+
+func statEntryWithLineCount(name, path string) domain.DiagnosticsFileEntry {
+	entry := statEntry(name, path)
+	if entry.Exists {
+		entry.LineCount = countLines(path)
+	}
+	return entry
+}
+
+func scanDir(dir string) []domain.DiagnosticsFileEntry {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return []domain.DiagnosticsFileEntry{}
+	}
+	var result []domain.DiagnosticsFileEntry
+	for _, e := range entries {
+		if e.IsDir() {
+			continue
+		}
+		info, err := e.Info()
+		if err != nil {
+			continue
+		}
+		size := info.Size()
+		mod := info.ModTime().UTC().Format(time.RFC3339)
+		result = append(result, domain.DiagnosticsFileEntry{
+			Name:         e.Name(),
+			Path:         filepath.Join(dir, e.Name()),
+			SizeBytes:    &size,
+			LastModified: &mod,
+			Exists:       true,
+		})
+	}
+	return result
+}
+
+func scanDirFiltered(dir string, suffix string) []domain.DiagnosticsFileEntry {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return []domain.DiagnosticsFileEntry{}
+	}
+	var result []domain.DiagnosticsFileEntry
+	for _, e := range entries {
+		if e.IsDir() || !strings.HasSuffix(e.Name(), suffix) {
+			continue
+		}
+		info, err := e.Info()
+		if err != nil {
+			continue
+		}
+		size := info.Size()
+		mod := info.ModTime().UTC().Format(time.RFC3339)
+		result = append(result, domain.DiagnosticsFileEntry{
+			Name:         e.Name(),
+			Path:         filepath.Join(dir, e.Name()),
+			SizeBytes:    &size,
+			LastModified: &mod,
+			Exists:       true,
+		})
+	}
+	return result
+}
+
 func scanFileSystem(hookerDir string) domain.DiagnosticsFileSystem {
 	fs := domain.DiagnosticsFileSystem{
 		HookerDir: hookerDir,
@@ -625,29 +752,31 @@ func scanFileSystem(hookerDir string) domain.DiagnosticsFileSystem {
 			statEntry("hooker.log", filepath.Join(hookerDir, "hooker.log")),
 			statEntry("build.log", filepath.Join(hookerDir, "build.log")),
 		},
-		Hooks: []domain.DiagnosticsFileEntry{},
+		Hooks:       scanDir(filepath.Join(hookerDir, "hooks")),
+		ClaudeHooks: []domain.DiagnosticsFileEntry{},
+		CodexHooks:  []domain.DiagnosticsFileEntry{},
+		CodexDBs:    []domain.DiagnosticsFileEntry{},
 	}
-	entries, err := os.ReadDir(filepath.Join(hookerDir, "hooks"))
-	if err == nil {
-		for _, e := range entries {
-			if e.IsDir() {
-				continue
-			}
-			info, err := e.Info()
-			if err != nil {
-				continue
-			}
-			size := info.Size()
-			mod := info.ModTime().UTC().Format(time.RFC3339)
-			fs.Hooks = append(fs.Hooks, domain.DiagnosticsFileEntry{
-				Name:         e.Name(),
-				Path:         filepath.Join(hookerDir, "hooks", e.Name()),
-				SizeBytes:    &size,
-				LastModified: &mod,
-				Exists:       true,
-			})
-		}
+
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return fs
 	}
+
+	claudeHooksDir := filepath.Join(homeDir, ".claude", "hooks")
+	fs.ClaudeHooksDirExists = pathExists(claudeHooksDir)
+	fs.ClaudeHooks = scanDir(claudeHooksDir)
+
+	fs.ClaudeHistory = statEntryWithLineCount("history.jsonl", filepath.Join(homeDir, ".claude", "history.jsonl"))
+
+	codexHooksDir := filepath.Join(homeDir, ".codex", "hooks")
+	fs.CodexHooksDirExists = pathExists(codexHooksDir)
+	fs.CodexHooks = scanDir(codexHooksDir)
+
+	codexDir := filepath.Join(homeDir, ".codex")
+	fs.CodexDBsDirExists = pathExists(codexDir)
+	fs.CodexDBs = scanDirFiltered(codexDir, ".sqlite")
+
 	return fs
 }
 

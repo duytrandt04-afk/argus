@@ -121,11 +121,13 @@ func Hook(svc *service.EventService, matcher IgnoreMatcher) http.Handler {
 
 		if err := svc.AddEvent(e); err != nil {
 			slog.Error("hook store event", "err", err)
+			svc.IncrementIngestionErrors()
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusAccepted)
 			_, _ = w.Write([]byte(`{}`))
 			return
 		}
+		svc.IncrementHookRequests()
 
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`{}`))
