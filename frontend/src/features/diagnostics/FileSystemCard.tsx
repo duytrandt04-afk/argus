@@ -28,15 +28,17 @@ function FileSize({ entry }: { entry: DiagnosticsFileEntry }) {
 
 function FileModified({ entry }: { entry: DiagnosticsFileEntry }) {
   if (!entry.exists || !entry.lastModified) return null
+  let label: string
   try {
-    return (
-      <span className="text-[12px] text-muted-foreground">
-        {format(new Date(entry.lastModified), 'MMM d')}
-      </span>
-    )
+    label = format(new Date(entry.lastModified), 'MMM d')
   } catch {
     return null
   }
+  return (
+    <span className="text-[12px] text-muted-foreground">
+      {label}
+    </span>
+  )
 }
 
 type TailPanelProps = {
