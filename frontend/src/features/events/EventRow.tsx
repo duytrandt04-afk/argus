@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { memo, useEffect, useRef, useState } from 'react'
 import type { DragEvent, ReactNode } from 'react'
 import { cn, displayModel } from '@/lib/utils'
 import { highlight } from '@/lib/format'
@@ -32,7 +32,7 @@ type EventRowProps = {
   isDraggable?: boolean
 }
 
-export function EventRow({
+export const EventRow = memo(function EventRow({
   event: e,
   searchQuery,
   highlighted = false,
@@ -263,4 +263,4 @@ export function EventRow({
       )}
     </div>
   )
-}
+})
