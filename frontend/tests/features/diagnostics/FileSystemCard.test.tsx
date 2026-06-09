@@ -27,6 +27,13 @@ const mockFS: DiagnosticsFileSystem = {
       lastModified: null,
       exists: false,
     },
+    {
+      name: 'hook-scripts.log',
+      path: '/home/user/.hooker/hook-scripts.log',
+      sizeBytes: 128,
+      lastModified: '2026-06-10T00:00:00Z',
+      exists: true,
+    },
   ],
   hooks: [
     {
@@ -128,5 +135,21 @@ describe('FileSystemCard', () => {
     await waitFor(() => {
       expect(screen.getByText('log line A')).toBeInTheDocument()
     })
+  })
+
+  it('tails hook-scripts.log', async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ file: 'hook-scripts.log', lines: ['script log A'] }),
+    })
+    vi.stubGlobal('fetch', mockFetch)
+
+    render(<FileSystemCard fileSystem={mockFS} />)
+
+    const rows = screen.getAllByRole('button', { name: /Tail hook-scripts\.log/i })
+    fireEvent.click(rows[0])
+
+    expect(mockFetch).toHaveBeenCalledWith('/api/diagnostics/log-tail?file=hook-scripts&lines=50')
+    expect(await screen.findByText('script log A')).toBeInTheDocument()
   })
 })

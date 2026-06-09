@@ -172,24 +172,31 @@ function SubSection({ label, entries, dirExists, emptyLabel }: SubSectionProps) 
 export function FileSystemCard({ fileSystem }: FileSystemCardProps) {
   const hookerTail = useLogTail('hooker', 50)
   const buildTail = useLogTail('build', 50)
+  const hookScriptsTail = useLogTail('hook-scripts', 50)
   const [openLog, setOpenLog] = useState<string | null>(null)
+
+  function tailFor(name: string) {
+    if (name === 'hooker.log') return hookerTail
+    if (name === 'build.log') return buildTail
+    if (name === 'hook-scripts.log') return hookScriptsTail
+    return hookerTail
+  }
 
   function toggleLog(name: string) {
     const opening = openLog !== name
     setOpenLog(opening ? name : null)
     if (opening) {
-      if (name === 'hooker.log') hookerTail.fetch()
-      else if (name === 'build.log') buildTail.fetch()
+      tailFor(name).fetch()
     }
   }
 
   function tailStateFor(name: string) {
-    const t = name === 'hooker.log' ? hookerTail : buildTail
+    const t = tailFor(name)
     return { lines: t.lines, loading: t.loading, error: t.error }
   }
 
   function refreshFor(name: string) {
-    return name === 'hooker.log' ? hookerTail.fetch : buildTail.fetch
+    return tailFor(name).fetch
   }
 
   return (

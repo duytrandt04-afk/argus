@@ -91,21 +91,31 @@ HOOKER_PORT=$HOOKER_PORT
 DB_DIR="\$HOME/.hooker"
 DB_PATH="\$DB_DIR/hooker.db"
 LOG_PATH="\$DB_DIR/hooker.log"
+SCRIPT_LOG_PATH="\$DB_DIR/hook-scripts.log"
+
+log_script() {
+  mkdir -p "\$DB_DIR" 2>/dev/null || true
+  printf '%s start-hooker.sh %s %s\n' "\$(date -u +"%Y-%m-%dT%H:%M:%SZ")" "\$1" "\$2" >> "\$SCRIPT_LOG_PATH" 2>/dev/null || true
+}
 
 mkdir -p "\$DB_DIR"
+log_script INFO "start"
 
 RUNNING_PID=\$(lsof -ti:"\$HOOKER_PORT" 2>/dev/null)
 if [ -n "\$RUNNING_PID" ]; then
   RUNNING_BIN=\$(lsof -p "\$RUNNING_PID" 2>/dev/null | awk '\$4=="txt" {print \$NF}' | head -1)
   if [ "\$RUNNING_BIN" = "\$BINARY_PATH" ]; then
+    log_script INFO "server already running"
     echo '{"continue":true,"suppressOutput":true}'
     exit 0
   fi
   # Different binary on port (dev build or old version) — replace with installed binary
+  log_script WARN "replacing pid \$RUNNING_PID on port \$HOOKER_PORT"
   kill "\$RUNNING_PID"
   sleep 0.5
 fi
 
+log_script INFO "launching server"
 DB_PATH="\$DB_PATH" ADDR="127.0.0.1:\$HOOKER_PORT" \\
   nohup "\$BINARY_PATH" >> "\$LOG_PATH" 2>&1 &
 
@@ -139,6 +149,7 @@ const net = require('net');
 const os = require('os');
 const path = require('path');
 const db = path.join(os.homedir(), '.hooker', 'hooker.db');
+const scriptLog = path.join(os.homedir(), '.hooker', 'hook-scripts.log');
 const url = 'http://127.0.0.1:10804';
 const startScript = '${START_SCRIPT}';
 const isClaudeCode = process.env.CLAUDECODE === '1';
@@ -165,14 +176,23 @@ function emit(msg) {
   }
 }
 
+function logScript(level, msg) {
+  try {
+    require('fs').appendFileSync(scriptLog, \`\${new Date().toISOString()} hooker-activate.js \${level} \${msg}\n\`);
+  } catch (_) {}
+}
+
 async function main() {
+  logScript('INFO', 'start');
   let up = await isServerUp();
   if (!up) {
+    logScript('WARN', 'server offline; invoking start script');
     spawnSync('bash', [startScript], { stdio: 'ignore' });
     await sleep(1200);
     up = await isServerUp();
   }
   if (!up) {
+    logScript('ERROR', 'server offline after start attempt');
     emit(isClaudeCode ? '\x1b[1m\x1b[31mHOOKER offline\x1b[0m' : 'HOOKER offline');
     return;
   }
@@ -183,14 +203,18 @@ async function main() {
       { encoding: 'utf8', timeout: 3000, stdio: ['pipe', 'pipe', 'ignore'] }
     ).trim();
     const [events, sessions] = result.split('|');
+    logScript('INFO', 'sqlite counts loaded');
     msg = \`HOOKER live @ \${url} | \${parseInt(events, 10).toLocaleString()} events · \${sessions.trim()} sessions\`;
   } catch (_) {
+    logScript('WARN', 'sqlite counts unavailable');
     msg = \`HOOKER live @ \${url}\`;
   }
   emit(isClaudeCode ? '\x1b[1m\x1b[32m' + msg + '\x1b[0m' : msg);
 }
 
-main();
+main().catch(err => {
+  logScript('ERROR', \`activation failed: \${err && err.message ? err.message : String(err)}\`);
+});
 SCRIPTEOF
 chmod +x "$ACTIVATE_SCRIPT"
 echo "  → $ACTIVATE_SCRIPT"

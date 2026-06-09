@@ -20,6 +20,9 @@ func TestScanFileSystemPopulatesEntries(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(dir, "hooker.log"), []byte("log line\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
+	if err := os.WriteFile(filepath.Join(dir, "hook-scripts.log"), []byte("script log line\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
 
 	hooksDir := filepath.Join(dir, "hooks")
 	if err := os.MkdirAll(hooksDir, 0o755); err != nil {
@@ -40,14 +43,20 @@ func TestScanFileSystemPopulatesEntries(t *testing.T) {
 	if fs.Binary.SizeBytes == nil || *fs.Binary.SizeBytes != 6 {
 		t.Errorf("binary.sizeBytes = %v, want 6", fs.Binary.SizeBytes)
 	}
-	if len(fs.Logs) != 2 {
-		t.Fatalf("len(logs) = %d, want 2", len(fs.Logs))
+	if len(fs.Logs) != 3 {
+		t.Fatalf("len(logs) = %d, want 3", len(fs.Logs))
 	}
 	if !fs.Logs[0].Exists {
 		t.Error("logs[0] (hooker.log) exists = false, want true")
 	}
 	if fs.Logs[1].Exists {
 		t.Error("logs[1] (build.log) exists = true, want false")
+	}
+	if !fs.Logs[2].Exists {
+		t.Error("logs[2] (hook-scripts.log) exists = false, want true")
+	}
+	if fs.Logs[2].Name != "hook-scripts.log" {
+		t.Errorf("logs[2].name = %q, want hook-scripts.log", fs.Logs[2].Name)
 	}
 	if len(fs.Hooks) != 1 {
 		t.Fatalf("len(hooks) = %d, want 1", len(fs.Hooks))

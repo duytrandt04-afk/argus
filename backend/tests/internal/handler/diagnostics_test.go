@@ -71,8 +71,17 @@ func TestDiagnosticsHandlerReturnsGroupedShape(t *testing.T) {
 	if !ok {
 		t.Fatalf("fileSystem.logs = %#v, want array", fileSystem["logs"])
 	}
-	if len(logs) != 2 {
-		t.Fatalf("len(fileSystem.logs) = %d, want 2", len(logs))
+	if len(logs) != 3 {
+		t.Fatalf("len(fileSystem.logs) = %d, want 3", len(logs))
+	}
+	for i, want := range []string{"hooker.log", "build.log", "hook-scripts.log"} {
+		entry, ok := logs[i].(map[string]any)
+		if !ok {
+			t.Fatalf("fileSystem.logs[%d] = %#v, want object", i, logs[i])
+		}
+		if entry["name"] != want {
+			t.Fatalf("fileSystem.logs[%d].name = %#v, want %q", i, entry["name"], want)
+		}
 	}
 	privacy, ok := payload["privacy"].(map[string]any)
 	if !ok {
