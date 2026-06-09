@@ -24,6 +24,13 @@ export function useEventFilters(
   const [agentFilter, setAgentFilter] = useState('all')
   const [sortOrder, setSortOrder] = useState('newest')
 
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery)
+
+  useEffect(() => {
+    const t = window.setTimeout(() => setDebouncedSearchQuery(searchQuery), 150)
+    return () => window.clearTimeout(t)
+  }, [searchQuery])
+
   const [projectFilter, setProjectFilter] = useState('all')
 
   const computedAgents = useMemo(() => {
@@ -86,8 +93,8 @@ export function useEventFilters(
 
       if (sessionFilter && e.session !== sessionFilter) return false
 
-      if (searchQuery) {
-        const q = searchQuery.toLowerCase()
+      if (debouncedSearchQuery) {
+        const q = debouncedSearchQuery.toLowerCase()
         if (
           !e.path?.toLowerCase().includes(q) &&
           !e.session?.toLowerCase().includes(q) &&
@@ -106,7 +113,7 @@ export function useEventFilters(
       }
       return true
     })
-  }, [events, actionFilter, agentFilter, projectFilter, searchQuery, sessionFilter])
+  }, [events, actionFilter, agentFilter, projectFilter, debouncedSearchQuery, sessionFilter])
 
   return {
     actionFilter,
