@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { memo, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
-import { Check, Copy } from 'lucide-react'
+import { CopyIconButton } from '@/components/shared/CopyIconButton'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { PaginationBar } from '@/components/shared/PaginationBar'
 import { cn } from '@/lib/utils'
@@ -27,7 +27,7 @@ type AgentSessionProps = {
   isEventDraggable?: boolean
 }
 
-export function AgentSession({
+export const AgentSession = memo(function AgentSession({
   session,
   lastTime,
   isCollapsed,
@@ -48,19 +48,6 @@ export function AgentSession({
 
   const [manualPage, setManualPage] = useState(0)
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
-  const [copied, setCopied] = useState(false)
-
-  const onCopySessionId = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    navigator.clipboard
-      .writeText(sessionId)
-      .then(() => {
-        setCopied(true)
-        window.setTimeout(() => setCopied(false), 1500)
-      })
-      .catch(() => {})
-  }
-
   const totalPages = Math.max(1, Math.ceil(events.length / pageSize))
   const targetEventIndex =
     targetEventKey && targetSessionId === sessionId
@@ -103,14 +90,12 @@ export function AgentSession({
             <span className="min-w-0 break-words sm:break-all">
               {highlight(firstEvent.session || shortId(transcriptPath), searchQuery)}
             </span>
-            <button
-              type="button"
-              onClick={onCopySessionId}
-              className="opacity-0 group-hover:opacity-100 transition-opacity inline-flex size-4 items-center justify-center rounded text-[#666] hover:text-[#47ff9c]"
-              aria-label={copied ? 'Copied session ID' : 'Copy session ID'}
-            >
-              {copied ? <Check className="size-3" /> : <Copy className="size-3" />}
-            </button>
+            <CopyIconButton
+              text={sessionId}
+              label="session ID"
+              className="opacity-0 group-hover:opacity-100 size-4 text-[#666] hover:text-[#47ff9c] hover:bg-transparent"
+              onClick={(e) => e.stopPropagation()}
+            />
           </div>
           <div className="inline-flex w-full flex-wrap items-center gap-2 text-[0.68rem] text-[#666] sm:w-auto sm:justify-end sm:text-right">
             {sessionUsage[sessionId] &&
@@ -158,17 +143,20 @@ export function AgentSession({
           />
         )}
         <div className="px-[10px] py-[6px]">
-          {visibleEvents.map((e) => (
-            <EventRow
-              key={buildEventKey(e)}
-              event={e}
-              searchQuery={searchQuery}
-              highlighted={highlightedEventKey === buildEventKey(e)}
-              isPendingTarget={targetEventKey === buildEventKey(e)}
-              onTargetVisible={onTargetVisible}
-              isDraggable={isEventDraggable}
-            />
-          ))}
+          {visibleEvents.map((e) => {
+            const eventKey = buildEventKey(e)
+            return (
+              <EventRow
+                key={eventKey}
+                event={e}
+                searchQuery={searchQuery}
+                highlighted={highlightedEventKey === eventKey}
+                isPendingTarget={targetEventKey === eventKey}
+                onTargetVisible={onTargetVisible}
+                isDraggable={isEventDraggable}
+              />
+            )
+          })}
         </div>
         {needsPagination && (
           <PaginationBar
@@ -186,4 +174,4 @@ export function AgentSession({
       </CollapsibleContent>
     </Collapsible>
   )
-}
+})
