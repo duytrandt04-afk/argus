@@ -175,28 +175,32 @@ export function FileSystemCard({ fileSystem }: FileSystemCardProps) {
   const hookScriptsTail = useLogTail('hook-scripts', 50)
   const [openLog, setOpenLog] = useState<string | null>(null)
 
-  function tailFor(name: string) {
-    if (name === 'hooker.log') return hookerTail
-    if (name === 'build.log') return buildTail
-    if (name === 'hook-scripts.log') return hookScriptsTail
-    return hookerTail
-  }
-
   function toggleLog(name: string) {
     const opening = openLog !== name
     setOpenLog(opening ? name : null)
     if (opening) {
-      tailFor(name).fetch()
+      if (name === 'hooker.log') hookerTail.fetch()
+      else if (name === 'build.log') buildTail.fetch()
+      else if (name === 'hook-scripts.log') hookScriptsTail.fetch()
     }
   }
 
   function tailStateFor(name: string) {
-    const t = tailFor(name)
-    return { lines: t.lines, loading: t.loading, error: t.error }
+    if (name === 'hooker.log')
+      return { lines: hookerTail.lines, loading: hookerTail.loading, error: hookerTail.error }
+    if (name === 'hook-scripts.log')
+      return {
+        lines: hookScriptsTail.lines,
+        loading: hookScriptsTail.loading,
+        error: hookScriptsTail.error,
+      }
+    return { lines: buildTail.lines, loading: buildTail.loading, error: buildTail.error }
   }
 
   function refreshFor(name: string) {
-    return tailFor(name).fetch
+    if (name === 'hooker.log') return hookerTail.fetch
+    if (name === 'hook-scripts.log') return hookScriptsTail.fetch
+    return buildTail.fetch
   }
 
   return (
