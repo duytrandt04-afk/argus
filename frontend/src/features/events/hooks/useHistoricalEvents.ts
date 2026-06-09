@@ -19,6 +19,7 @@ export function useHistoricalEvents(
   const [hasMore, setHasMore] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [loadVersion, setLoadVersion] = useState(0)
   const cursorRef = useRef<number>(0)
   const refreshCountRef = useRef(0)
 
@@ -70,6 +71,7 @@ export function useHistoricalEvents(
           })
           return next
         })
+        if (replace) setLoadVersion((v) => v + 1)
       } catch {
         setError('Failed to load events.')
       } finally {
@@ -101,5 +103,5 @@ export function useHistoricalEvents(
     void fetchPage(0, true)
   }, [fetchPage])
 
-  return { events, hasMore, loading, error, loadMore, refresh }
+  return { events, hasMore, loading, error, loadMore, refresh, loadVersion }
 }
