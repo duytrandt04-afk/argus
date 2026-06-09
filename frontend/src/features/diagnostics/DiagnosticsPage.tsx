@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
 import { format, formatDistanceToNow } from 'date-fns'
-import { Activity, AlertTriangle, RefreshCw, Shield, Zap } from 'lucide-react'
+import { Activity, AlertTriangle, RefreshCw } from 'lucide-react'
 import { CopyIconButton } from '@/components/shared/CopyIconButton'
-import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -137,92 +136,6 @@ function HookConfigCell({ hookConfigStatus, label }: { hookConfigStatus: string;
   return <span className="text-[12px] text-muted-foreground">{hookConfigStatus}</span>
 }
 
-function PrivacySecurityCard({ data }: { data: Diagnostics }) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Privacy &amp; Security</CardTitle>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-0">
-        <div className="flex items-center justify-between py-2 text-[13px]">
-          <span className="text-muted-foreground">Ignore File</span>
-          <span className="flex items-center gap-1">
-            <MonoPath path={data.privacy.ignoreFile.path} ariaLabel="Copy ignore file path" />
-            {data.privacy.ignoreFile.status === 'loaded' && (
-              <Badge variant="outline" className={BADGE_GREEN}>
-                Active
-              </Badge>
-            )}
-            {data.privacy.ignoreFile.status === 'missing_ok' && (
-              <span className="text-[12px] text-muted-foreground">Not configured</span>
-            )}
-            {data.privacy.ignoreFile.status === 'missing' && (
-              <Badge variant="outline" className={BADGE_AMBER}>
-                Missing
-              </Badge>
-            )}
-            {data.privacy.ignoreFile.status === 'error' && (
-              <Badge variant="outline" className={BADGE_RED}>
-                Error
-              </Badge>
-            )}
-          </span>
-        </div>
-        <Separator />
-        <div className="flex items-center justify-between py-2 text-[13px]">
-          <span className="text-muted-foreground">Active Rules</span>
-          <span>{data.privacy.ignoreFile.activePatternCount.toLocaleString()}</span>
-        </div>
-        <Separator />
-        <div className="flex items-center justify-between py-2 text-[13px]">
-          <span className="text-muted-foreground">Bind Posture</span>
-          <span className="flex items-center gap-1">
-            <span className="text-[13px]">{data.security.remoteBind.addr}</span>
-            {data.security.remoteBind.status === 'loopback' &&
-            !data.security.remoteBind.allowRemote ? (
-              <Badge variant="outline" className={BADGE_GREEN}>
-                Loopback only
-              </Badge>
-            ) : data.security.remoteBind.status === 'remote' ||
-              data.security.remoteBind.allowRemote ? (
-              <Badge variant="outline" className={BADGE_RED}>
-                Remote enabled
-              </Badge>
-            ) : (
-              <span className="text-[12px] text-muted-foreground">
-                {data.security.remoteBind.status}
-              </span>
-            )}
-          </span>
-        </div>
-        <Separator />
-        <div className="flex items-center justify-between py-2 text-[13px]">
-          <span className="text-muted-foreground">CORS Origins</span>
-          <span className="flex items-center gap-1">
-            <span className="text-[13px]">
-              {data.security.cors.totalOrigins} total, {data.security.cors.localOrigins} local
-            </span>
-            {data.security.cors.extraOrigins === 0 ? (
-              <Badge variant="outline" className={BADGE_GREEN}>
-                Local only
-              </Badge>
-            ) : (
-              <Badge variant="outline" className={BADGE_AMBER}>
-                {data.security.cors.extraOrigins} extra origin
-                {data.security.cors.extraOrigins === 1 ? '' : 's'}
-              </Badge>
-            )}
-          </span>
-        </div>
-        <Alert className="mt-4 border-[var(--border)] bg-[var(--secondary)]">
-          <AlertDescription className="text-xs text-muted-foreground">
-            {data.privacy.exportWarning}
-          </AlertDescription>
-        </Alert>
-      </CardContent>
-    </Card>
-  )
-}
 
 function LoadedContent({ data }: { data: Diagnostics }) {
   const hookConfigLabels = useHookConfigLabels(data.agents)
@@ -234,18 +147,13 @@ function LoadedContent({ data }: { data: Diagnostics }) {
       (a.hookConfigStatus === 'unknown' && a.eventCount === 0)
   ).length
 
-  const privacyWarningCount =
-    (data.security.remoteBind.allowRemote ? 1 : 0) +
-    (data.security.cors.extraOrigins > 0 ? 1 : 0) +
-    (data.privacy.ignoreFile.status === 'error' ? 1 : 0)
-
   const isFirstRun =
     data.storage.totalEvents === 0 && data.agents.every((a) => a.status === 'no events')
 
   return (
     <>
       {/* Summary tile row */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3">
         {/* Tile 1 — Readiness */}
         <Card>
           <CardContent className="p-4">
@@ -277,25 +185,7 @@ function LoadedContent({ data }: { data: Diagnostics }) {
           </CardContent>
         </Card>
 
-        {/* Tile 2 — Events */}
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-1 text-[12px] text-muted-foreground mb-1">
-              <Zap className="inline size-4 mr-1 text-muted-foreground" />
-              Events
-            </div>
-            <div className="text-[20px] font-semibold">
-              {data.storage.totalEvents.toLocaleString()}
-            </div>
-            <p className="text-[12px] text-muted-foreground mt-1">
-              {data.storage.latestEventAt
-                ? `Latest: ${formatDistanceToNow(new Date(data.storage.latestEventAt), { addSuffix: true })}`
-                : 'No events yet'}
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Tile 3 — Agent Warnings */}
+{/* Tile 3 — Agent Warnings */}
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-1 text-[12px] text-muted-foreground mb-1">
@@ -314,26 +204,6 @@ function LoadedContent({ data }: { data: Diagnostics }) {
           </CardContent>
         </Card>
 
-        {/* Tile 4 — Privacy/Security */}
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-1 text-[12px] text-muted-foreground mb-1">
-              <Shield className="inline size-4 mr-1 text-muted-foreground" />
-              Privacy Warnings
-            </div>
-            <div
-              className={cn(
-                'text-[20px] font-semibold',
-                privacyWarningCount > 0 ? 'text-foreground' : 'text-muted-foreground'
-              )}
-            >
-              {privacyWarningCount} {privacyWarningCount === 1 ? 'warning' : 'warnings'}
-            </div>
-            <p className="text-[12px] text-muted-foreground mt-1">
-              {data.privacy.ignoreFile.activePatternCount} rules active
-            </p>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Two-column body */}
@@ -357,6 +227,8 @@ function LoadedContent({ data }: { data: Diagnostics }) {
                   <TableHead scope="col" className="w-[120px]">
                     Last Seen
                   </TableHead>
+                  <TableHead scope="col" className="w-[50px] text-right">1h</TableHead>
+                  <TableHead scope="col" className="w-[50px] text-right">24h</TableHead>
                   <TableHead scope="col" className="w-[120px]">
                     Hook Config
                   </TableHead>
@@ -375,6 +247,12 @@ function LoadedContent({ data }: { data: Diagnostics }) {
                       {agent.lastSeenAt
                         ? formatDistanceToNow(new Date(agent.lastSeenAt), { addSuffix: true })
                         : '—'}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {agent.eventsLastHour.toLocaleString()}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {agent.eventsLast24h.toLocaleString()}
                     </TableCell>
                     <TableCell>
                       <HookConfigCell
@@ -464,29 +342,59 @@ function LoadedContent({ data }: { data: Diagnostics }) {
                 </span>
               </div>
               <Separator />
+              {/* Runtime */}
               <div className="flex items-center justify-between py-2 text-[13px]">
-                <span className="text-muted-foreground">Total Events</span>
-                <span>{data.storage.totalEvents.toLocaleString()}</span>
+                <span className="text-muted-foreground">Started</span>
+                <span>{formatDistanceToNow(new Date(data.runtime.startedAt), { addSuffix: true })}</span>
               </div>
               <Separator />
               <div className="flex items-center justify-between py-2 text-[13px]">
-                <span className="text-muted-foreground">Total Sessions</span>
-                <span>{data.storage.totalSessions.toLocaleString()}</span>
-              </div>
-              <Separator />
-              <div className="flex items-center justify-between py-2 text-[13px]">
-                <span className="text-muted-foreground">Latest Event</span>
+                <span className="text-muted-foreground">Uptime</span>
                 <span>
-                  {data.storage.latestEventAt
-                    ? formatDistanceToNow(new Date(data.storage.latestEventAt), { addSuffix: true })
-                    : 'None'}
+                  {Math.floor(data.runtime.uptimeSeconds / 3600)}h{' '}
+                  {Math.floor((data.runtime.uptimeSeconds % 3600) / 60)}m
                 </span>
+              </div>
+              <Separator />
+              <div className="flex items-center justify-between py-2 text-[13px]">
+                <span className="text-muted-foreground">Hook requests</span>
+                <span>{data.runtime.hookRequests.toLocaleString()}</span>
+              </div>
+              <Separator />
+              <div className="flex items-center justify-between py-2 text-[13px]">
+                <span className="text-muted-foreground">Ingestion errors</span>
+                <span className={data.runtime.ingestionErrors > 0 ? 'text-[var(--destructive)]' : ''}>
+                  {data.runtime.ingestionErrors.toLocaleString()}
+                </span>
+              </div>
+              <Separator />
+              {/* DB Health */}
+              <div className="flex items-center justify-between py-2 text-[13px]">
+                <span className="text-muted-foreground">DB journal</span>
+                <code className="font-mono text-[12px]">{data.dbHealth.journalMode}</code>
+              </div>
+              <Separator />
+              <div className="flex items-center justify-between py-2 text-[13px]">
+                <span className="text-muted-foreground">DB pages</span>
+                <span>
+                  {data.dbHealth.pageCount.toLocaleString()} × {formatBytes(data.dbHealth.pageSizeBytes)}
+                </span>
+              </div>
+              <Separator />
+              <div className="flex items-center justify-between py-2 text-[13px]">
+                <span className="text-muted-foreground">WAL size</span>
+                <span>
+                  {data.dbHealth.walSizeBytes !== null ? formatBytes(data.dbHealth.walSizeBytes) : '—'}
+                </span>
+              </div>
+              <Separator />
+              <div className="flex items-center justify-between py-2 text-[13px]">
+                <span className="text-muted-foreground">Migration</span>
+                <span>v{data.dbHealth.migrationVersion}</span>
               </div>
             </CardContent>
           </Card>
 
-          {/* Privacy & Security */}
-          <PrivacySecurityCard data={data} />
         </div>
       </div>
 
@@ -526,28 +434,18 @@ export function DiagnosticsPage() {
         {/* Loading branch — skeleton only on first fetch, NOT on refresh (D-14, D-16) */}
         {loading && (
           <div aria-busy="true" className="flex flex-col gap-6">
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <Skeleton className="h-[80px] rounded-lg" />
-              <Skeleton className="h-[80px] rounded-lg" />
+            <div className="grid grid-cols-2 gap-3">
               <Skeleton className="h-[80px] rounded-lg" />
               <Skeleton className="h-[80px] rounded-lg" />
             </div>
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_360px]">
               <Skeleton className="h-[160px]" />
-              <div className="flex flex-col gap-6">
-                <div className="flex flex-col gap-3">
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-full" />
-                </div>
-                <div className="flex flex-col gap-3">
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-full" />
-                </div>
+              <div className="flex flex-col gap-3">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full" />
               </div>
             </div>
           </div>

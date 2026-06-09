@@ -19,6 +19,21 @@ export interface DiagnosticsStorage {
   latestEventAt: string | null
 }
 
+export interface DiagnosticsRuntime {
+  startedAt: string
+  uptimeSeconds: number
+  hookRequests: number
+  ingestionErrors: number
+}
+
+export interface DiagnosticsDBHealth {
+  journalMode: string
+  pageCount: number
+  pageSizeBytes: number
+  walSizeBytes: number | null
+  migrationVersion: number
+}
+
 export interface DiagnosticsAgent {
   id: string
   label: string
@@ -30,6 +45,8 @@ export interface DiagnosticsAgent {
   hookConfigReason?: string
   status: string
   warnings: string[]
+  eventsLastHour: number
+  eventsLast24h: number
 }
 
 export interface DiagnosticsIgnoreFile {
@@ -66,6 +83,7 @@ export interface DiagnosticsFileEntry {
   sizeBytes: number | null
   lastModified: string | null
   exists: boolean
+  lineCount?: number | null
 }
 
 export interface DiagnosticsFileSystem {
@@ -73,6 +91,13 @@ export interface DiagnosticsFileSystem {
   binary: DiagnosticsFileEntry
   logs: DiagnosticsFileEntry[]
   hooks: DiagnosticsFileEntry[]
+  claudeHooks: DiagnosticsFileEntry[]
+  claudeHooksDirExists: boolean
+  claudeHistory: DiagnosticsFileEntry
+  codexHooks: DiagnosticsFileEntry[]
+  codexHooksDirExists: boolean
+  codexDBs: DiagnosticsFileEntry[]
+  codexDBsDirExists: boolean
 }
 
 export interface Diagnostics {
@@ -83,4 +108,6 @@ export interface Diagnostics {
   privacy: DiagnosticsPrivacy
   security: DiagnosticsSecurity
   fileSystem: DiagnosticsFileSystem
+  runtime: DiagnosticsRuntime
+  dbHealth: DiagnosticsDBHealth
 }

@@ -27,6 +27,8 @@ const healthyDiagnostics: Diagnostics = {
       hookConfigStatus: 'configured',
       status: 'healthy',
       warnings: [],
+      eventsLastHour: 5,
+      eventsLast24h: 42,
     },
     {
       id: 'codex',
@@ -38,6 +40,8 @@ const healthyDiagnostics: Diagnostics = {
       hookConfigStatus: 'configured',
       status: 'healthy',
       warnings: [],
+      eventsLastHour: 5,
+      eventsLast24h: 42,
     },
   ],
   privacy: {
@@ -74,6 +78,33 @@ const healthyDiagnostics: Diagnostics = {
       },
     ],
     hooks: [],
+    claudeHooks: [],
+    claudeHooksDirExists: true,
+    claudeHistory: {
+      name: 'history.jsonl',
+      path: '/home/user/.claude/history.jsonl',
+      sizeBytes: 278000,
+      lastModified: '2026-06-09T10:00:00Z',
+      exists: true,
+      lineCount: 48231,
+    },
+    codexHooks: [],
+    codexHooksDirExists: false,
+    codexDBs: [],
+    codexDBsDirExists: false,
+  },
+  runtime: {
+    startedAt: '2026-06-09T08:00:00Z',
+    uptimeSeconds: 3600,
+    hookRequests: 150,
+    ingestionErrors: 0,
+  },
+  dbHealth: {
+    journalMode: 'wal',
+    pageCount: 1024,
+    pageSizeBytes: 4096,
+    walSizeBytes: 65536,
+    migrationVersion: 13,
   },
 }
 
@@ -171,8 +202,22 @@ describe('DiagnosticsPage', () => {
     expect(screen.getByText('Codex')).toBeInTheDocument()
     // Readiness tile shows Ready
     expect(screen.getByText('Ready')).toBeInTheDocument()
-    // Export warning always visible
-    expect(screen.getByText(/Exported data may contain prompts/)).toBeInTheDocument()
+    expect(screen.getByText('Hook requests')).toBeInTheDocument()
+    expect(screen.getByText('Migration')).toBeInTheDocument()
+    expect(screen.getByText('1h')).toBeInTheDocument()
+    expect(screen.getByText('24h')).toBeInTheDocument()
+  })
+
+  it('shows Uninstalled badge when codexDBsDirExists is false', async () => {
+    renderPage()
+    await screen.findByText('Agent Connectivity')
+    expect(screen.getAllByText('Uninstalled').length).toBeGreaterThan(0)
+  })
+
+  it('renders history.jsonl line count', async () => {
+    renderPage()
+    await screen.findByText('Agent Connectivity')
+    expect(screen.getByText(/48,231 lines/)).toBeInTheDocument()
   })
 
   it('shows Configured (X/Y) label in hook config column when config has hooker hooks', async () => {
@@ -220,8 +265,6 @@ describe('DiagnosticsPage', () => {
     renderPage()
     // Degraded badge for agent 0
     expect(await screen.findByText('Degraded')).toBeInTheDocument()
-    // Extra CORS origins badge
-    expect(screen.getByText(/extra origin/i)).toBeInTheDocument()
   })
 
   it('renders first-run hint when no events have been observed', async () => {

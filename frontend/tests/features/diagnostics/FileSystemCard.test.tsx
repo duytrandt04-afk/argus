@@ -37,6 +37,28 @@ const mockFS: DiagnosticsFileSystem = {
       exists: true,
     },
   ],
+  claudeHooks: [],
+  claudeHooksDirExists: true,
+  claudeHistory: {
+    name: 'history.jsonl',
+    path: '/home/user/.claude/history.jsonl',
+    sizeBytes: 278000,
+    lastModified: '2026-06-09T10:00:00Z',
+    exists: true,
+    lineCount: 48231,
+  },
+  codexHooks: [],
+  codexHooksDirExists: false,
+  codexDBs: [
+    {
+      name: 'logs_2.sqlite',
+      path: '/home/user/.codex/logs_2.sqlite',
+      sizeBytes: 368000000,
+      lastModified: '2026-06-09T10:00:00Z',
+      exists: true,
+    },
+  ],
+  codexDBsDirExists: true,
 }
 
 describe('FileSystemCard', () => {
@@ -71,6 +93,21 @@ describe('FileSystemCard', () => {
     render(<FileSystemCard fileSystem={mockFS} />)
     const tailButtons = screen.getAllByRole('button', { name: /tail/i })
     expect(tailButtons.length).toBeGreaterThan(0)
+  })
+
+  it('renders Uninstalled badge when codexHooksDirExists is false', () => {
+    render(<FileSystemCard fileSystem={mockFS} />)
+    expect(screen.getByText('Uninstalled')).toBeInTheDocument()
+  })
+
+  it('renders history.jsonl line count', () => {
+    render(<FileSystemCard fileSystem={mockFS} />)
+    expect(screen.getByText(/48,231 lines/)).toBeInTheDocument()
+  })
+
+  it('renders Codex DB file name', () => {
+    render(<FileSystemCard fileSystem={mockFS} />)
+    expect(screen.getByText('logs_2.sqlite')).toBeInTheDocument()
   })
 
   it('fetches and shows log lines when Tail is clicked', async () => {

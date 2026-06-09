@@ -49,6 +49,33 @@ const minimalDiagnostics: Diagnostics = {
       },
     ],
     hooks: [],
+    claudeHooks: [],
+    claudeHooksDirExists: true,
+    claudeHistory: {
+      name: 'history.jsonl',
+      path: '/home/user/.claude/history.jsonl',
+      sizeBytes: 278000,
+      lastModified: '2026-06-09T10:00:00Z',
+      exists: true,
+      lineCount: 48231,
+    },
+    codexHooks: [],
+    codexHooksDirExists: false,
+    codexDBs: [],
+    codexDBsDirExists: false,
+  },
+  runtime: {
+    startedAt: '2026-06-09T08:00:00Z',
+    uptimeSeconds: 3600,
+    hookRequests: 150,
+    ingestionErrors: 0,
+  },
+  dbHealth: {
+    journalMode: 'wal',
+    pageCount: 1024,
+    pageSizeBytes: 4096,
+    walSizeBytes: 65536,
+    migrationVersion: 13,
   },
 }
 

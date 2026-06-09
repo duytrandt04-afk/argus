@@ -11,6 +11,16 @@ import { formatBytes } from './utils'
 import { useLogTail } from './hooks/useLogTail'
 import type { DiagnosticsFileEntry, DiagnosticsFileSystem } from './types'
 
+const BADGE_AMBER = 'border-[var(--cwd)] text-[var(--cwd)] bg-transparent'
+
+function UninstalledBadge() {
+  return (
+    <Badge variant="outline" className={BADGE_AMBER}>
+      Uninstalled
+    </Badge>
+  )
+}
+
 type FileSystemCardProps = {
   fileSystem: DiagnosticsFileSystem
 }
@@ -196,7 +206,7 @@ export function FileSystemCard({ fileSystem }: FileSystemCardProps) {
 
         {/* Logs */}
         <div className="py-1">
-          <p className="text-[11px] text-muted-foreground uppercase tracking-wide py-1">Logs</p>
+          <p className="text-[11px] text-muted-foreground py-1">logs</p>
           {fileSystem.logs.map((entry, i) => (
             <div key={entry.name}>
               {i > 0 && <Separator />}
@@ -214,13 +224,134 @@ export function FileSystemCard({ fileSystem }: FileSystemCardProps) {
 
         {/* Hooks */}
         <div className="py-1">
-          <p className="text-[11px] text-muted-foreground uppercase tracking-wide py-1">
-            Hooks ({fileSystem.hooks.length})
+          <p className="text-[11px] text-muted-foreground py-1">
+            ~/.hooker/hooks ({fileSystem.hooks.length})
           </p>
           {fileSystem.hooks.length === 0 ? (
             <p className="text-[12px] text-muted-foreground py-2">No hook scripts found</p>
           ) : (
             fileSystem.hooks.map((entry, i) => (
+              <div key={entry.name}>
+                {i > 0 && <Separator />}
+                <div className="flex items-center justify-between py-2 text-[13px]">
+                  <span className="font-mono text-[12px]">{entry.name}</span>
+                  <div className="flex items-center gap-2">
+                    <FileSize entry={entry} />
+                    <FileModified entry={entry} />
+                    <CopyIconButton
+                      text={entry.path}
+                      label={`Copy ${entry.name} path`}
+                      className="size-4 opacity-40 hover:opacity-100 hover:bg-transparent"
+                    />
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        <Separator />
+
+        {/* Claude hooks */}
+        <div className="py-1">
+          <div className="flex items-center gap-2 py-1">
+            <p className="text-[11px] text-muted-foreground">
+              ~/.claude/hooks ({(fileSystem.claudeHooks ?? []).length})
+            </p>
+            {!fileSystem.claudeHooksDirExists && <UninstalledBadge />}
+          </div>
+          {(fileSystem.claudeHooks ?? []).length === 0 && fileSystem.claudeHooksDirExists ? (
+            <p className="text-[12px] text-muted-foreground py-2">No hook scripts found</p>
+          ) : (
+            (fileSystem.claudeHooks ?? []).map((entry, i) => (
+              <div key={entry.name}>
+                {i > 0 && <Separator />}
+                <div className="flex items-center justify-between py-2 text-[13px]">
+                  <span className="font-mono text-[12px]">{entry.name}</span>
+                  <div className="flex items-center gap-2">
+                    <FileSize entry={entry} />
+                    <FileModified entry={entry} />
+                    <CopyIconButton
+                      text={entry.path}
+                      label={`Copy ${entry.name} path`}
+                      className="size-4 opacity-40 hover:opacity-100 hover:bg-transparent"
+                    />
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+        <Separator />
+
+        {/* Claude history.jsonl */}
+        <div className="flex items-center justify-between py-2 text-[13px]">
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-[12px]">~/.claude/history.jsonl</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <FileSize entry={fileSystem.claudeHistory} />
+            {fileSystem.claudeHistory.lineCount != null && (
+              <span className="text-[12px] text-muted-foreground">
+                {fileSystem.claudeHistory.lineCount.toLocaleString()} lines
+              </span>
+            )}
+            <FileModified entry={fileSystem.claudeHistory} />
+            {fileSystem.claudeHistory.exists && (
+              <CopyIconButton
+                text={fileSystem.claudeHistory.path}
+                label="Copy history.jsonl path"
+                className="size-4 opacity-40 hover:opacity-100 hover:bg-transparent"
+              />
+            )}
+          </div>
+        </div>
+        <Separator />
+
+        {/* Codex hooks */}
+        <div className="py-1">
+          <div className="flex items-center gap-2 py-1">
+            <p className="text-[11px] text-muted-foreground">
+              ~/.codex/hooks ({(fileSystem.codexHooks ?? []).length})
+            </p>
+            {!fileSystem.codexHooksDirExists && <UninstalledBadge />}
+          </div>
+          {(fileSystem.codexHooks ?? []).length === 0 && fileSystem.codexHooksDirExists ? (
+            <p className="text-[12px] text-muted-foreground py-2">No hook scripts found</p>
+          ) : (
+            (fileSystem.codexHooks ?? []).map((entry, i) => (
+              <div key={entry.name}>
+                {i > 0 && <Separator />}
+                <div className="flex items-center justify-between py-2 text-[13px]">
+                  <span className="font-mono text-[12px]">{entry.name}</span>
+                  <div className="flex items-center gap-2">
+                    <FileSize entry={entry} />
+                    <FileModified entry={entry} />
+                    <CopyIconButton
+                      text={entry.path}
+                      label={`Copy ${entry.name} path`}
+                      className="size-4 opacity-40 hover:opacity-100 hover:bg-transparent"
+                    />
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+        <Separator />
+
+        {/* Codex databases */}
+        <div className="py-1">
+          <div className="flex items-center gap-2 py-1">
+            <p className="text-[11px] text-muted-foreground">
+              ~/.codex databases ({(fileSystem.codexDBs ?? []).length})
+            </p>
+            {!fileSystem.codexDBsDirExists && <UninstalledBadge />}
+          </div>
+          {(fileSystem.codexDBs ?? []).length === 0 && fileSystem.codexDBsDirExists ? (
+            <p className="text-[12px] text-muted-foreground py-2">No databases found</p>
+          ) : (
+            (fileSystem.codexDBs ?? []).map((entry, i) => (
               <div key={entry.name}>
                 {i > 0 && <Separator />}
                 <div className="flex items-center justify-between py-2 text-[13px]">
