@@ -34,6 +34,23 @@ describe('useLogTail', () => {
     expect(result.current.error).toBeNull()
   })
 
+  it('fetches hook-scripts log', async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ file: 'hook-scripts.log', lines: ['script line'] }),
+    })
+    vi.stubGlobal('fetch', mockFetch)
+
+    const { result } = renderHook(() => useLogTail('hook-scripts', 25))
+
+    await act(async () => {
+      await result.current.fetch()
+    })
+
+    expect(mockFetch).toHaveBeenCalledWith('/api/diagnostics/log-tail?file=hook-scripts&lines=25')
+    expect(result.current.lines).toEqual(['script line'])
+  })
+
   it('sets error on HTTP failure', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 400 }))
     const { result } = renderHook(() => useLogTail('build'))

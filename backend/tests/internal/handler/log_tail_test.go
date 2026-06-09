@@ -97,3 +97,30 @@ func TestLogTailBuildFileParam(t *testing.T) {
 		t.Errorf("file = %q, want build.log", payload.File)
 	}
 }
+
+func TestLogTailHookScriptsFileParam(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "hook-scripts.log"), []byte("script output\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	h := handler.LogTail(handler.LogTailOptions{HookerDir: dir})
+	req := httptest.NewRequest(http.MethodGet, "/api/diagnostics/log-tail?file=hook-scripts", nil)
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", rec.Code)
+	}
+	var payload struct {
+		File  string   `json:"file"`
+		Lines []string `json:"lines"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&payload); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if payload.File != "hook-scripts.log" {
+		t.Errorf("file = %q, want hook-scripts.log", payload.File)
+	}
+	if len(payload.Lines) != 1 || payload.Lines[0] != "script output" {
+		t.Errorf("lines = %v, want [script output]", payload.Lines)
+	}
+}

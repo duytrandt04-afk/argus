@@ -186,8 +186,14 @@ export function FileSystemCard({ fileSystem }: FileSystemCardProps) {
   }
 
   function tailStateFor(name: string) {
-    if (name === 'hooker.log') return { lines: hookerTail.lines, loading: hookerTail.loading, error: hookerTail.error }
-    if (name === 'hook-scripts.log') return { lines: hookScriptsTail.lines, loading: hookScriptsTail.loading, error: hookScriptsTail.error }
+    if (name === 'hooker.log')
+      return { lines: hookerTail.lines, loading: hookerTail.loading, error: hookerTail.error }
+    if (name === 'hook-scripts.log')
+      return {
+        lines: hookScriptsTail.lines,
+        loading: hookScriptsTail.loading,
+        error: hookScriptsTail.error,
+      }
     return { lines: buildTail.lines, loading: buildTail.loading, error: buildTail.error }
   }
 

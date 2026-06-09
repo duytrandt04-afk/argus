@@ -47,6 +47,13 @@ const minimalDiagnostics: Diagnostics = {
         lastModified: null,
         exists: false,
       },
+      {
+        name: 'hook-scripts.log',
+        path: '/home/user/.hooker/hook-scripts.log',
+        sizeBytes: 128,
+        lastModified: '2026-06-10T00:00:00Z',
+        exists: true,
+      },
     ],
     hooks: [],
     claudeDir: '/home/user/.claude',
