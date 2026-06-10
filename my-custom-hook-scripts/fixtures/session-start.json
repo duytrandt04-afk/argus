@@ -1,0 +1,5 @@
+{
+  "hook_event_name": "SessionStart",
+  "source": "startup",
+  "transcript_path": "/Users/duytran/.claude/projects/test/session.jsonl"
+}
