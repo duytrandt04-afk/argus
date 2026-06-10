@@ -68,8 +68,8 @@ export function SummaryStats({ stats }: SummaryStatsProps) {
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-7">
       {STAT_LABELS.map((item) => (
         <Card key={item.key}>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-medium text-muted-foreground">
+          <CardHeader className="min-h-10 pb-2">
+            <CardTitle className="text-xs leading-4 font-medium text-muted-foreground">
               {item.label}
             </CardTitle>
           </CardHeader>

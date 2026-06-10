@@ -40,11 +40,55 @@ checksum:
   name_template: "checksums.txt"
 
 changelog:
-  use: github
-  sort: asc
-  filters:
-    exclude:
-      - "^docs:"
-      - "^test:"
-      - "^ci:"
-      - "Merge pull request"
+  disable: true
+
+release:
+  header: |
+    ## Argus v0.1.0 — First Public Release
+
+    **Argus** is a local-first monitoring dashboard for AI coding agent activity. Install it in under 10 minutes and get full visibility into your Claude Code, Codex, and Gemini CLI sessions — no cloud dependencies, no data leaving your machine.
+
+    ### What's included
+
+    **Agents supported**
+    - Claude Code — full hook payload normalization, token usage breakdown, tool call rendering
+    - Codex — session tracking, file diff rendering, tool call events
+    - Gemini CLI (Antigravity) — hook payload normalization and session tracking
+
+    **Event feed**
+    - Real-time event stream via SSE
+    - Filter by agent, event type, session, keyword
+    - Expandable raw payload modal per event
+    - Tool call and diff renderers
+
+    **Sessions**
+    - Session tree with parent/child spawn relationships
+    - Per-session file change tracking
+    - Session duration and status indicators
+
+    **Dashboard**
+    - Aggregate stats: events, sessions, tokens, tool calls
+    - Usage breakdown by agent and model
+    - Date-range filtering
+
+    **Diagnostics**
+    - Filesystem health check (DB path, transcript dirs)
+    - Hook scripts log viewer
+    - Version and build info endpoint
+
+    **Hooks configuration UI**
+    - Generate and install `hooks.json` for Claude Code, Codex, and Gemini CLI
+    - Preset levels: minimal, standard, full
+    - One-click install / uninstall scripts
+
+    **Privacy**
+    - `.argusignore` support to exclude paths from context enrichment
+
+    ### Install
+
+    Download the binary for your platform from the assets below, or install from source:
+
+    ```bash
+    git clone https://github.com/duytrandt04-afk/argus
+    cd argus && make install
+    ```

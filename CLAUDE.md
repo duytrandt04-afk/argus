@@ -2,7 +2,7 @@
 
 ## Project overview
 
-Argus = AI coding session observer. Receives hook payloads from Claude Code and Codex via `POST /api/hook`, normalizes them, persists to SQLite, streams to browser via SSE. Frontend is a React SPA: live event feed, session waterfall, dashboard stats, usage breakdown.
+Argus = AI coding session observer. Receives hook payloads from Claude Code and Codex via `POST /api/hook`, normalizes them, persists to SQLite, streams to browser via SSE. Frontend is a React SPA: live event feed, dashboard stats, usage breakdown.
 
 Go backend + React frontend. No external infra. Ships as Docker image or local binary.
 

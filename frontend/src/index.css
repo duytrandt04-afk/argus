@@ -2,7 +2,6 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
-@import '@fontsource-variable/geist';
 @import './styles/app.css';
 
 @custom-variant dark (&:is(.dark *));
@@ -93,7 +92,7 @@ body {
 
 @theme inline {
   --font-heading: var(--font-sans);
-  --font-sans: 'Geist Variable', sans-serif;
+  --font-sans: 'JetBrains Mono', monospace;
 
   /* Expose app tokens as Tailwind utilities */
   --color-bg: var(--bg);
