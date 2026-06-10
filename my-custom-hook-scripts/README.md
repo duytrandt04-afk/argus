@@ -2,7 +2,7 @@
 
 Standalone hook scripts for Claude Code and Codex. Zero dependencies — each file
 is self-contained and can be copied anywhere. All scripts fail open: any internal
-error exits 0 silently so a hook bug never blocks the agent. Scripts log to
+error exits 0 (blockers emit a harmless `{}`) so a hook bug never blocks the agent. Scripts log to
 `~/.argus/hook-scripts.log`.
 
 Agent detection: `CLAUDECODE=1` env var → Claude Code (JSON hook output);
@@ -13,7 +13,7 @@ otherwise Codex (plain text / exit codes).
 | Script | Hook event | Purpose |
 | --- | --- | --- |
 | `block-dangerous.js` | PreToolUse (`Bash`) | Deny dangerous shell commands (`rm -rf ~`, `curl \| sh`, force-push to main, `mkfs`, ...) with a reason the agent can act on. |
-| `protect-secrets.js` | PreToolUse (`Read\|Edit\|Write\|Bash`) | Deny access to secret files (`.env`, `*.pem`, `~/.ssh/`, `~/.aws/`, ...). `.env.example/sample/template` are allowed. |
+| `protect-secrets.js` | PreToolUse (`Read\|Edit\|Write\|Bash`) | Deny access to secret files (`.env`, `*.pem`, `~/.ssh/`, `~/.aws/`, ...). `.env.example/sample/template` and `secrets.test/spec.*` files are allowed. |
 | `cost-warn.js` | SessionStart | Warn when token usage in the rolling 5h window (from the local argus DB) crosses a threshold. Silent otherwise. |
 | `permission-request.js` | PermissionRequest | Native macOS approval dialog with an "Always" list. |
 | `stop.js` | Stop | Local notification when the agent finishes. |
@@ -27,16 +27,16 @@ otherwise Codex (plain text / exit codes).
     "PreToolUse": [
       {
         "matcher": "Bash",
-        "hooks": [{ "type": "command", "command": "node /Users/duytran/GitHub/argus/my-custom-hook-scripts/block-dangerous.js" }]
+        "hooks": [{ "type": "command", "command": "node /path/to/my-custom-hook-scripts/block-dangerous.js" }]
       },
       {
         "matcher": "Read|Edit|Write|Bash",
-        "hooks": [{ "type": "command", "command": "node /Users/duytran/GitHub/argus/my-custom-hook-scripts/protect-secrets.js" }]
+        "hooks": [{ "type": "command", "command": "node /path/to/my-custom-hook-scripts/protect-secrets.js" }]
       }
     ],
     "SessionStart": [
       {
-        "hooks": [{ "type": "command", "command": "node /Users/duytran/GitHub/argus/my-custom-hook-scripts/cost-warn.js" }]
+        "hooks": [{ "type": "command", "command": "node /path/to/my-custom-hook-scripts/cost-warn.js" }]
       }
     ]
   }
@@ -77,3 +77,6 @@ Codex behavior: drop `CLAUDECODE=1` — blockers exit 2 with the reason on stder
   billing-block boundaries.
 - Blockers are regex-based: they stop common accidents, not a determined
   adversary. Shell obfuscation can evade them.
+- Pattern matching applies to the whole command string, so quoted text can
+  false-positive (e.g. `git commit -m "drop table cleanup"` trips the SQL DROP
+  pattern). Use the `allow` config lists as an escape hatch.

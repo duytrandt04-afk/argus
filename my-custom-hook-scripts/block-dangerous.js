@@ -23,7 +23,7 @@ const DANGEROUS = [
   },
   { re: /\bchmod\s+(-[a-zA-Z]+\s+)*777\b/, why: 'chmod 777 (world-writable permissions)' },
   {
-    re: /\bgit\s+push\b[^|;&]*(--force\b|\s-f\b)[^|;&]*\b(main|master)\b|\bgit\s+push\b[^|;&]*\b(main|master)\b[^|;&]*(--force\b|\s-f\b)/,
+    re: /\bgit\s+push\b[^|;&]*(--force(?!-with-lease)\b|\s-f\b)[^|;&]*\b(main|master)\b|\bgit\s+push\b[^|;&]*\b(main|master)\b[^|;&]*(--force(?!-with-lease)\b|\s-f\b)/,
     why: 'force push to main/master',
   },
   { re: /\bDROP\s+(DATABASE|TABLE)\b/i, why: 'SQL DROP statement' },

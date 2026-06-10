@@ -136,7 +136,7 @@ async function main() {
 
   if (tool === 'bash' || tool === 'shell') {
     const command = typeof input.command === 'string' ? input.command : '';
-    const tokens = command.split(/[\s;|&<>()'"`]+/).filter(Boolean);
+    const tokens = command.split(/[\s;|&<>()'"`=]+/).filter(Boolean);
     for (const token of tokens) {
       const hit = matchProtected(token, config);
       if (hit) {
