@@ -39,6 +39,19 @@ func TestDeleteProjectByCWDCascades(t *testing.T) {
 	seed("doomed-2", "/work/doomed", "2026-06-11T10:05:00Z")
 	seed("survivor", "/work/keep", "2026-06-11T10:10:00Z")
 
+	// Extra event without its own session: makes eventsDeleted (3) differ from
+	// sessionsDeleted (2) so a swapped return order fails the assertions.
+	if err := db.Add(domain.NormalizedEvent{
+		Time:          "2026-06-11T10:06:00Z",
+		Agent:         "claudecode",
+		Session:       "doomed-1",
+		CWD:           "/work/doomed",
+		HookEventName: "PreToolUse",
+		RawPayload:    []byte(`{}`),
+	}); err != nil {
+		t.Fatalf("add extra event: %v", err)
+	}
+
 	sessionsDeleted, eventsDeleted, err := db.DeleteProjectByCWD("/work/doomed")
 	if err != nil {
 		t.Fatalf("DeleteProjectByCWD: %v", err)
@@ -46,8 +59,8 @@ func TestDeleteProjectByCWDCascades(t *testing.T) {
 	if sessionsDeleted != 2 {
 		t.Errorf("sessionsDeleted = %d, want 2", sessionsDeleted)
 	}
-	if eventsDeleted != 2 {
-		t.Errorf("eventsDeleted = %d, want 2", eventsDeleted)
+	if eventsDeleted != 3 {
+		t.Errorf("eventsDeleted = %d, want 3", eventsDeleted)
 	}
 
 	// Doomed project gone, survivor untouched.
