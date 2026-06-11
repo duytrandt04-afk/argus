@@ -1,6 +1,5 @@
 import { Fragment, useEffect, type AnchorHTMLAttributes, type Ref, type RefObject } from 'react'
 import {
-  FishingHook,
   FolderOpen,
   LayoutDashboard,
   PanelLeft,
@@ -15,6 +14,26 @@ import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { VersionBadge } from '@/features/version/VersionBadge'
 import { cn } from '@/lib/utils'
+
+// Argus brand mark — all-seeing eye (lucide-style strokes, inherits currentColor)
+function ArgusEye({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12Z" />
+      <circle cx="12" cy="12" r="3" />
+      <circle cx="12" cy="12" r=".5" fill="currentColor" />
+    </svg>
+  )
+}
 
 interface SidebarProps {
   id?: string
@@ -204,7 +223,7 @@ export function Sidebar({
           <div className="flex w-full items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">
               <div className="flex size-6 items-center justify-center">
-                <FishingHook className="size-3.5 text-[#9a9a9a]" />
+                <ArgusEye className="size-3.5 text-[#9a9a9a]" />
               </div>
               <span className="text-[0.78rem] font-semibold tracking-[0.04em] text-[#ccc]">
                 argus
@@ -240,7 +259,7 @@ export function Sidebar({
             }}
           >
             <div className="flex size-6 shrink-0 items-center justify-center">
-              <FishingHook className="size-3.5 text-[#9a9a9a]" />
+              <ArgusEye className="size-3.5 text-[#9a9a9a]" />
             </div>
             <span className="sidebar-label-motion sidebar-label-open whitespace-nowrap text-[0.78rem] font-semibold tracking-[0.04em] text-[#ccc]">
               argus
