@@ -1,5 +1,5 @@
 import { format } from 'date-fns'
-import { RefreshCw } from 'lucide-react'
+import { FolderOpen, RefreshCw } from 'lucide-react'
 import { CopyIconButton } from '@/components/shared/CopyIconButton'
 import { useState } from 'react'
 import { Badge } from '@/components/ui/badge'
@@ -23,6 +23,29 @@ function UninstalledBadge() {
 
 type FileSystemCardProps = {
   fileSystem: DiagnosticsFileSystem
+}
+
+function RevealButton({ entry }: { entry: DiagnosticsFileEntry }) {
+  if (!entry.exists) return null
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon-sm"
+      aria-label={`Show ${entry.name} in folder`}
+      title="Show in folder"
+      className="size-4 opacity-40 hover:opacity-100 hover:bg-transparent"
+      onClick={() => {
+        fetch('/api/diagnostics/reveal', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ path: entry.path }),
+        }).catch((err: unknown) => console.error('reveal failed', err))
+      }}
+    >
+      <FolderOpen className="size-3.5" />
+    </Button>
+  )
 }
 
 function FileSize({ entry }: { entry: DiagnosticsFileEntry }) {
@@ -108,6 +131,7 @@ function LogRow({ entry, open, onToggle, tailState, onRefresh }: LogRowProps) {
               className="size-4 opacity-40 hover:opacity-100 hover:bg-transparent"
             />
           )}
+          <RevealButton entry={entry} />
           <Button
             type="button"
             variant="outline"
@@ -164,6 +188,7 @@ function SubSection({ label, entries, dirExists, emptyLabel, total }: SubSection
                     label={`Copy ${entry.name} path`}
                     className="size-4 opacity-40 hover:opacity-100 hover:bg-transparent"
                   />
+                  <RevealButton entry={entry} />
                 </div>
               </div>
             </div>
@@ -252,6 +277,7 @@ export function FileSystemCard({ fileSystem }: FileSystemCardProps) {
                 className="size-4 opacity-40 hover:opacity-100 hover:bg-transparent"
               />
             )}
+            <RevealButton entry={fileSystem.binary} />
           </div>
         </div>
         <Separator />
@@ -334,6 +360,7 @@ export function FileSystemCard({ fileSystem }: FileSystemCardProps) {
                   className="size-4 opacity-40 hover:opacity-100 hover:bg-transparent"
                 />
               )}
+              <RevealButton entry={fileSystem.claudeHistory} />
             </div>
           </div>
         </div>

@@ -95,6 +95,7 @@ func NewRouter(svc *service.EventService, repo repository.EventRepository, ready
 	mux.Handle("GET /api/diagnostics/log-tail", handler.LogTail(handler.LogTailOptions{
 		ArgusDir: opts.ArgusDir,
 	}))
+	mux.Handle("POST /api/diagnostics/reveal", handler.Reveal())
 	mux.Handle("GET /api/projects", handler.Projects(svc))
 	mux.Handle("DELETE /api/projects", handler.Projects(svc))
 	mux.Handle("GET /api/sessions", handler.Sessions(svc))
