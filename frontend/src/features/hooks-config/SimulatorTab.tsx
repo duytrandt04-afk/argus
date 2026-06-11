@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { json } from '@codemirror/lang-json'
 import CodeMirror from '@uiw/react-codemirror'
 import { Check, RefreshCw, Terminal } from 'lucide-react'
@@ -19,6 +19,25 @@ import { getTemplate, HOOK_TEMPLATES } from './hookTemplates'
 import type { AgentKey, HooksConfig } from './types'
 
 const CUSTOM_VALUE = '__custom__'
+
+type HookScript = { name: string; path: string }
+
+const SCRIPT_RUNNERS: Record<string, string> = {
+  '.js': 'node',
+  '.sh': 'sh',
+  '.py': 'python3',
+}
+
+function scriptExtension(name: string): string {
+  const i = name.lastIndexOf('.')
+  return i === -1 ? '' : name.slice(i)
+}
+
+function composeScriptCommand(script: HookScript, agent: AgentKey): string {
+  const runner = SCRIPT_RUNNERS[scriptExtension(script.name)]
+  const base = `${runner} ${script.path}`
+  return agent === 'claudecode' ? `CLAUDECODE=1 ${base}` : base
+}
 
 type SimulateResult = {
   stdout: string
@@ -65,6 +84,23 @@ export function SimulatorTab({
   const [result, setResult] = useState<SimulateResult | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [applied, setApplied] = useState(false)
+  const [hookScripts, setHookScripts] = useState<HookScript[]>([])
+
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/diagnostics')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: { fileSystem?: { hooks?: HookScript[] } } | null) => {
+        if (cancelled || !data?.fileSystem?.hooks) return
+        setHookScripts(
+          data.fileSystem.hooks.filter((h) => scriptExtension(h.name) in SCRIPT_RUNNERS)
+        )
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const eventTypes = Object.keys(HOOK_TEMPLATES[agent]).sort()
 
@@ -72,14 +108,25 @@ export function SimulatorTab({
     if (!eventType) return []
     const groups = config?.hooks[eventType] ?? []
     const opts: { label: string; value: string; timeout?: number }[] = []
+    // Dedupe by command — option value IS the command string, and duplicate values
+    // make Radix Select render every matching item's label in the trigger.
+    const seen = new Set<string>()
     groups.forEach((g, gi) => {
       g.hooks.forEach((h, hi) => {
+        if (seen.has(h.command)) return
+        seen.add(h.command)
         opts.push({
           label: `group ${gi + 1} hook ${hi + 1} → ${truncate(h.command, 60)}`,
           value: h.command,
           timeout: h.timeout,
         })
       })
+    })
+    hookScripts.forEach((script) => {
+      const command = composeScriptCommand(script, agent)
+      if (seen.has(command)) return
+      seen.add(command)
+      opts.push({ label: `script: ${script.name}`, value: command })
     })
     return opts
   })()
@@ -166,7 +213,7 @@ export function SimulatorTab({
         </Select>
 
         <Select value={commandValue} onValueChange={handleCommandValueChange} disabled={!eventType}>
-          <SelectTrigger className="flex-1">
+          <SelectTrigger className="flex-1" aria-label="Select hook command">
             <SelectValue placeholder="Select hook command" />
           </SelectTrigger>
           <SelectContent>
