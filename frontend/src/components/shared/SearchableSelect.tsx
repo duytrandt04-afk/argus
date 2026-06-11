@@ -32,7 +32,7 @@ export function SearchableSelect({
   placeholder,
   ariaLabel,
   disabled = false,
-  emptyText = 'No results.',
+  emptyText = 'No results',
   className,
 }: SearchableSelectProps) {
   const [open, setOpen] = useState(false)
@@ -48,7 +48,10 @@ export function SearchableSelect({
           aria-expanded={open}
           aria-label={ariaLabel}
           disabled={disabled}
-          className={cn('justify-between font-normal', className)}
+          className={cn(
+            'justify-between font-normal dark:bg-input/30 dark:hover:bg-input/50',
+            className
+          )}
         >
           <span className={cn('truncate', !selected && 'text-muted-foreground')}>
             {selected ? selected.label : placeholder}
@@ -56,6 +59,7 @@ export function SearchableSelect({
           <ChevronDown className="size-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
+      {/* align="start" is required for Radix to set --radix-popover-trigger-width */}
       <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
         <Command>
           <CommandInput placeholder="Search…" />
