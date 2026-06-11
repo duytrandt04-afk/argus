@@ -13,6 +13,12 @@ const PROJECT = {
   live_count: 0,
 }
 
+const OTHER_PROJECT = {
+  ...PROJECT,
+  cwd: '/home/dev/argus',
+  name: 'argus',
+}
+
 function mockFetch(impl: (url: string, init?: RequestInit) => unknown) {
   vi.stubGlobal(
     'fetch',
@@ -84,5 +90,50 @@ describe('ProjectsPage delete', () => {
     expect(calls.some(([, init]) => (init as RequestInit | undefined)?.method === 'DELETE')).toBe(
       false
     )
+  })
+})
+
+describe('ProjectsPage search', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks()
+    vi.unstubAllGlobals()
+  })
+
+  it('filters cards by name, matches cwd segments, and restores on clear', async () => {
+    mockFetch(() => ({ projects: [PROJECT, OTHER_PROJECT] }))
+    renderPage()
+
+    expect(await screen.findAllByTestId('project-card')).toHaveLength(2)
+    const search = screen.getByRole('textbox', { name: /search projects/i })
+
+    fireEvent.change(search, { target: { value: 'argus' } })
+    await waitFor(() => {
+      expect(screen.getAllByTestId('project-card')).toHaveLength(1)
+    })
+    expect(screen.getByText('argus')).toBeInTheDocument()
+
+    // cwd segment match: "/home/dev" hits OTHER_PROJECT only
+    fireEvent.change(search, { target: { value: 'home/dev' } })
+    await waitFor(() => {
+      expect(screen.getAllByTestId('project-card')).toHaveLength(1)
+    })
+
+    fireEvent.change(search, { target: { value: '' } })
+    await waitFor(() => {
+      expect(screen.getAllByTestId('project-card')).toHaveLength(2)
+    })
+  })
+
+  it('shows no-match message for unmatched query', async () => {
+    mockFetch(() => ({ projects: [PROJECT] }))
+    renderPage()
+
+    await screen.findAllByTestId('project-card')
+    fireEvent.change(screen.getByRole('textbox', { name: /search projects/i }), {
+      target: { value: 'zzzz' },
+    })
+
+    expect(await screen.findByText(/no projects match/i)).toBeInTheDocument()
+    expect(screen.queryByTestId('project-card')).not.toBeInTheDocument()
   })
 })

@@ -12,6 +12,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import type { Project } from '@/types/sessions'
 
 async function loadProjects(signal: AbortSignal): Promise<Project[]> {
@@ -25,6 +26,12 @@ export function ProjectsPage() {
   const [projects, setProjects] = useState<Project[] | null>(null)
   const [pendingDelete, setPendingDelete] = useState<Project | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+
+  const query = searchQuery.trim().toLowerCase()
+  const visibleProjects = (projects ?? []).filter(
+    (p) => !query || p.name.toLowerCase().includes(query) || p.cwd.toLowerCase().includes(query)
+  )
 
   useEffect(() => {
     const controller = new AbortController()
@@ -63,11 +70,20 @@ export function ProjectsPage() {
 
   return (
     <div className="flex h-full flex-col bg-[#0a0a0a] text-white">
-      <header className="border-b border-white/10 bg-black/40 px-6 py-4">
-        <div className="text-[12px] font-semibold uppercase tracking-widest text-white/45">
-          Projects
+      <header className="flex items-end justify-between gap-4 border-b border-white/10 bg-black/40 px-6 py-4">
+        <div>
+          <div className="text-[12px] font-semibold uppercase tracking-widest text-white/45">
+            Projects
+          </div>
+          <h1 className="mt-1 text-xl font-semibold">Projects</h1>
         </div>
-        <h1 className="mt-1 text-xl font-semibold">Projects</h1>
+        <Input
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search projects…"
+          aria-label="Search projects"
+          className="w-full max-w-[260px] border-white/10 bg-black/30 text-[13px] placeholder:text-white/35"
+        />
       </header>
 
       <main className="flex-1 overflow-auto p-6">
@@ -77,9 +93,11 @@ export function ProjectsPage() {
           <div className="text-sm text-white/55">
             No projects yet. Start a Claude Code or Codex session to see it here.
           </div>
+        ) : visibleProjects.length === 0 ? (
+          <div className="text-sm text-white/55">No projects match “{searchQuery.trim()}”.</div>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {projects.map((project) => (
+            {visibleProjects.map((project) => (
               <Link
                 key={project.cwd}
                 to={`/sessions/${encodeURIComponent(project.cwd)}`}
