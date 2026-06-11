@@ -945,6 +945,35 @@ func (d *DB) UpsertSession(sessionID, agent, model, source, cwd, transcriptPath,
 	return err
 }
 
+// DeleteProjectByCWD removes every event and session recorded under cwd in one
+// transaction, so a half-deleted project can never be observed.
+func (d *DB) DeleteProjectByCWD(cwd string) (int64, int64, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), sqliteWriteTimeout)
+	defer cancel()
+
+	tx, err := d.db.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, 0, err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	evRes, err := tx.ExecContext(ctx, `DELETE FROM hook_events WHERE cwd = ?`, cwd)
+	if err != nil {
+		return 0, 0, err
+	}
+	sessRes, err := tx.ExecContext(ctx, `DELETE FROM sessions WHERE cwd = ?`, cwd)
+	if err != nil {
+		return 0, 0, err
+	}
+	if err := tx.Commit(); err != nil {
+		return 0, 0, err
+	}
+
+	eventsDeleted, _ := evRes.RowsAffected()
+	sessionsDeleted, _ := sessRes.RowsAffected()
+	return sessionsDeleted, eventsDeleted, nil
+}
+
 func (d *DB) MarkStaleSessions(cutoff time.Time) (int64, error) {
 	res, err := d.db.Exec(`
 		UPDATE sessions

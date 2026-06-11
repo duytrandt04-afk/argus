@@ -56,6 +56,10 @@ func (noopRepo) UpsertSession(string, string, string, string, string, string, st
 	return nil
 }
 
+func (noopRepo) DeleteProjectByCWD(string) (int64, int64, error) {
+	return 0, 0, nil
+}
+
 func (noopRepo) ExportEvents(_ context.Context, _ io.Writer) error { return nil }
 
 func (noopRepo) ExportSnapshot(_ context.Context, _ string) error { return nil }

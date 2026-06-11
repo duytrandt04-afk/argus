@@ -175,6 +175,10 @@ func (m *mockRepo) UpsertSession(sessionID, _, model, _, _, _, _, endedAt string
 	return nil
 }
 
+func (m *mockRepo) DeleteProjectByCWD(string) (int64, int64, error) {
+	return 0, 0, nil
+}
+
 func TestDiagnosticsReportsNotReadyAndUnavailableMemoryDB(t *testing.T) {
 	latest := "2026-05-27T10:00:00Z"
 	repo := &mockRepo{
