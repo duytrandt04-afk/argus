@@ -20,7 +20,7 @@ build-local:
 	 if [ -n "$$PID" ]; then kill $$PID && sleep 0.5; fi
 	@DB_PATH="$(HOME)/.argus/argus.db" ADDR="127.0.0.1:10804" \
 	  nohup $(LOCAL_BINARY) >> $(HOME)/.argus/argus.log 2>&1 &
-	@sleep 1 && curl -s http://127.0.0.1:10804/api/version
+	@curl -s --retry 10 --retry-connrefused --retry-delay 1 --max-time 15 http://127.0.0.1:10804/api/version
 
 clean:
 	rm -rf frontend/dist
