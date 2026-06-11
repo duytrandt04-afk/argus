@@ -116,42 +116,37 @@ export function EventFilters({
       {availableAgents.length > 0 && (
         <div className="flex w-full items-center gap-2 sm:w-auto">
           <span className="text-[0.7rem] text-[#666]">Agent</span>
-          <Select value={agentFilter} onValueChange={setAgentFilter}>
-            <SelectTrigger className="h-auto w-full px-2 py-1 text-[0.8rem] bg-neutral-950 border-[#333] text-[#cccccc] sm:w-[120px] focus:ring-0 focus:ring-offset-0">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="bg-[#111] border-[#333] text-[#cccccc]">
-              <SelectGroup>
-                <SelectItem value="all">All</SelectItem>
-                {availableAgents.map((agent) => (
-                  <SelectItem key={agent} value={agent}>
-                    {agent}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
+          <SearchableSelect
+            value={agentFilter}
+            onValueChange={setAgentFilter}
+            options={[
+              { label: 'All', value: 'all' },
+              ...availableAgents.map((agent) => ({ label: agent, value: agent })),
+            ]}
+            placeholder="All"
+            ariaLabel="Filter by agent"
+            className="h-auto w-full px-2 py-1 text-[0.8rem] bg-neutral-950 border-[#333] text-[#cccccc] sm:w-[120px]"
+          />
         </div>
       )}
 
       {availableProjects.length > 0 && (
         <div className="flex w-full items-center gap-2 sm:w-auto">
           <span className="text-[0.7rem] text-[#666]">Project</span>
-          <Select value={projectFilter} onValueChange={setProjectFilter}>
-            <SelectTrigger className="h-auto w-full px-2 py-1 text-[0.8rem] bg-neutral-950 border-[#333] text-[#cccccc] sm:w-[140px] focus:ring-0 focus:ring-offset-0">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="bg-[#111] border-[#333] text-[#cccccc]">
-              <SelectGroup>
-                <SelectItem value="all">All</SelectItem>
-                {availableProjects.map((cwd) => (
-                  <SelectItem key={cwd} value={cwd} title={cwd}>
-                    {cwd.split('/').filter(Boolean).pop() ?? cwd}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
+          <SearchableSelect
+            value={projectFilter}
+            onValueChange={setProjectFilter}
+            options={[
+              { label: 'All', value: 'all' },
+              ...availableProjects.map((cwd) => ({
+                label: cwd.split('/').filter(Boolean).pop() ?? cwd,
+                value: cwd,
+              })),
+            ]}
+            placeholder="All"
+            ariaLabel="Filter by project"
+            className="h-auto w-full px-2 py-1 text-[0.8rem] bg-neutral-950 border-[#333] text-[#cccccc] sm:w-[140px]"
+          />
         </div>
       )}
 
