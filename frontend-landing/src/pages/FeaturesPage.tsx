@@ -185,7 +185,7 @@ export function FeaturesPage() {
                   marginBottom: '32px',
                 }}
               >
-                Clone, build, and have your first event in under 10 minutes.
+                One command, and your first event lands in minutes.
               </p>
               <div className="hero-ctas" style={{ justifyContent: 'center' }}>
                 <a href="/install" className="btn-primary">

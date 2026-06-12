@@ -3,7 +3,8 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { Hero } from '../Hero'
 
-const INSTALL_CMD = 'git clone https://github.com/duytrandt04-afk/argus && make build-local'
+const INSTALL_CMD =
+  'curl -fsSL https://raw.githubusercontent.com/duytrandt04-afk/argus/main/install.sh | bash'
 
 describe('Hero', () => {
   beforeEach(() => {

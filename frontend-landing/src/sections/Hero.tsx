@@ -3,7 +3,8 @@ import { useState } from 'react'
 import { GitHubIcon } from '../components/GitHubIcon'
 import { WatchingEye } from '../components/WatchingEye'
 
-const INSTALL_CMD = 'git clone https://github.com/duytrandt04-afk/argus && make build-local'
+const INSTALL_CMD =
+  'curl -fsSL https://raw.githubusercontent.com/duytrandt04-afk/argus/main/install.sh | bash'
 
 function TerminalWindow() {
   return (

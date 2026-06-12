@@ -38,10 +38,9 @@ function CodeBlock({ lang, code }: CodeBlockProps) {
   )
 }
 
-const CLONE_CODE = `git clone https://github.com/duytrandt04-afk/argus
-cd argus
-make build-local
-~/.argus/bin/argus`
+const INSTALL_CODE = `# One command — downloads the binary for your OS, wires the
+# Claude Code SessionStart hook, installs to ~/.argus/bin
+curl -fsSL https://raw.githubusercontent.com/duytrandt04-afk/argus/main/install.sh | bash`
 
 const HOOKS_CODE = `# Add to ~/.claude/settings.json (Claude Code)
 {
@@ -55,14 +54,15 @@ const HOOKS_CODE = `# Add to ~/.claude/settings.json (Claude Code)
   }
 }`
 
-const DASHBOARD_CODE = `# Open in your browser after starting argus
+const DASHBOARD_CODE = `# Argus starts automatically with your next Claude Code or Codex
+# session. Open the dashboard:
 http://localhost:10804
 
-# Verify the hook endpoint is live
-curl http://127.0.0.1:10804/api/hook`
+# Verify the backend is live
+curl -fsS http://127.0.0.1:10804/api/version`
 
 const TAB_CONTENT: Record<Tab, { label: string; lang: string; code: string }> = {
-  clone: { label: 'Clone & Build', lang: 'bash', code: CLONE_CODE },
+  clone: { label: 'Install', lang: 'bash', code: INSTALL_CODE },
   hooks: { label: 'Configure Hooks', lang: 'json', code: HOOKS_CODE },
   dashboard: { label: 'Open Dashboard', lang: 'bash', code: DASHBOARD_CODE },
 }
@@ -78,7 +78,8 @@ export function QuickInstall() {
           <p className="section-eyebrow">03 · Install</p>
           <h2 className="section-title">Up and running in minutes</h2>
           <p>
-            No accounts, no API keys. Clone, build, configure one hook line, and you&apos;re live.
+            No accounts, no API keys, no build tools. One command installs the binary and wires your
+            first hook — building from source is only for contributors.
           </p>
         </AnimateOnScroll>
 

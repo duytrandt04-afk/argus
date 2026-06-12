@@ -10,9 +10,9 @@ describe('QuickInstall', () => {
     })
   })
 
-  it('renders Clone & Build tab by default', () => {
+  it('renders Install tab by default', () => {
     render(<QuickInstall />)
-    expect(screen.getByText(/git clone/i)).toBeInTheDocument()
+    expect(screen.getByText(/install.sh/i)).toBeInTheDocument()
   })
 
   it('switches to Configure Hooks tab', async () => {
@@ -27,9 +27,9 @@ describe('QuickInstall', () => {
     expect(screen.getByText(/localhost:10804/i)).toBeInTheDocument()
   })
 
-  it('Clone & Build tab is active by default', () => {
+  it('Install tab is active by default', () => {
     render(<QuickInstall />)
-    expect(screen.getByRole('button', { name: /clone & build/i })).toHaveClass('active')
+    expect(screen.getByRole('button', { name: /^install$/i })).toHaveClass('active')
   })
 
   it('clicked tab becomes active', async () => {

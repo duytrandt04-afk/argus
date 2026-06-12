@@ -57,16 +57,17 @@ function Step({ num, title, children }: StepProps) {
   )
 }
 
-const CLONE_CODE = `git clone https://github.com/duytrandt04-afk/argus
+const INSTALL_CODE = `curl -fsSL https://raw.githubusercontent.com/duytrandt04-afk/argus/main/install.sh | bash`
+
+const START_OUTPUT = `SessionStart hook (completed)
+  hook context: ARGUS live @ http://127.0.0.1:10804`
+
+const START_MANUAL = `~/.argus/bin/start-argus.sh`
+
+const SOURCE_CODE = `git clone https://github.com/duytrandt04-afk/argus
 cd argus
-make build-local`
-
-const RUN_CODE = `~/.argus/bin/argus`
-
-const RUN_OUTPUT = `argus version -> 0.1.0
-hook endpoint  -> POST http://127.0.0.1:10804/api/hook
-events SSE     -> GET  http://127.0.0.1:10804/api/events/stream
-db             -> ~/.argus/argus.db`
+make build-local
+~/.argus/bin/argus`
 
 const CLAUDECODE_HOOKS = `{
   "hooks": {
@@ -99,8 +100,8 @@ ARGUS_URL=http://127.0.0.1:10804/api/hook
   "postToolUse": "curl -s -X POST $ARGUS_URL -H 'Content-Type: application/json' -d @-"
 }`
 
-const VERIFY_CODE = `# Check the hook endpoint is live
-curl http://127.0.0.1:10804/api/hook
+const VERIFY_CODE = `# Check the backend is live
+curl -fsS http://127.0.0.1:10804/api/version
 
 # Send a test event manually
 echo '{"type":"Stop","session_id":"test"}' \
@@ -127,16 +128,13 @@ export function InstallPage() {
               <div className="requirements-bar">
                 <span className="req-label">Requirements</span>
                 <span className="req-item">
-                  <span className="t-ok">●</span> Go 1.25+
-                </span>
-                <span className="req-item">
                   <span className="t-ok">●</span> Node.js 18+
                 </span>
                 <span className="req-item">
-                  <span className="t-ok">●</span> pnpm 10.x
+                  <span className="t-ok">●</span> curl
                 </span>
                 <span className="req-item">
-                  <span className="t-ok">●</span> curl
+                  <span className="t-ok">●</span> tar
                 </span>
                 <span className="req-item">
                   <span className="t-ok">●</span> macOS / Linux / WSL
@@ -149,31 +147,33 @@ export function InstallPage() {
         {/* Steps */}
         <section className="section">
           <div className="container install-steps">
-            <Step num="01" title="Clone & build">
+            <Step num="01" title="Install with one command">
               <p className="step-desc">
-                Clone the repo and run <code>make build-local</code>. This compiles the frontend,
-                embeds the React SPA into the Go binary, and places <code>argus</code> in{' '}
-                <code>~/.argus/bin/</code>.
+                The installer downloads a pre-built binary for your OS and architecture, places it
+                at <code>~/.argus/bin/argus</code>, wires the Claude Code <code>SessionStart</code>{' '}
+                hook, and creates <code>start-argus.sh</code>. No Go, no pnpm, no build step.
               </p>
-              <CodeBlock lang="bash" code={CLONE_CODE} />
+              <CodeBlock lang="bash" code={INSTALL_CODE} />
             </Step>
 
-            <Step num="02" title="Start the server">
+            <Step num="02" title="Start argus">
               <p className="step-desc">
-                Run the binary. It starts the hook endpoint and serves the dashboard on{' '}
-                <code>:10804</code>.
+                Open a new Claude Code or Codex session — argus starts automatically via the{' '}
+                <code>SessionStart</code> hook. You will see:
               </p>
-              <CodeBlock lang="bash" code={RUN_CODE} />
+              <CodeBlock lang="text" code={START_OUTPUT} filename="session" />
               <p className="step-desc" style={{ marginTop: '12px' }}>
-                Expected output:
+                Or start it manually:
               </p>
-              <CodeBlock lang="text" code={RUN_OUTPUT} filename="stdout" />
+              <CodeBlock lang="bash" code={START_MANUAL} />
             </Step>
 
             <Step num="03" title="Configure agent hooks">
               <p className="step-desc">
-                Add the hook commands to your agent config. Argus accepts any JSON payload via{' '}
-                <code>POST /api/hook</code> — it auto-detects the agent from the transcript path.
+                The installer wires Claude Code automatically; add more event types with one-click
+                presets on the dashboard&apos;s Hooks Config page. For manual setup, Argus accepts
+                any JSON payload via <code>POST /api/hook</code> — it auto-detects the agent from
+                the transcript path.
               </p>
               <div className="tabs" style={{ marginBottom: '0' }}>
                 <span className="tab-label">Claude Code</span>
@@ -233,6 +233,15 @@ export function InstallPage() {
                 running a full agent session.
               </p>
               <CodeBlock lang="bash" code={VERIFY_CODE} />
+            </Step>
+
+            <Step num="06" title="From source (contributors only)">
+              <p className="step-desc">
+                Building from source needs Go 1.25+ and pnpm 10.x. <code>make build-local</code>{' '}
+                compiles the frontend, embeds the SPA into the Go binary, and installs to{' '}
+                <code>~/.argus/bin/</code>. End users never need this.
+              </p>
+              <CodeBlock lang="bash" code={SOURCE_CODE} />
             </Step>
           </div>
         </section>
@@ -302,23 +311,23 @@ const TROUBLE_ITEMS = [
     fix: 'Set ADDR=:9000 (or any free port) before running argus. Update the curl commands in your hook config to match.',
   },
   {
-    problem: 'make build-local fails — pnpm not found',
-    fix: 'Install pnpm with: npm install -g pnpm@10. Then re-run make build-local.',
+    problem: 'Installer fails — curl or tar not found',
+    fix: 'Install curl and tar with your system package manager, then re-run the install one-liner.',
   },
   {
     problem: 'Events not appearing in the dashboard',
     fix: 'Confirm argus is running and the curl in your hook config points to the correct port. Send a test payload manually (step 5).',
   },
   {
-    problem: 'go: command not found',
-    fix: 'Install Go 1.25+ from go.dev/dl. Make sure GOPATH/bin is in your PATH.',
+    problem: 'Argus did not auto-start with my session',
+    fix: 'Check the SessionStart hook exists in ~/.claude/settings.json, or start manually: ~/.argus/bin/start-argus.sh.',
   },
   {
     problem: 'Dashboard shows blank / no SSE connection',
     fix: 'Hard-refresh the browser (Cmd+Shift+R). If on WSL, ensure localhost resolves to 127.0.0.1 in your browser.',
   },
   {
-    problem: 'Binary not found after make build-local',
+    problem: 'Binary not found after install',
     fix: 'Check ~/.argus/bin is in your PATH. Add: export PATH="$HOME/.argus/bin:$PATH" to your shell profile.',
   },
 ]
