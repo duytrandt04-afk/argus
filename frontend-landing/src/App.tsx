@@ -1,14 +1,13 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
-import { Features } from './sections/Features'
 import { Footer } from './sections/Footer'
 import { Hero } from './sections/Hero'
-import { HowItWorks } from './sections/HowItWorks'
 import { NavBar } from './sections/NavBar'
 import { MythBlock } from './sections/MythBlock'
 import { Pillars } from './sections/Pillars'
 import { Privacy } from './sections/Privacy'
 import { QuickInstall } from './sections/QuickInstall'
 import { StatsBar } from './sections/StatsBar'
+import { SurfaceTour } from './sections/SurfaceTour'
 import { FeaturesPage } from './pages/FeaturesPage'
 import { InstallPage } from './pages/InstallPage'
 
@@ -21,8 +20,7 @@ function HomePage() {
         <StatsBar />
         <Pillars />
         <MythBlock />
-        <HowItWorks />
-        <Features />
+        <SurfaceTour />
         <QuickInstall />
         <Privacy />
       </main>
