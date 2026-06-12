@@ -35,9 +35,9 @@ export function NavBar() {
         </Link>
         <div className="navbar-links">
           {isHome ? (
-            <a href="#features">HOW IT WORKS</a>
+            <a href="#features">THE INSTRUMENTS</a>
           ) : (
-            <Link to="/#features">HOW IT WORKS</Link>
+            <Link to="/#features">THE INSTRUMENTS</Link>
           )}
           <Link to="/features">FEATURES</Link>
           <Link to="/install">INSTALL</Link>
