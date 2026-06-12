@@ -4,6 +4,7 @@ import { Footer } from './sections/Footer'
 import { Hero } from './sections/Hero'
 import { HowItWorks } from './sections/HowItWorks'
 import { NavBar } from './sections/NavBar'
+import { Pillars } from './sections/Pillars'
 import { Privacy } from './sections/Privacy'
 import { QuickInstall } from './sections/QuickInstall'
 import { StatsBar } from './sections/StatsBar'
@@ -17,6 +18,7 @@ function HomePage() {
       <main>
         <Hero />
         <StatsBar />
+        <Pillars />
         <HowItWorks />
         <Features />
         <QuickInstall />

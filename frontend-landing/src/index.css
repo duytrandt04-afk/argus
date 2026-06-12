@@ -1162,6 +1162,47 @@ a {
 }
 
 /* ============================================================
+   PILLARS — three duties, typography not cards
+   ============================================================ */
+.pillars-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 40px;
+}
+.pillar {
+  border-left: 1px solid var(--border-deep);
+  padding-left: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 100%;
+}
+.pillar-title {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 28px;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+.pillar-body {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  color: var(--text-muted);
+  line-height: 1.65;
+}
+.pillar-link {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-sub);
+  margin-top: auto;
+  transition: color 0.15s;
+}
+.pillar-link:hover {
+  color: var(--text-primary);
+}
+
+/* ============================================================
    RESPONSIVE
    ============================================================ */
 @media (max-width: 900px) {
@@ -1206,6 +1247,9 @@ a {
     direction: ltr;
   }
   .trouble-grid {
+    grid-template-columns: 1fr;
+  }
+  .pillars-grid {
     grid-template-columns: 1fr;
   }
 }
