@@ -49,6 +49,5 @@ backend/internal/ui/dist/*
 !backend/internal/ui/dist/.gitkeep
 
 # AI agents
-docs/superpowers/
 
 .cache
