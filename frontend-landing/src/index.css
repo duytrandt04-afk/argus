@@ -31,8 +31,6 @@
   --text-sub: #b4b4bd;
   --text-path: #84848e;
   --text-ok: #3ecf8e;
-  --font-pixel: 'JetBrains Mono', ui-monospace, monospace; /* legacy var name — mono stack */
-  --font-vt: 'Inter', system-ui, sans-serif; /* legacy var name — body stack */
   --font-serif: 'Instrument Serif', Georgia, serif;
   --font-sans: 'Inter', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
@@ -434,7 +432,11 @@ a {
 }
 .terminal-dot.green {
   background: var(--text-ok);
-  animation: pulse 2.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .terminal-dot.green {
+    animation: pulse 2.4s ease-in-out infinite;
+  }
 }
 @keyframes pulse {
   0%,
@@ -507,7 +509,11 @@ a {
   height: 1.1em;
   background: var(--text-sub);
   vertical-align: text-bottom;
-  animation: blink 1.1s step-end infinite;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .terminal-cursor {
+    animation: blink 1.1s step-end infinite;
+  }
 }
 @keyframes blink {
   0%,
@@ -709,41 +715,6 @@ a {
 /* ============================================================
    FEATURES — module cards
    ============================================================ */
-.features {
-  padding: 96px 0;
-  border-top: 1px solid var(--border-deep);
-}
-.features-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1px;
-  background: var(--border-deep);
-  border: 1px solid var(--border-deep);
-  border-radius: 10px;
-  overflow: hidden;
-  margin-top: 48px;
-}
-.features-grid > .animate-on-scroll {
-  display: contents;
-}
-.feature-card {
-  background: var(--bg-base);
-  padding: 26px 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  height: 100%;
-  transition: background 0.2s;
-}
-.feature-card:hover {
-  background: var(--bg-surface);
-}
-/* variant classes kept for markup compatibility — one calm voice now */
-.feature-card.v1,
-.feature-card.v2,
-.feature-card.v3 {
-  border: none;
-}
 .feature-icon {
   width: 34px;
   height: 34px;
@@ -754,23 +725,6 @@ a {
   justify-content: center;
   color: var(--text-sub);
   background: var(--bg-card);
-}
-.feature-card:hover .feature-icon {
-  color: var(--accent-soft);
-}
-.feature-card h3 {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  color: var(--text-primary);
-  line-height: 1.5;
-}
-.feature-card p {
-  font-family: var(--font-sans);
-  font-size: 13.5px;
-  color: var(--text-muted);
-  line-height: 1.6;
 }
 
 /* ============================================================
@@ -1287,9 +1241,6 @@ a {
   }
   .stat-item:nth-child(n + 3) {
     border-top: 1px solid var(--border-deep);
-  }
-  .features-grid {
-    grid-template-columns: 1fr;
   }
   .flow-row {
     flex-direction: column;

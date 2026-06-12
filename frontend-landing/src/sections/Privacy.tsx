@@ -15,19 +15,16 @@ function FileKeyIcon() {
 
 const CARDS = [
   {
-    variant: 'v1',
     icon: <ShieldIcon />,
     title: 'No telemetry',
     desc: 'Zero analytics, zero tracking, zero phoning home. The binary never makes outbound connections.',
   },
   {
-    variant: 'v2',
     icon: <HardDriveIcon />,
     title: 'Local SQLite',
     desc: 'All events land in a single SQLite file on your machine. No external database, no SaaS.',
   },
   {
-    variant: 'v3',
     icon: <FileKeyIcon />,
     title: 'You control exports',
     desc: 'Export your event history anytime via the dashboard. Delete it anytime with rm.',
