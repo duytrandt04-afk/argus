@@ -398,7 +398,7 @@ git commit -m "perf(fileutil): single-read line helpers and 2MB enrichment cap"
 **Files:**
 - Modify: `backend/internal/handler/hook.go:162-178`
 
-- [ ] **Step 1: Replace the two-read block**
+- [x] **Step 1: Replace the two-read block**
 
 In `enrichContext`, replace lines 162-178 (from `startLine := e.StartLine` through the closing brace of `if startLine > 0 {`) with:
 
@@ -434,19 +434,21 @@ In `enrichContext`, replace lines 162-178 (from `startLine := e.StartLine` throu
 
 Note the early return: when the payload already carries a usable `StartLine` (> 1) and context lines, the file is no longer read at all (previously this path also did zero reads — preserve that).
 
-- [ ] **Step 2: Run handler tests**
+- [x] **Step 2: Run handler tests**
 
 Run: `cd backend && go test ./internal/handler/`
 Expected: PASS. Existing enrichment tests assert the same outputs from one read.
 
-- [ ] **Step 3: Gates and commit**
+- [x] **Step 3: Gates and commit**
 
 Run: `cd backend && go build ./... && go test ./... && golangci-lint run ./...`
 Expected: all pass.
 
+Scope extension (approved): `backend/internal/agents/codex/codex.go` hunk loop also had two `FindStartLine(path, …)` calls each re-reading the same file per hunk. One `ReadFileLines(path)` call was hoisted before the hunks loop (path is constant within the patch block — set before the loop and never changed inside it). Both lookups replaced with `FindStartLineInLines(fileLines, …)`. Guard: `fileLines == nil` passes nil through; `FindStartLineInLines(nil, x)` returns 0, matching pre-existing fallback when file is missing.
+
 ```bash
-git add backend/internal/handler/hook.go
-git commit -m "perf(handler): enrich hook context with a single file read"
+git add backend/internal/handler/hook.go backend/internal/agents/codex/codex.go docs/superpowers/plans/2026-06-13-cpu-optimization.md
+git commit -m "perf(ingest): enrich hook and codex patch context with a single file read"
 ```
 
 ---
