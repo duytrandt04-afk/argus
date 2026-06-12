@@ -715,7 +715,7 @@ Today `AddEvent` scans the whole transcript JSONL on **every** hook event. Chang
 - Modify: `backend/internal/service/event_service.go:21-32` (struct), `70-106` (AddEvent)
 - Test: service test file
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```go
 // countingUsageRepo records UpsertSession usage values, embedding the
@@ -781,12 +781,12 @@ func TestAddEventThrottlesUsageComputation(t *testing.T) {
 
 Add `"os"` and `"path/filepath"` imports to the test file as needed.
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 Run: `cd backend && go test -run TestAddEventThrottlesUsageComputation ./internal/service/`
 Expected: FAIL — `repo.usages[1].InputTokens` is 10 (usage currently computed on every event).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Add to the `EventService` struct (after `ingestionErrors atomic.Int64`):
 
@@ -858,7 +858,7 @@ func (s *EventService) shouldComputeUsage(e domain.NormalizedEvent) bool {
 
 Zero-usage upserts are safe because of Task 5's guard.
 
-- [ ] **Step 4: Run tests, gates, commit**
+- [x] **Step 4: Run tests, gates, commit**
 
 Run: `cd backend && go build ./... && go test ./... && golangci-lint run ./...`
 Expected: all pass. If an existing service/handler test asserts usage is upserted on every event, update it to match the throttle semantics (terminal events exact, mid-session throttled).

@@ -26,6 +26,10 @@ type EventService struct {
 	hookRequests    atomic.Int64
 	ingestionErrors atomic.Int64
 
+	// usageScannedAt tracks the last transcript usage scan per session so
+	// mid-session events don't re-scan the whole JSONL on every hook.
+	usageScannedAt sync.Map // session ID (string) → time.Time
+
 	diagMu         sync.RWMutex
 	diagCache      *domain.Diagnostics
 	diagCachedAt   time.Time
@@ -43,6 +47,10 @@ type DiagnosticsOptions struct {
 }
 
 const exportSensitivityWarning = "Exports may include prompts, diffs, file paths, tool outputs, raw payloads, and exports; handle exported data as sensitive."
+
+// usageRescanInterval bounds transcript scans for live sessions: usage is
+// recomputed at most this often per session, plus always on terminal events.
+const usageRescanInterval = 30 * time.Second
 
 func New(repo repository.EventRepository) *EventService {
 	return &EventService{
@@ -82,11 +90,14 @@ func (s *EventService) AddEvent(e domain.NormalizedEvent) error {
 	}
 	if e.Session != "" {
 		var usage domain.SessionUsage
-		switch e.Agent {
-		case "claudecode":
-			usage = claudecode.ComputeUsage(e.TranscriptPath)
-		default:
-			usage = codex.ComputeUsage(e.TranscriptPath)
+		if s.shouldComputeUsage(e) {
+			switch e.Agent {
+			case "claudecode":
+				usage = claudecode.ComputeUsage(e.TranscriptPath)
+			default:
+				usage = codex.ComputeUsage(e.TranscriptPath)
+			}
+			s.usageScannedAt.Store(e.Session, time.Now())
 		}
 		if err := s.repo.UpsertSession(
 			e.Session,
@@ -104,6 +115,24 @@ func (s *EventService) AddEvent(e domain.NormalizedEvent) error {
 	}
 	s.broadcast(e)
 	return nil
+}
+
+// shouldComputeUsage reports whether this event warrants a transcript scan.
+// Terminal events always scan (final numbers must be exact); other events
+// scan at most once per usageRescanInterval per session.
+func (s *EventService) shouldComputeUsage(e domain.NormalizedEvent) bool {
+	if e.TranscriptPath == "" {
+		return false
+	}
+	if endedAtForEvent(e) != "" {
+		return true
+	}
+	if v, ok := s.usageScannedAt.Load(e.Session); ok {
+		if last, isTime := v.(time.Time); isTime && time.Since(last) < usageRescanInterval {
+			return false
+		}
+	}
+	return true
 }
 
 func (s *EventService) ListEvents(limit int) ([]domain.NormalizedEvent, error) {
