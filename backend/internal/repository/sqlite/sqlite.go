@@ -934,11 +934,11 @@ func (d *DB) UpsertSession(sessionID, agent, model, source, cwd, transcriptPath,
 				THEN excluded.ended_at
 				ELSE sessions.ended_at
 			END,
-			input_tokens = excluded.input_tokens,
-			output_tokens = excluded.output_tokens,
-			cache_creation_tokens = excluded.cache_creation_tokens,
-			cache_read_tokens = excluded.cache_read_tokens,
-			turns = excluded.turns`,
+			input_tokens = CASE WHEN (excluded.input_tokens + excluded.output_tokens + excluded.cache_creation_tokens + excluded.cache_read_tokens + excluded.turns) > 0 THEN excluded.input_tokens ELSE sessions.input_tokens END,
+			output_tokens = CASE WHEN (excluded.input_tokens + excluded.output_tokens + excluded.cache_creation_tokens + excluded.cache_read_tokens + excluded.turns) > 0 THEN excluded.output_tokens ELSE sessions.output_tokens END,
+			cache_creation_tokens = CASE WHEN (excluded.input_tokens + excluded.output_tokens + excluded.cache_creation_tokens + excluded.cache_read_tokens + excluded.turns) > 0 THEN excluded.cache_creation_tokens ELSE sessions.cache_creation_tokens END,
+			cache_read_tokens = CASE WHEN (excluded.input_tokens + excluded.output_tokens + excluded.cache_creation_tokens + excluded.cache_read_tokens + excluded.turns) > 0 THEN excluded.cache_read_tokens ELSE sessions.cache_read_tokens END,
+			turns = CASE WHEN (excluded.input_tokens + excluded.output_tokens + excluded.cache_creation_tokens + excluded.cache_read_tokens + excluded.turns) > 0 THEN excluded.turns ELSE sessions.turns END`,
 		sessionID, agent, model, source, cwd, transcriptPath, eventTime, eventTime, nullStr(endedAt),
 		usage.InputTokens, usage.OutputTokens, usage.CacheCreationTokens, usage.CacheReadTokens, usage.Turns,
 	)

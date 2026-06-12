@@ -621,7 +621,7 @@ Prerequisite for Task 6 — once usage is computed only on some events, the othe
 - Modify: `backend/internal/repository/sqlite/sqlite.go:901-946`
 - Test: the sqlite test file containing `UpsertSession` tests
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Append to the sqlite test file (package `sqlite_test`):
 
@@ -668,12 +668,12 @@ func TestUpsertSessionZeroUsagePreservesStored(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 Run: `cd backend && go test -run TestUpsertSessionZeroUsagePreservesStored ./internal/repository/sqlite/... ./tests/...`
 Expected: FAIL — stored usage is wiped to 0 by the second upsert. (Run against whichever path holds the sqlite tests; `backend/tests/internal/repository/sqlite/` exists in this repo.)
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `UpsertSession` (`sqlite.go:937-941`), replace the five unconditional usage assignments:
 
@@ -695,7 +695,7 @@ with guarded ones (all-zero incoming usage means "no new usage computed — keep
 			turns = CASE WHEN (excluded.input_tokens + excluded.output_tokens + excluded.cache_creation_tokens + excluded.cache_read_tokens + excluded.turns) > 0 THEN excluded.turns ELSE sessions.turns END`,
 ```
 
-- [ ] **Step 4: Run tests, gates, commit**
+- [x] **Step 4: Run tests, gates, commit**
 
 Run: `cd backend && go build ./... && go test ./... && golangci-lint run ./...`
 Expected: all pass.

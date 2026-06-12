@@ -1403,3 +1403,44 @@ func TestDiagnosticsAgentStatsEventRates(t *testing.T) {
 		t.Errorf("EventsLast24h: want 1, got %d", cc.EventsLast24h)
 	}
 }
+
+func TestUpsertSessionZeroUsagePreservesStored(t *testing.T) {
+	db, err := sqlite.New(":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = db.Close() }()
+
+	usage := domain.SessionUsage{InputTokens: 100, OutputTokens: 50, Turns: 3}
+	if err := db.UpsertSession("s1", "claudecode", "m", "", "/tmp/p", "/tmp/.claude/t.jsonl",
+		"2026-06-13T00:00:00Z", "", usage); err != nil {
+		t.Fatal(err)
+	}
+
+	// A later event without computed usage must not wipe the stored counts.
+	if err := db.UpsertSession("s1", "claudecode", "m", "", "/tmp/p", "/tmp/.claude/t.jsonl",
+		"2026-06-13T00:01:00Z", "", domain.SessionUsage{}); err != nil {
+		t.Fatal(err)
+	}
+
+	sessions, err := db.ListSessions()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(sessions) != 1 {
+		t.Fatalf("expected 1 session, got %d", len(sessions))
+	}
+	if sessions[0].Usage.InputTokens != 100 || sessions[0].Usage.Turns != 3 {
+		t.Fatalf("zero-usage upsert clobbered stored usage: %+v", sessions[0].Usage)
+	}
+
+	// A non-zero usage write still overwrites.
+	if err := db.UpsertSession("s1", "claudecode", "m", "", "/tmp/p", "/tmp/.claude/t.jsonl",
+		"2026-06-13T00:02:00Z", "", domain.SessionUsage{InputTokens: 200, OutputTokens: 80, Turns: 4}); err != nil {
+		t.Fatal(err)
+	}
+	sessions, _ = db.ListSessions()
+	if sessions[0].Usage.InputTokens != 200 {
+		t.Fatalf("non-zero usage upsert did not overwrite: %+v", sessions[0].Usage)
+	}
+}
