@@ -367,6 +367,12 @@ a {
 .btn-primary:hover {
   color: var(--accent-soft);
 }
+
+/* the watchman himself — iris follows the cursor (WatchingEye component) */
+.hero-eye {
+  color: rgba(255, 255, 255, 0.9);
+  filter: drop-shadow(0 0 28px rgba(139, 92, 246, 0.45));
+}
 /* hero entry stagger — secondary link lands at 1s */
 @media (prefers-reduced-motion: no-preference) {
   .hero-copy > * {
@@ -374,16 +380,19 @@ a {
     animation: hero-enter 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
   }
   .hero-copy > :nth-child(1) {
-    animation-delay: 0.05s;
+    animation-delay: 0s;
   }
   .hero-copy > :nth-child(2) {
-    animation-delay: 0.15s;
+    animation-delay: 0.1s;
   }
   .hero-copy > :nth-child(3) {
-    animation-delay: 0.4s;
+    animation-delay: 0.2s;
   }
   .hero-copy > :nth-child(4) {
-    animation-delay: 0.65s;
+    animation-delay: 0.45s;
+  }
+  .hero-copy > :nth-child(5) {
+    animation-delay: 0.7s;
   }
   .hero-copy .btn-secondary {
     opacity: 0;

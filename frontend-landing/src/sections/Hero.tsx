@@ -1,5 +1,6 @@
 import { Check, Copy } from 'lucide-react'
 import { useState } from 'react'
+import { WatchingEye } from '../components/WatchingEye'
 
 const INSTALL_CMD = 'git clone https://github.com/duytrandt04-afk/argus && make build-local'
 
@@ -75,6 +76,8 @@ export function Hero() {
     <section className="hero">
       <div className="hero-inner">
         <div className="hero-copy">
+          <WatchingEye size={76} className="hero-eye" />
+
           <div className="hero-badge">Open source · local-first · zero cloud</div>
 
           <h1>
