@@ -1,26 +1,29 @@
 /* ============================================================
-   ARGUS — instrument panel
-   The page reads like precision recording equipment: hairline
-   rules, mono readouts, etched micro-labels, one purple moment
-   per viewport (the iris, the primary CTA). Everything else is
-   calm zinc. The eye watches; it does not shout.
+   ARGUS — the watchhouse
+   Editorial serif voice over instrument-panel hardware. Serif
+   (Instrument Serif, display only, one italic word per headline)
+   tells the story; mono panels prove the product. Full-strength
+   violet only on the iris and the primary CTA; the soft tint
+   carries italic words, feed markers, and the hero glow. Nothing
+   blinks, nothing follows the cursor, one eye only.
    ============================================================ */
 
 /* ============================================================
    TOKENS
    ============================================================ */
 :root {
-  --bg-base: #131316;
-  --bg-surface: #16161a;
-  --bg-card: #1c1c21;
-  --bg-inset: #0f0f12;
-  --border: #2a2a31;
-  --border-deep: #222228;
+  --bg-base: #0a0a0c;
+  --bg-surface: #101014;
+  --bg-card: #16161b;
+  --bg-inset: #0d0d10;
+  --border: #26262d;
+  --border-deep: #1e1e24;
   --accent: #863bff;
   --accent-mid: #7434e0;
   --accent-soft: #a978ff;
+  --glow: rgba(134, 59, 255, 0.07);
   --shadow: rgba(0, 0, 0, 0.45);
-  --text-primary: #f2f2f5;
+  --text-primary: #ededf0;
   --text-muted: #9c9ca6;
   --text-dim: #6e6e78;
   --text-ghost: #4b4b54;
@@ -28,11 +31,11 @@
   --text-sub: #b4b4bd;
   --text-path: #84848e;
   --text-ok: #3ecf8e;
-  --font-pixel:
-    'JetBrains Mono', ui-monospace, monospace; /* legacy var name — heading/mono stack */
-  --font-vt: 'IBM Plex Sans', system-ui, sans-serif; /* legacy var name — body stack */
+  --font-pixel: 'JetBrains Mono', ui-monospace, monospace; /* legacy var name — mono stack */
+  --font-vt: 'Inter', system-ui, sans-serif; /* legacy var name — body stack */
+  --font-serif: 'Instrument Serif', Georgia, serif;
+  --font-sans: 'Inter', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
-  --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
   --max-width: 1160px;
 }
 
