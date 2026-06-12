@@ -79,16 +79,15 @@ export function Hero() {
           <div className="hero-badge">Open source · local-first · zero cloud</div>
 
           <h1>
-            Your coding agents,
+            The watchman whose eyes
             <br />
-            governed <span className="accent">hook by hook.</span>
+            <span className="accent">never</span> all close.
           </h1>
 
           <p className="hero-sub">
-            Argus is the hook control center for Claude Code and Codex: manage hook configs with
-            one-click presets, test any hook in a built-in simulator before an agent fires it, and
-            use a free collection of battle-tested guardrail scripts — with a real-time local
-            dashboard watching every event. No cloud, your data stays local.
+            Argus is the hook control center for Claude Code and Codex — manage configs with
+            one-click presets, test any hook in the simulator before an agent fires it, ship
+            guardrails from the free script collection. No cloud. Your machine, your SQLite file.
           </p>
 
           <div className="hero-actions">
