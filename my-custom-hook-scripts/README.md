@@ -1,7 +1,9 @@
 # my-custom-hook-scripts
 
+**Argus's public hook script collection — free for everyone, with or without Argus.**
 Standalone hook scripts for Claude Code and Codex. Zero dependencies — each file
-is self-contained and can be copied anywhere. All scripts fail open: any internal
+is self-contained and can be copied anywhere. Test any of them in the
+[Argus hook simulator](../docs/hooks.md#hook-simulator) before wiring them up. All scripts fail open: any internal
 error exits 0 (blockers emit a harmless `{}`) so a hook bug never blocks the agent. Scripts log to
 `~/.argus/hook-scripts.log`.
 

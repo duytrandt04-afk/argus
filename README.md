@@ -5,14 +5,27 @@
 
 **Website: [getargus.org](https://getargus.org)**
 
-Local-first monitoring dashboard for AI coding agent activity. Receives hook payloads from
-Claude Code and Codex, normalizes them to a canonical event model, persists to
-SQLite, and streams to a React SPA in real time.
+**The hook control center for AI coding agents.** Hooks are how you govern what
+Claude Code and Codex can do — block dangerous commands, protect secrets, enforce
+branch policy, get notified. But managing them means hand-editing JSON, testing
+them means waiting for a live agent to misbehave, and good scripts are scattered
+across a thousand gists. Argus fixes all three, locally:
 
-Highlights: live event feed, per-project session explorer, usage dashboard, hooks
-config editor with one-click presets, and a **hook simulator** — run any hook command
-or `~/.argus/hooks` script against a synthetic event payload and inspect its
-stdout/stderr/exit code without waiting for a real agent session.
+- **Hook management** — a config editor with one-click presets for Claude Code and
+  Codex. No JSON surgery; argus-managed entries are tagged and reversible.
+- **Hook simulator** — run any hook command or script against a realistic synthetic
+  payload for any event type, and inspect stdout/stderr/exit code/duration *before*
+  an agent ever fires it. The missing debugger for the hook ecosystem.
+- **Public script collection** — [`my-custom-hook-scripts/`](my-custom-hook-scripts/)
+  ships battle-tested, zero-dependency guardrails free for everyone: dangerous-command
+  blocker, secrets protection, branch guard, auto-format with lint feedback,
+  prompt-injection scanner, webhook notifications, and more. Every script works
+  with Claude Code and Codex.
+
+Backing it up: a **live observability layer** — every hook payload is normalized to a
+canonical event model, persisted to SQLite, and streamed to a real-time dashboard
+(event feed, session explorer, usage and cost stats). You see your hooks — and your
+agents — actually working. No cloud, no telemetry, your data stays local.
 
 ## Quick start
 
@@ -39,8 +52,9 @@ Stops the server, removes binaries and scripts, unwires hooks from `~/.claude/se
 
 ## Documentation
 
+- [docs/hooks.md](docs/hooks.md) - hook management, presets, and the hook simulator
+- [my-custom-hook-scripts/](my-custom-hook-scripts/) - the public hook script collection
 - [docs/quickstart.md](docs/quickstart.md) - first-event walkthrough (under 10 minutes)
-- [docs/hooks.md](docs/hooks.md) - hook setup, presets, and the hook simulator
 - [docs/install.md](docs/install.md) - full install reference, support matrix, data lifecycle
 - [docs/privacy.md](docs/privacy.md) - capture categories, ignore controls, export implications
 - [docs/security.md](docs/security.md) - local threat model and remote-sharing posture

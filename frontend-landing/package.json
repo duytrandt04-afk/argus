@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "deploy": "pnpm build && wrangler pages deploy dist --project-name=argus-landing",
+    "deploy": "pnpm build && npx wrangler pages deploy dist --project-name=argus-landing --commit-dirty=true",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest"
   },

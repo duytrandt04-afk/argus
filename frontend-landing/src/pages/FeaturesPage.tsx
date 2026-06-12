@@ -186,6 +186,19 @@ type FeatureDetail = {
 
 const FEATURES: FeatureDetail[] = [
   {
+    eyebrow: 'Hooks config & simulator',
+    title: 'Manage & test hooks\nbefore agents run them',
+    desc: 'The core of Argus: one-click hook presets, a structured config editor, and a simulator that fires synthetic payloads at any hook command — plus a free public collection of battle-tested guardrail scripts.',
+    bullets: [
+      'One-click presets for Claude Code and Codex — tagged, additive, reversible',
+      'Simulator runs any hook against a realistic payload for every event type',
+      'Inspect stdout, stderr, exit code, and duration without a live agent',
+      'Public script collection: command blocker, secrets guard, branch protection, auto-format, injection scanner',
+      'Structured JSON editor with live validation',
+    ],
+    panel: <HooksConfigPanel />,
+  },
+  {
     eyebrow: 'Live event feed',
     title: 'Every tool call,\nin real time',
     desc: 'Argus streams every agent action to your browser the instant it fires. No polling. No refresh.',
@@ -197,6 +210,7 @@ const FEATURES: FeatureDetail[] = [
       'Permission events (allow / deny) tracked separately',
     ],
     panel: <EventsFeedPanel />,
+    flip: true,
   },
   {
     eyebrow: 'Session waterfall',
@@ -210,7 +224,6 @@ const FEATURES: FeatureDetail[] = [
       'Session state persists across page reloads',
     ],
     panel: <SessionsPanel />,
-    flip: true,
   },
   {
     eyebrow: 'Dashboard & costs',
@@ -224,19 +237,6 @@ const FEATURES: FeatureDetail[] = [
       'All math runs locally — no external pricing API',
     ],
     panel: <DashboardPanel />,
-  },
-  {
-    eyebrow: 'Hooks config & simulator',
-    title: 'Configure &\ntest your hooks',
-    desc: 'Manage your hook configuration and fire test payloads directly from the dashboard — no curl required.',
-    bullets: [
-      'View and edit hook config for Claude Code and Codex',
-      'Built-in payload simulator for every hook event type',
-      'Verify your hook endpoint responds correctly',
-      'One-click copy of the curl command for any hook',
-      'Structured JSON editor with live validation',
-    ],
-    panel: <HooksConfigPanel />,
     flip: true,
   },
 ]
@@ -253,8 +253,8 @@ export function FeaturesPage() {
               <p className="section-eyebrow">Capabilities</p>
               <h1 className="page-hero-title">Features</h1>
               <p className="page-hero-sub">
-                Everything you need to observe, debug, and understand your AI coding agents —
-                running entirely on localhost.
+                Everything you need to govern, test, and observe your AI coding agents — running
+                entirely on localhost.
               </p>
             </AnimateOnScroll>
           </div>

@@ -79,15 +79,16 @@ export function Hero() {
           <div className="hero-badge">Open source · local-first · zero cloud</div>
 
           <h1>
-            Every move your
+            Your coding agents,
             <br />
-            agents make, <span className="accent">on record.</span>
+            governed <span className="accent">hook by hook.</span>
           </h1>
 
           <p className="hero-sub">
-            Argus captures every hook event from Claude Code and Codex, normalizes them into a
-            unified event model, and streams to a real-time dashboard. No cloud, no telemetry, your
-            data stays local.
+            Argus is the hook control center for Claude Code and Codex: manage hook configs with
+            one-click presets, test any hook in a built-in simulator before an agent fires it, and
+            use a free collection of battle-tested guardrail scripts — with a real-time local
+            dashboard watching every event. No cloud, your data stays local.
           </p>
 
           <div className="hero-actions">

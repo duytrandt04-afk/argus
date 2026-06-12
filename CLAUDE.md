@@ -2,7 +2,7 @@
 
 ## Project overview
 
-Argus = AI coding session observer. Receives hook payloads from Claude Code and Codex via `POST /api/hook`, normalizes them, persists to SQLite, streams to browser via SSE. Frontend is a React SPA: live event feed, dashboard stats, usage breakdown, projects/sessions explorer, diagnostics, and a hooks config editor with a built-in hook simulator (run any hook command or `~/.argus/hooks` script against a synthetic payload and inspect stdout/stderr/exit code).
+Argus = hook control center for AI coding agents. Core value, in order: **hook management** (config editor with one-click presets for Claude Code and Codex), the **hook simulator** (run any hook command or `~/.argus/hooks` script against a synthetic payload and inspect stdout/stderr/exit code — test guardrails before a live agent fires them), and the **public hook script collection** (`my-custom-hook-scripts/` — zero-dependency, cross-agent guardrail/automation scripts shipped for everyone). The observability layer supports it: hook payloads arrive via `POST /api/hook`, get normalized, persisted to SQLite, streamed to browser via SSE. Frontend is a React SPA: hooks config editor + simulator, live event feed, dashboard stats, usage breakdown, projects/sessions explorer, diagnostics.
 
 Go backend + React frontend. No external infra. Ships as Docker image or local binary.
 
@@ -233,9 +233,9 @@ function renderWith(props) {
 
 **argus**
 
-argus is a local-first monitoring dashboard for AI coding agent activity. It receives hook payloads from Claude Code and Codex normalizes them into a canonical event model, persists to SQLite, and streams to a React SPA in real time. Built for solo developers who want visibility into their coding agent sessions without cloud dependencies.
+argus is a local-first hook control center for AI coding agents: manage hook configs with one-click presets, test any hook in the built-in simulator before a live agent fires it, and ship/use the public hook script collection (`my-custom-hook-scripts/`). The supporting observability layer receives hook payloads from Claude Code and Codex, normalizes them into a canonical event model, persists to SQLite, and streams to a React SPA in real time. Built for solo developers who want control over — and visibility into — their coding agent sessions without cloud dependencies.
 
-**Core Value:** A developer can install argus from source in under 10 minutes and trust that it reliably captures, stores, and surfaces their coding agent activity without data loss, silent failures, or upgrade surprises.
+**Core Value:** A developer can install argus in under 10 minutes and trust it to manage, test, and observe their agent hooks — reliable capture and storage of agent activity, no data loss, no silent failures, no upgrade surprises.
 
 ### Constraints
 

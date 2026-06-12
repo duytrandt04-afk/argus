@@ -1,5 +1,10 @@
 # Hooks
 
+Hook management is Argus's core: configure hooks with presets, test them in the
+simulator before an agent ever runs them, and grab ready-made scripts from the
+[public hook script collection](../my-custom-hook-scripts/) (guardrails,
+formatters, notifications — zero dependencies, Claude Code + Codex).
+
 Argus receives agent events at:
 
 ```text
