@@ -48,7 +48,7 @@ Capture before-numbers for the two hot paths whose public API stays stable acros
 - Create: `backend/internal/fileutil/fileutil_bench_test.go`
 - Create: `backend/internal/service/event_service_bench_test.go`
 
-- [ ] **Step 1: Write the fileutil benchmark**
+- [x] **Step 1: Write the fileutil benchmark**
 
 ```go
 package fileutil_test
@@ -94,7 +94,7 @@ func BenchmarkEnrichLookup(b *testing.B) {
 }
 ```
 
-- [ ] **Step 2: Write the dashboard stats benchmark**
+- [x] **Step 2: Write the dashboard stats benchmark**
 
 ```go
 package service_test
@@ -168,17 +168,17 @@ func BenchmarkGetDashboardStats(b *testing.B) {
 
 Note: `domain.NormalizedEvent` field names above must match `backend/internal/domain/event.go` — verify with a quick read and adjust field names if they differ (e.g., `CWD` vs `Cwd`).
 
-- [ ] **Step 3: Run benchmarks, record baseline**
+- [x] **Step 3: Run benchmarks, record baseline**
 
 Run: `cd backend && go test -bench BenchmarkEnrichLookup -benchtime 2s -run '^$' ./internal/fileutil/ && go test -bench BenchmarkGetDashboardStats -benchtime 2s -run '^$' ./internal/service/`
 Expected: both benchmarks run and report ns/op. **Paste the two baseline numbers here:**
 
 ```
-BASELINE BenchmarkEnrichLookup:        ____ ns/op
-BASELINE BenchmarkGetDashboardStats:   ____ ns/op
+BASELINE BenchmarkEnrichLookup:        212832 ns/op
+BASELINE BenchmarkGetDashboardStats:   75647572 ns/op
 ```
 
-- [ ] **Step 4: Verify gates and commit**
+- [x] **Step 4: Verify gates and commit**
 
 Run: `cd backend && go build ./... && go test ./... && golangci-lint run ./...`
 Expected: all pass.
