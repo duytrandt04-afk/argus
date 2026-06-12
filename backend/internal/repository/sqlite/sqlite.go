@@ -934,6 +934,8 @@ func (d *DB) UpsertSession(sessionID, agent, model, source, cwd, transcriptPath,
 				THEN excluded.ended_at
 				ELSE sessions.ended_at
 			END,
+			-- All-zero incoming usage means no usage was computed for this event
+			-- (throttled or transcript unreadable) — keep the stored values.
 			input_tokens = CASE WHEN (excluded.input_tokens + excluded.output_tokens + excluded.cache_creation_tokens + excluded.cache_read_tokens + excluded.turns) > 0 THEN excluded.input_tokens ELSE sessions.input_tokens END,
 			output_tokens = CASE WHEN (excluded.input_tokens + excluded.output_tokens + excluded.cache_creation_tokens + excluded.cache_read_tokens + excluded.turns) > 0 THEN excluded.output_tokens ELSE sessions.output_tokens END,
 			cache_creation_tokens = CASE WHEN (excluded.input_tokens + excluded.output_tokens + excluded.cache_creation_tokens + excluded.cache_read_tokens + excluded.turns) > 0 THEN excluded.cache_creation_tokens ELSE sessions.cache_creation_tokens END,
