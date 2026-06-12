@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import { AnimateOnScroll } from '../components/AnimateOnScroll'
 import {
   DashboardPanel,
@@ -77,7 +78,33 @@ const SURFACES = [
   },
 ]
 
+// Scrollytelling: chapters scroll on the left; the panel mock pins on the
+// right and crossfades to the chapter under the reader's eye. Driven by
+// IntersectionObserver (universal support); a band ~20% from the viewport
+// top marks the active chapter. Collapses to inline panels on mobile.
 export function SurfaceTour() {
+  const chaptersRef = useRef<HTMLDivElement>(null)
+  const [active, setActive] = useState(0)
+
+  useEffect(() => {
+    const root = chaptersRef.current
+    if (!root || typeof IntersectionObserver !== 'function') return
+    const chapters = Array.from(root.querySelectorAll('[data-chapter]'))
+    if (chapters.length === 0) return
+
+    const observers = chapters.map((el, idx) => {
+      const io = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) setActive(idx)
+        },
+        { rootMargin: '-20% 0px -55% 0px', threshold: 0 }
+      )
+      io.observe(el)
+      return io
+    })
+    return () => observers.forEach((io) => io.disconnect())
+  }, [])
+
   return (
     <section id="features" className="tour section">
       <div className="container">
@@ -85,10 +112,14 @@ export function SurfaceTour() {
           <p className="section-eyebrow">The instruments</p>
           <h2 className="section-title">Six instruments, one panel.</h2>
         </AnimateOnScroll>
-        {SURFACES.map((s, i) => (
-          <AnimateOnScroll key={s.eyebrow}>
-            <div className={`tour-row${i % 2 === 1 ? ' flip' : ''}`}>
-              <div className="tour-copy">
+        <div className="tour-stage">
+          <div className="tour-chapters" ref={chaptersRef}>
+            {SURFACES.map((s, i) => (
+              <article
+                key={s.eyebrow}
+                data-chapter
+                className={`tour-chapter${active === i ? ' active' : ''}`}
+              >
                 <p className="section-eyebrow">
                   {String(i + 1).padStart(2, '0')} · {s.eyebrow}
                 </p>
@@ -101,11 +132,20 @@ export function SurfaceTour() {
                     </li>
                   ))}
                 </ul>
-              </div>
-              <div>{s.panel}</div>
+                <div className="tour-chapter-panel">{s.panel}</div>
+              </article>
+            ))}
+          </div>
+          <div className="tour-sticky" aria-hidden="true">
+            <div className="tour-panel-stack">
+              {SURFACES.map((s, i) => (
+                <div key={s.eyebrow} className={`tour-panel${active === i ? ' active' : ''}`}>
+                  {s.panel}
+                </div>
+              ))}
             </div>
-          </AnimateOnScroll>
-        ))}
+          </div>
+        </div>
       </div>
     </section>
   )

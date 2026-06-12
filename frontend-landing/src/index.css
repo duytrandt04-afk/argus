@@ -1248,26 +1248,33 @@ a {
 }
 
 /* ============================================================
-   SURFACE TOUR — six instruments
+   SURFACE TOUR — scrollytelling: chapters scroll, panel pins
    ============================================================ */
-.tour-row {
+.tour-stage {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 56px;
-  align-items: center;
-  padding: 48px 0;
-  border-top: 1px solid var(--border-deep);
+  grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+  gap: 64px;
+  align-items: start;
 }
-.tour-row.flip {
-  direction: rtl;
-}
-.tour-row.flip > * {
-  direction: ltr;
-}
-.tour-copy {
+.tour-chapter {
+  min-height: 68vh;
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 14px;
+  padding: 32px 0;
+  border-top: 1px solid var(--border-deep);
+  opacity: 0.35;
+  transition: opacity 0.45s ease;
+}
+.tour-chapter.active {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tour-chapter {
+    opacity: 1;
+    transition: none;
+  }
 }
 .tour-title {
   font-family: var(--font-serif);
@@ -1295,6 +1302,39 @@ a {
   display: flex;
   gap: 10px;
   align-items: baseline;
+}
+/* pinned panel column */
+.tour-sticky {
+  position: sticky;
+  top: calc(50vh - 220px);
+}
+.tour-panel-stack {
+  position: relative;
+  min-height: 440px;
+}
+.tour-panel {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transform: translateY(10px) scale(0.985);
+  transition:
+    opacity 0.45s ease,
+    transform 0.45s cubic-bezier(0.23, 1, 0.32, 1);
+  pointer-events: none;
+}
+.tour-panel.active {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .tour-panel {
+    transition: none;
+    transform: none;
+  }
+}
+/* inline per-chapter panel — mobile only */
+.tour-chapter-panel {
+  display: none;
 }
 
 /* ============================================================
@@ -1326,11 +1366,19 @@ a {
   .pillars-grid {
     grid-template-columns: 1fr;
   }
-  .tour-row {
+  .tour-stage {
     grid-template-columns: 1fr;
   }
-  .tour-row.flip {
-    direction: ltr;
+  .tour-sticky {
+    display: none;
+  }
+  .tour-chapter {
+    min-height: 0;
+    opacity: 1;
+  }
+  .tour-chapter-panel {
+    display: block;
+    margin-top: 18px;
   }
 }
 
@@ -1340,7 +1388,6 @@ a {
    ============================================================ */
 @supports (animation-timeline: view()) {
   @media (prefers-reduced-motion: no-preference) {
-    .tour-row,
     .pillar {
       animation: rise linear both;
       animation-timeline: view();
@@ -1480,10 +1527,6 @@ a {
   .myth,
   .why {
     padding: 64px 0;
-  }
-  .tour-row {
-    gap: 32px;
-    padding: 36px 0;
   }
   .section-title {
     margin-bottom: 32px;
