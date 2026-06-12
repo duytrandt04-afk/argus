@@ -196,7 +196,7 @@ git commit -m "test(backend): baseline CPU benchmarks for enrichment and dashboa
 - Modify: `backend/internal/fileutil/fileutil.go:170-224`
 - Test: `backend/internal/fileutil/fileutil_test.go` (create if absent; append if it exists)
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Append to (or create) `backend/internal/fileutil/fileutil_test.go`:
 
@@ -278,12 +278,12 @@ func TestComputeContextFromLinesMatchesComputeContext(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `cd backend && go test -run 'TestReadFileLines|TestFindStartLineInLines|TestComputeContextFromLines' ./internal/fileutil/`
 Expected: FAIL — `undefined: fileutil.ReadFileLines`, `undefined: fileutil.MaxEnrichFileBytes`, etc.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `backend/internal/fileutil/fileutil.go`, replace the existing `FindStartLine` and `ComputeContext` (lines 170-224) with:
 
@@ -379,12 +379,12 @@ Add `"log/slog"` to the import block of `fileutil.go`.
 
 Behavior change (intentional, per spec 1b): `FindStartLine`/`ComputeContext` now skip files over 2 MB — previously they read any size. If an existing fileutil test asserts behavior on a >2 MB fixture (unlikely), flag it rather than changing the cap.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `cd backend && go test ./internal/fileutil/ ./internal/handler/`
 Expected: PASS (handler tests confirm no regression in enrichment behavior).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/internal/fileutil/
