@@ -6,8 +6,8 @@ import { MythBlock } from './sections/MythBlock'
 import { Pillars } from './sections/Pillars'
 import { Privacy } from './sections/Privacy'
 import { QuickInstall } from './sections/QuickInstall'
-import { StatsBar } from './sections/StatsBar'
 import { SurfaceTour } from './sections/SurfaceTour'
+import { Ticker } from './sections/Ticker'
 import { WhyBlock } from './sections/WhyBlock'
 import { FeaturesPage } from './pages/FeaturesPage'
 import { InstallPage } from './pages/InstallPage'
@@ -18,7 +18,7 @@ function HomePage() {
       <NavBar />
       <main>
         <Hero />
-        <StatsBar />
+        <Ticker />
         <Pillars />
         <MythBlock />
         <SurfaceTour />

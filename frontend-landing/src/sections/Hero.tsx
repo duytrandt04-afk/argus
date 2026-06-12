@@ -1,5 +1,6 @@
 import { Check, Copy } from 'lucide-react'
 import { useState } from 'react'
+import { GitHubIcon } from '../components/GitHubIcon'
 import { WatchingEye } from '../components/WatchingEye'
 
 const INSTALL_CMD = 'git clone https://github.com/duytrandt04-afk/argus && make build-local'
@@ -100,7 +101,7 @@ export function Hero() {
                 rel="noopener noreferrer"
                 className="btn-primary"
               >
-                View on GitHub →
+                <GitHubIcon size={15} /> View on GitHub
               </a>
               <a
                 href="https://github.com/duytrandt04-afk/argus/tree/main/docs"

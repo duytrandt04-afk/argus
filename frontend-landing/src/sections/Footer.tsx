@@ -20,8 +20,7 @@ export function Footer() {
               <ArgusEye />
             </span>
             <span>
-              <span style={{ color: 'var(--text-primary)' }}>argus</span>
-              <span style={{ color: 'var(--text-muted)' }}>_</span>
+              <span style={{ color: 'var(--text-primary)' }}>Argus</span>
             </span>
           </div>
           <p className="footer-tag">The hook control center for AI coding agents.</p>

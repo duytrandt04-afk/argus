@@ -81,8 +81,8 @@ a {
   opacity: 0;
   transform: translateY(16px);
   transition:
-    opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1),
-    transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    opacity 0.6s cubic-bezier(0.23, 1, 0.32, 1),
+    transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
 }
 .animate-on-scroll.visible {
   opacity: 1;
@@ -185,7 +185,9 @@ a {
   padding: 7px 14px;
   cursor: pointer;
   flex-shrink: 0;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
   transition:
     color 0.15s,
     border-color 0.15s;
@@ -202,32 +204,9 @@ a {
    entry; secondary link lands last at 1s.
    ============================================================ */
 .hero {
-  padding: 120px 0 96px;
+  padding: 64px 0 88px;
   position: relative;
   overflow: hidden;
-}
-.hero::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse 62% 52% at 50% -12%, var(--glow) 0%, transparent 62%),
-    radial-gradient(ellipse 38% 42% at 0% 52%, var(--glow-cyan) 0%, transparent 65%);
-  pointer-events: none;
-}
-@media (prefers-reduced-motion: no-preference) {
-  .hero::before {
-    animation: breathe 14s ease-in-out infinite;
-  }
-}
-@keyframes breathe {
-  0%,
-  100% {
-    opacity: 0.85;
-  }
-  50% {
-    opacity: 1;
-  }
 }
 .hero-inner {
   max-width: var(--max-width);
@@ -243,8 +222,8 @@ a {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 28px;
-  max-width: 900px;
+  gap: 22px;
+  max-width: 1020px;
 }
 .hero-badge {
   display: inline-flex;
@@ -271,8 +250,8 @@ a {
 .hero h1 {
   font-family: var(--font-serif);
   font-weight: 400;
-  font-size: clamp(56px, 9vw, 128px);
-  line-height: 0.92;
+  font-size: clamp(44px, 6.4vw, 92px);
+  line-height: 0.95;
   letter-spacing: -0.015em;
   color: #fff;
 }
@@ -339,7 +318,9 @@ a {
   border-radius: 999px;
   cursor: pointer;
   text-decoration: none;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   border: 1px solid transparent;
   background:
     linear-gradient(var(--bg-card), var(--bg-card)) padding-box,
@@ -371,13 +352,13 @@ a {
 /* the watchman himself — iris follows the cursor (WatchingEye component) */
 .hero-eye {
   color: rgba(255, 255, 255, 0.9);
-  filter: drop-shadow(0 0 28px rgba(139, 92, 246, 0.45));
+  filter: drop-shadow(0 0 18px rgba(139, 92, 246, 0.35));
 }
 /* hero entry stagger — secondary link lands at 1s */
 @media (prefers-reduced-motion: no-preference) {
   .hero-copy > * {
     opacity: 0;
-    animation: hero-enter 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    animation: hero-enter 0.8s cubic-bezier(0.23, 1, 0.32, 1) forwards;
   }
   .hero-copy > :nth-child(1) {
     animation-delay: 0s;
@@ -396,7 +377,7 @@ a {
   }
   .hero-copy .btn-secondary {
     opacity: 0;
-    animation: hero-enter 0.8s cubic-bezier(0.22, 1, 0.36, 1) 1s forwards;
+    animation: hero-enter 0.8s cubic-bezier(0.23, 1, 0.32, 1) 1s forwards;
   }
 }
 @keyframes hero-enter {
@@ -410,7 +391,7 @@ a {
   }
 }
 .hero-panel {
-  margin-top: 64px;
+  margin-top: 56px;
   width: 100%;
   max-width: 860px;
   position: relative;
@@ -418,7 +399,7 @@ a {
 @media (prefers-reduced-motion: no-preference) {
   .hero-panel {
     opacity: 0;
-    animation: hero-enter 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.9s forwards;
+    animation: hero-enter 0.9s cubic-bezier(0.23, 1, 0.32, 1) 0.9s forwards;
   }
 }
 .btn-secondary {
@@ -660,50 +641,6 @@ a {
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-/* ============================================================
-   STATS BAR — readout strip
-   ============================================================ */
-.stats-bar {
-  border-top: 1px solid var(--border-deep);
-  border-bottom: 1px solid var(--border-deep);
-  background: var(--bg-surface);
-  padding: 0;
-}
-.stats-grid {
-  max-width: var(--max-width);
-  margin: 0 auto;
-  padding: 0 28px;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-}
-.stat-item {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  align-items: flex-start;
-  padding: 22px 24px;
-  border-left: 1px solid var(--border-deep);
-}
-.stat-item:first-child {
-  border-left: none;
-}
-.stat-value {
-  font-family: var(--font-mono);
-  font-size: 20px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  color: var(--text-primary);
-}
-.stat-label {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 500;
-  color: var(--text-dim);
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  line-height: 1.6;
 }
 
 /* ============================================================
@@ -1183,6 +1120,63 @@ a {
 }
 
 /* ============================================================
+   TICKER — full-width infinite marquee
+   ============================================================ */
+.ticker {
+  border-top: 1px solid var(--border-deep);
+  border-bottom: 1px solid var(--border-deep);
+  background: var(--bg-surface);
+  overflow: hidden;
+  padding: 16px 0;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+.ticker-track {
+  display: flex;
+  width: max-content;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ticker-track {
+    animation: ticker-scroll 36s linear infinite;
+  }
+  .ticker:hover .ticker-track {
+    animation-play-state: paused;
+  }
+}
+@keyframes ticker-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.ticker-group {
+  display: flex;
+  flex-shrink: 0;
+}
+.ticker-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 0 28px;
+  white-space: nowrap;
+  border-right: 1px solid var(--border-deep);
+}
+.ticker-tag {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent-soft);
+}
+.ticker-text {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 0.02em;
+}
+
+/* ============================================================
    PILLARS — three duties, typography not cards
    ============================================================ */
 .pillars-grid {
@@ -1312,15 +1306,6 @@ a {
   }
   .hero-panel {
     margin-top: 40px;
-  }
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .stat-item:nth-child(odd) {
-    border-left: none;
-  }
-  .stat-item:nth-child(n + 3) {
-    border-top: 1px solid var(--border-deep);
   }
   .flow-row {
     flex-direction: column;

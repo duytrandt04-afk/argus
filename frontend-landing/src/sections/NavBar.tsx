@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-
+import { GitHubIcon } from '../components/GitHubIcon'
 import { WatchingEye } from '../components/WatchingEye'
 
 export function NavBar() {
@@ -29,8 +29,7 @@ export function NavBar() {
             <WatchingEye size={18} />
           </span>
           <span>
-            <span className="navbar-wordmark-arg">argus</span>
-            <span className="navbar-wordmark-us">_</span>
+            <span className="navbar-wordmark-arg">Argus</span>
           </span>
         </Link>
         <div className="navbar-links">
@@ -49,7 +48,7 @@ export function NavBar() {
           rel="noopener noreferrer"
           className="btn-nav"
         >
-          GitHub ↗
+          <GitHubIcon size={14} /> GitHub
         </a>
       </div>
     </nav>
