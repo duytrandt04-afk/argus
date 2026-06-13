@@ -5,7 +5,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Button } from '@/components/ui/button'
 import type { ScriptPackage } from '@/types'
 
@@ -21,13 +20,13 @@ export function ScriptSourceDialog({ script }: ScriptSourceDialogProps) {
           View source
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl border border-white/15 bg-[#141414] shadow-2xl">
+      <DialogContent className="max-h-[85vh] max-w-2xl border border-white/15 bg-[#141414] shadow-2xl">
         <DialogHeader>
           <DialogTitle className="font-mono">{script.filename}</DialogTitle>
         </DialogHeader>
-        <ScrollArea className="max-h-[60vh] rounded-md border border-white/10 bg-[#0a0a0a]">
-          <pre className="bg-[#0a0a0a] p-4 text-xs leading-relaxed text-[#ccc]">{script.body}</pre>
-        </ScrollArea>
+        <pre className="max-h-[70vh] overflow-auto rounded-md border border-white/10 bg-[#0a0a0a] p-4 text-xs leading-relaxed text-[#ccc]">
+          {script.body}
+        </pre>
       </DialogContent>
     </Dialog>
   )
