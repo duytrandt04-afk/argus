@@ -2,8 +2,10 @@ package server
 
 import (
 	"net/http"
+	"os"
 
 	"argus/internal/domain"
+	"argus/internal/github"
 	"argus/internal/handler"
 	"argus/internal/hookconfig"
 	"argus/internal/repository"
@@ -91,7 +93,7 @@ func NewRouter(svc *service.EventService, repo repository.EventRepository, ready
 		Addr:               opts.Addr,
 		AllowRemote:        opts.AllowRemote,
 		CORSOrigins:        corsOrigins,
-		ArgusDir:          opts.ArgusDir,
+		ArgusDir:           opts.ArgusDir,
 	}))
 	mux.Handle("GET /api/diagnostics/log-tail", handler.LogTail(handler.LogTailOptions{
 		ArgusDir: opts.ArgusDir,
@@ -113,7 +115,23 @@ func NewRouter(svc *service.EventService, repo repository.EventRepository, ready
 	mux.Handle("POST /api/scripts/install", handler.ScriptsInstall(scriptSrc, opts.ArgusDir))
 	mux.Handle("POST /api/scripts/install-bundle", handler.ScriptsInstallBundle(scriptSrc, opts.ArgusDir))
 	mux.Handle("DELETE /api/scripts/installed", handler.ScriptsDelete(scriptSrc, opts.ArgusDir))
+	githubClientID := os.Getenv("ARGUS_GITHUB_CLIENT_ID")
+	if githubClientID == "" {
+		githubClientID = defaultGitHubClientID
+	}
+	ghSvc := github.NewService(githubClientID, opts.ArgusDir)
+	mux.Handle("POST /api/github/device", handler.GitHubDevice(ghSvc))
+	mux.Handle("GET /api/github/status", handler.GitHubStatus(ghSvc))
+	mux.Handle("POST /api/github/logout", handler.GitHubLogout(ghSvc))
+	mux.Handle("GET /api/collection", handler.Collection(ghSvc, opts.ArgusDir))
+	mux.Handle("POST /api/collection", handler.CollectionAdd(ghSvc, scriptSrc, opts.ArgusDir))
+	mux.Handle("DELETE /api/collection", handler.CollectionRemove(ghSvc))
+	mux.Handle("POST /api/collection/install", handler.CollectionInstall(ghSvc, opts.ArgusDir))
 	mux.Handle("GET /", ui.Handler())
 
 	return panicRecovery(hostHeader(corsAllowlist(corsOrigins)(logging(mux))))
 }
+
+// defaultGitHubClientID is argus's public OAuth App client id (device flow needs
+// no secret). Override at runtime with ARGUS_GITHUB_CLIENT_ID.
+const defaultGitHubClientID = "REPLACE_WITH_OAUTH_APP_CLIENT_ID"
