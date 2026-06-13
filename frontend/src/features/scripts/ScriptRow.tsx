@@ -13,6 +13,7 @@ type ScriptRowProps = {
   // When false, an installed script shows a static "Installed" label instead of
   // a Delete action (the All/Bundles tabs); the Installed tab passes true.
   canDelete?: boolean
+  onAddToCollection?: (id: string) => void
 }
 
 export function ScriptRow({
@@ -22,6 +23,7 @@ export function ScriptRow({
   onDelete,
   busy,
   canDelete = false,
+  onAddToCollection,
 }: ScriptRowProps) {
   return (
     <div className="flex items-center gap-4 border-b border-white/[0.06] px-3 py-3 hover:bg-white/[0.02]">
@@ -49,6 +51,16 @@ export function ScriptRow({
 
       <div className="flex shrink-0 items-center gap-2">
         <ScriptSourceDialog script={script} />
+        {onAddToCollection ? (
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={busy}
+            onClick={() => onAddToCollection(script.id)}
+          >
+            + Collection
+          </Button>
+        ) : null}
         {!script.installed ? (
           <Button size="sm" disabled={busy} onClick={() => onInstall(script.id)}>
             Install

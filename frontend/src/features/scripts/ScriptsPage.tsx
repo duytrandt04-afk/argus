@@ -38,6 +38,22 @@ export function ScriptsPage() {
     setPage(0)
   }
 
+  async function addToCollection(
+    origin: 'bundled' | 'local',
+    script: { id: string; filename: string }
+  ) {
+    const body =
+      origin === 'bundled' ? { origin, id: script.id } : { origin, filename: script.filename }
+    const resp = await fetch('/api/collection', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    if (resp.status === 401) {
+      changeTab('collection')
+    }
+  }
+
   function changeQuery(next: string) {
     setQuery(next)
     setPage(0)
@@ -166,6 +182,14 @@ export function ScriptsPage() {
                     canDelete={tab === 'installed'}
                     onInstall={(id) => run(() => install(id))}
                     onDelete={(id) => run(() => remove(id))}
+                    onAddToCollection={(id) =>
+                      run(() =>
+                        addToCollection(tab === 'installed' ? 'local' : 'bundled', {
+                          id,
+                          filename: p.filename,
+                        })
+                      )
+                    }
                   />
                 ))
               )}

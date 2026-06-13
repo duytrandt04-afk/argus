@@ -103,9 +103,18 @@ Browser ← GET /api/events/stream (SSE) ← EventService.subscribers (sync.Map)
         → DELETE /api/scripts/installed      (remove an installed script)
         ← GET /api/diagnostics               (health/storage/file system; also feeds the
                                               simulator's ~/.argus/hooks script picker)
+        → POST /api/github/device            (start GitHub device-flow login)
+        ← GET /api/github/status             (auth state; advances device-flow poll)
+        → POST /api/github/logout            (delete local token)
+        ← GET /api/collection                (user's gist-backed script collection)
+        → POST /api/collection               (add a bundled/local script to the gist)
+        → POST /api/collection/install       (install a collection script → ~/.argus/hooks/)
+        → DELETE /api/collection             (remove a script from the gist)
 ```
 
 **Hook simulator (`features/hooks-config/SimulatorTab.tsx`):** searchable event-type picker fills an editable per-event payload template; command picker offers config-wired hooks, auto-discovered `~/.argus/hooks` scripts (`.js`→node, `.sh`→sh, `.py`→python3, `CLAUDECODE=1` prefix on the Claude Code tab), or a custom command. Custom commands can be applied into the hooks config (idempotent). Backend executes via `handler/hooks_simulate.go` with the hook's configured timeout (default 10s).
+
+**Scripts collection (Phase 2a):** optional GitHub login (device flow, scope `gist`, token in `~/.argus/github-token.json` 0600) backs up a user's scripts to their own private gist (`[argus-collection]`), portable across machines. Backend `internal/github` owns the token + API; the SPA never sees it. No argus-hosted storage.
 
 **Dependency direction (backend):** handler → service → repository → domain. Never skip layers. Never import handler from service.
 
