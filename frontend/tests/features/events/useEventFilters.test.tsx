@@ -121,3 +121,56 @@ describe('useEventFilters — sessionStorage cache', () => {
     expect(sessionStorage.getItem('events_action_filter')).toBe('BASH')
   })
 })
+
+describe('useEventFilters append short-circuit', () => {
+  function makeAppendEvent(overrides: Partial<EventRecord> = {}): EventRecord {
+    return {
+      time: '2026-06-13T00:00:00Z',
+      agent: 'claudecode',
+      session: 's1',
+      action: 'EDIT',
+      ...overrides,
+    } as EventRecord
+  }
+
+  function renderFilters(events: EventRecord[]) {
+    return renderHook(
+      ({ evts }) =>
+        useEventFilters(evts, '', vi.fn(), '', 'all', vi.fn(), '', vi.fn(), '', vi.fn(), true),
+      { wrapper, initialProps: { evts: events } }
+    )
+  }
+
+  it('append path matches a full re-filter', () => {
+    const base = [
+      makeAppendEvent({ session: 's1', action: 'EDIT' }),
+      makeAppendEvent({ session: 's2', action: 'BASH' }),
+    ]
+    const { result, rerender } = renderFilters(base)
+    expect(result.current.filteredEvents).toHaveLength(2)
+
+    // Live merge appends to a fresh array, preserving item identities.
+    const appended = [...base, makeAppendEvent({ session: 's3', action: 'EDIT' })]
+    rerender({ evts: appended })
+    expect(result.current.filteredEvents).toHaveLength(3)
+    expect(result.current.filteredEvents).toEqual(appended)
+  })
+
+  it('keeps the same filtered array identity when re-rendered with the same array', () => {
+    const base = [makeAppendEvent({ session: 's1' })]
+    const { result, rerender } = renderFilters(base)
+    const firstResult = result.current.filteredEvents
+
+    rerender({ evts: base })
+    expect(result.current.filteredEvents).toBe(firstResult)
+  })
+
+  it('full re-filter on shrink/reset', () => {
+    const base = [makeAppendEvent({ session: 's1' }), makeAppendEvent({ session: 's2' })]
+    const { result, rerender } = renderFilters(base)
+    expect(result.current.filteredEvents).toHaveLength(2)
+
+    rerender({ evts: [] })
+    expect(result.current.filteredEvents).toHaveLength(0)
+  })
+})

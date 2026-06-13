@@ -1963,7 +1963,7 @@ git commit -m "perf(frontend): cache per-timestamp formatting and highlight rege
 - Modify: `frontend/src/features/events/hooks/useEventFilters.ts:102-137`
 - Test: `frontend/src/features/events/hooks/__tests__/useEventFilters.test.tsx` (create or extend)
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 The test pins the core invariant: the append path must produce exactly what a full re-filter would.
 
@@ -2036,12 +2036,12 @@ describe('useEventFilters append short-circuit', () => {
 
 Adjust the `useEventFilters(...)` argument list to its exact signature (events, searchQuery, setSearchQuery, sessionFilterOverride, timeRange, setTimeRange, customStart, setCustomStart, customEnd, setCustomEnd, isLive) — the literals above follow it.
 
-- [ ] **Step 2: Run to verify the identity test fails**
+- [x] **Step 2: Run to verify the identity test fails**
 
 Run: `cd frontend && npx vitest run src/features/events/hooks/__tests__/useEventFilters.test.tsx`
 Expected: the length-based tests pass against current code; the array-identity expectation may also pass (useMemo with unchanged deps). The real change is algorithmic — proceed regardless; the tests pin behavior.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `useEventFilters.ts`, add a module-level predicate above the hook (extracted verbatim from the current filter body):
 
@@ -2133,7 +2133,7 @@ Replace the `filteredEvents` memo (lines 102-137) with:
 
 `useRef` is already imported in this file.
 
-- [ ] **Step 4: Run tests, format, commit**
+- [x] **Step 4: Run tests, format, commit**
 
 Run: `cd frontend && npx tsc --noEmit && npx vitest run && npx prettier --write src/features/events/hooks/`
 Expected: all pass, including pre-existing useEventFilters tests.
