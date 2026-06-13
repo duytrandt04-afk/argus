@@ -9,8 +9,18 @@ import { DeviceFlowModal } from './DeviceFlowModal'
 import { CollectionRow } from './CollectionRow'
 
 export function CollectionTab() {
-  const { status, collection, loading, error, deviceCode, startLogin, logout, install, remove } =
-    useCollection()
+  const {
+    status,
+    collection,
+    loading,
+    error,
+    deviceCode,
+    startLogin,
+    cancelLogin,
+    logout,
+    install,
+    remove,
+  } = useCollection()
   const [busy, setBusy] = useState(false)
 
   async function run(fn: () => Promise<void>) {
@@ -36,7 +46,7 @@ export function CollectionTab() {
     return (
       <>
         <GitHubLoginPanel onLogin={() => run(startLogin)} busy={busy} />
-        <DeviceFlowModal device={deviceCode} onClose={() => undefined} />
+        <DeviceFlowModal device={deviceCode} onClose={cancelLogin} />
       </>
     )
   }

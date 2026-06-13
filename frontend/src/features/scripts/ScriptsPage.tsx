@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Search } from 'lucide-react'
 
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
@@ -23,6 +24,7 @@ export function ScriptsPage() {
   const [tab, setTab] = useState<Tab>('all')
   const [page, setPage] = useState(0)
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
+  const [notice, setNotice] = useState<string | null>(null)
 
   async function run(fn: () => Promise<void>) {
     setBusy(true)
@@ -44,13 +46,28 @@ export function ScriptsPage() {
   ) {
     const body =
       origin === 'bundled' ? { origin, id: script.id } : { origin, filename: script.filename }
-    const resp = await fetch('/api/collection', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    })
-    if (resp.status === 401) {
-      changeTab('collection')
+    try {
+      const resp = await fetch('/api/collection', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      if (resp.status === 401) {
+        setNotice('Log in with GitHub to use your collection.')
+        changeTab('collection')
+        return
+      }
+      if (resp.status === 409) {
+        setNotice(`“${script.id}” is already in your collection.`)
+        return
+      }
+      if (!resp.ok) {
+        setNotice('Could not add to collection.')
+        return
+      }
+      setNotice(`Added “${script.id}” to your collection.`)
+    } catch {
+      setNotice('Could not add to collection.')
     }
   }
 
@@ -127,6 +144,21 @@ export function ScriptsPage() {
             <ToggleGroupItem value="bundles">Bundles ({bundles.length})</ToggleGroupItem>
             <ToggleGroupItem value="collection">My Collection</ToggleGroupItem>
           </ToggleGroup>
+
+          {notice ? (
+            <div className="flex items-center justify-between rounded-md border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-[0.78rem] text-[#bbb]">
+              <span>{notice}</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-auto px-1 py-0 text-[#777] hover:text-[#ccc]"
+                onClick={() => setNotice(null)}
+                aria-label="Dismiss"
+              >
+                ✕
+              </Button>
+            </div>
+          ) : null}
 
           {tab === 'collection' ? (
             <CollectionTab />

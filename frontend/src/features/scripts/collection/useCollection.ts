@@ -78,18 +78,12 @@ export function useCollection() {
     await refresh()
   }, [refresh])
 
-  const add = useCallback(
-    async (body: { origin: 'bundled' | 'local'; id?: string; filename?: string }) => {
-      const resp = await fetch('/api/collection', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      })
-      if (!resp.ok) throw new Error(`add ${resp.status}`)
-      await refresh()
-    },
-    [refresh]
-  )
+  // cancelLogin aborts an in-progress device flow (user dismissed the modal).
+  const cancelLogin = useCallback(() => {
+    if (pollRef.current) clearInterval(pollRef.current)
+    pollRef.current = null
+    setDeviceCode(null)
+  }, [])
 
   const install = useCallback(
     async (id: string) => {
@@ -113,5 +107,5 @@ export function useCollection() {
     [refresh]
   )
 
-  return { ...state, deviceCode, startLogin, logout, add, install, remove, refresh }
+  return { ...state, deviceCode, startLogin, cancelLogin, logout, install, remove, refresh }
 }
