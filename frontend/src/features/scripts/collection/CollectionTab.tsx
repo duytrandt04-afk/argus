@@ -67,7 +67,7 @@ export function CollectionTab() {
               className="flex w-fit items-center gap-1 text-[12px] text-muted-foreground transition-colors hover:text-foreground"
             >
               <ExternalLink className="size-3" />
-              View gist on GitHub
+              View scripts on GitHub
             </a>
           ) : null}
           <Button variant="outline" size="sm" disabled={busy} onClick={() => run(logout)}>
