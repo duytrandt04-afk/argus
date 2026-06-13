@@ -2151,7 +2151,7 @@ git commit -m "perf(frontend): filter only appended events on live stream update
 - Modify: `frontend/src/features/events/SessionList.tsx:36-84`
 - Test: existing SessionList/EventsPage tests must stay green
 
-- [ ] **Step 1: Implement the split**
+- [x] **Step 1: Implement the split**
 
 Replace the single `sessionList` memo (lines 36-84) with two memos — grouping (parses each event's time exactly once) and sorting (numeric comparisons, no Date allocation in comparators):
 
@@ -2217,12 +2217,12 @@ type SessionAccumulator = {
 
 Behavior preserved exactly: same grouping key, same cwd backfill, same lastTime (max event time), same sort directions. What changed: one `new Date()` per event total (was one per comparison), and toggling `sortOrder` no longer rebuilds the groups.
 
-- [ ] **Step 2: Run the full frontend suite**
+- [x] **Step 2: Run the full frontend suite**
 
 Run: `cd frontend && npx tsc --noEmit && npx vitest run`
 Expected: PASS — existing events-page tests cover grouping and ordering.
 
-- [ ] **Step 3: Format and commit**
+- [x] **Step 3: Format and commit**
 
 Run: `cd frontend && npx prettier --write src/features/events/SessionList.tsx`
 
