@@ -2,8 +2,6 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import type { ScriptPackage } from '@/types'
 
-import { ScriptSourceDialog } from './ScriptSourceDialog'
-
 type ScriptRowProps = {
   script: ScriptPackage
   index: number
@@ -41,7 +39,6 @@ export function ScriptRow({
 
       <div className="hidden shrink-0 items-center gap-1 md:flex">
         <Badge variant="outline">{script.event}</Badge>
-        <Badge variant="outline">{script.tier === 'official' ? 'Official' : script.tier}</Badge>
         {!script.runtime_available ? (
           <Badge variant="outline" className="border-amber-600/40 text-amber-500">
             needs {script.runtime}
@@ -50,7 +47,6 @@ export function ScriptRow({
       </div>
 
       <div className="flex shrink-0 items-center gap-2">
-        <ScriptSourceDialog script={script} />
         {onAddToCollection ? (
           <Button
             variant="outline"
