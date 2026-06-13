@@ -2239,7 +2239,7 @@ git commit -m "perf(frontend): split session grouping from sorting, sort on prec
 - Modify: `frontend/src/features/dashboard/hooks/useDashboardStats.ts:179-214`
 - Modify: `frontend/src/features/dashboard/TokenTimelineChart.tsx:35`, `frontend/src/features/dashboard/ActivityPanel.tsx:33`
 
-- [ ] **Step 1: Implement identical-payload skip**
+- [x] **Step 1: Implement identical-payload skip**
 
 In `useDashboardStats.ts`, add next to `statsCache` (line 81):
 
@@ -2265,7 +2265,7 @@ Replace the success branch of `fetchStats` (lines 193-199) with:
         }
 ```
 
-- [ ] **Step 2: Memo-wrap the two chart components**
+- [x] **Step 2: Memo-wrap the two chart components**
 
 `TokenTimelineChart.tsx`: change the component declaration to
 
@@ -2288,7 +2288,7 @@ closing `})`, `import { memo, useMemo } from 'react'`.
 
 With stable `stats` identity from Step 1 and string `query` props, `memo` makes repeated parent renders skip both chart subtrees entirely.
 
-- [ ] **Step 3: Run tests, format, commit**
+- [x] **Step 3: Run tests, format, commit**
 
 Run: `cd frontend && npx tsc --noEmit && npx vitest run && npx prettier --write src/features/dashboard/hooks/useDashboardStats.ts src/features/dashboard/TokenTimelineChart.tsx src/features/dashboard/ActivityPanel.tsx`
 Expected: all pass.
