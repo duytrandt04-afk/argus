@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { ExternalLink } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -63,8 +64,9 @@ export function CollectionTab() {
               href={collection.gist_url}
               target="_blank"
               rel="noreferrer"
-              className="text-[#863bff] underline hover:text-[#a06bff]"
+              className="flex w-fit items-center gap-1 text-[12px] text-muted-foreground transition-colors hover:text-foreground"
             >
+              <ExternalLink className="size-3" />
               View gist on GitHub
             </a>
           ) : null}
