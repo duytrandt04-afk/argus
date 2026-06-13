@@ -1,9 +1,18 @@
-# argus
+# Argus
 
 [![Release](https://img.shields.io/github/v/release/duytrandt04-afk/argus)](https://github.com/duytrandt04-afk/argus/releases/latest)
+[![License](https://img.shields.io/github/license/duytrandt04-afk/argus)](LICENSE)
+[![Stars](https://img.shields.io/github/stars/duytrandt04-afk/argus?style=flat)](https://github.com/duytrandt04-afk/argus/stargazers)
 [![Website](https://img.shields.io/badge/website-getargus.org-863bff)](https://getargus.org)
 
-**Website: [getargus.org](https://getargus.org)**
+<p align="center">
+  <a href="https://getargus.org">
+    <img src="docs/argus-banner.png" alt="Argus — the watchman whose eyes never all close" width="100%" />
+  </a>
+</p>
+
+> **The hook control center for AI coding agents.** Manage hooks, test them before
+> an agent fires them, ship guardrails — all local. **[getargus.org »](https://getargus.org)**
 
 **The hook control center for AI coding agents.** Hooks are how you govern what
 Claude Code and Codex can do — block dangerous commands, protect secrets, enforce
@@ -41,6 +50,20 @@ curl -fsSL https://raw.githubusercontent.com/duytrandt04-afk/argus/main/install.
 Open **http://127.0.0.1:10804** after your next Claude Code or Codex session starts.
 
 Then follow [docs/quickstart.md](docs/quickstart.md) to verify your first event.
+
+## What it looks like
+
+The dashboard is one local panel over your agents: a live event feed, a session
+waterfall, token and cost stats, the hooks config editor, and the built-in hook
+simulator. Take the full visual tour at **[getargus.org](https://getargus.org)**.
+
+| Surface | What it does |
+| ------- | ------------ |
+| **Hooks config + simulator** | One-click presets; fire a synthetic payload at any hook and read stdout/stderr/exit code before a live agent runs it. |
+| **Event feed** | Every normalized tool call streamed over SSE, sub-100ms from hook to browser. |
+| **Sessions** | Tool calls grouped per session and drawn as a waterfall. |
+| **Dashboard** | Token and cost roll-ups per session, day, and model — computed locally. |
+| **Script collection** | Free zero-dependency guardrails in [`my-custom-hook-scripts/`](my-custom-hook-scripts/). |
 
 ## Uninstall
 
