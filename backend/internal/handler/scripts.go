@@ -70,19 +70,15 @@ func findBundle(cat domain.ScriptCatalog, id string) (domain.ScriptBundle, bool)
 	return domain.ScriptBundle{}, false
 }
 
-// installOne writes a package's embedded bytes to ~/.argus/hooks/<filename>.
-// Never overwrites: O_EXCL makes the create atomic, so a concurrent install of
-// the same id can't race past the check — returns os.ErrExist when present.
-func installOne(ctx context.Context, src scriptcatalog.ScriptSource, argusDir string, p domain.ScriptPackage) error {
-	target, err := hookTarget(argusDir, p.Filename)
+// writeHookScript writes body to <argusDir>/hooks/<filename> atomically.
+// O_EXCL makes the create atomic (never overwrites → os.ErrExist if present);
+// the filename must be a flat basename (defense-in-depth against traversal).
+func writeHookScript(argusDir, filename string, body []byte) error {
+	target, err := hookTarget(argusDir, filename)
 	if err != nil {
 		return err
 	}
 	if err := os.MkdirAll(hooksDir(argusDir), 0o755); err != nil {
-		return err
-	}
-	body, err := src.ReadScript(ctx, p.ID)
-	if err != nil {
 		return err
 	}
 	f, err := os.OpenFile(target, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o755)
@@ -95,6 +91,16 @@ func installOne(ctx context.Context, src scriptcatalog.ScriptSource, argusDir st
 		return writeErr
 	}
 	return closeErr
+}
+
+// installOne writes a package's embedded bytes to ~/.argus/hooks/<filename>.
+// Never overwrites: returns os.ErrExist when the file is already present.
+func installOne(ctx context.Context, src scriptcatalog.ScriptSource, argusDir string, p domain.ScriptPackage) error {
+	body, err := src.ReadScript(ctx, p.ID)
+	if err != nil {
+		return err
+	}
+	return writeHookScript(argusDir, p.Filename, body)
 }
 
 // ScriptsCatalog returns the full catalog with install + runtime state.
