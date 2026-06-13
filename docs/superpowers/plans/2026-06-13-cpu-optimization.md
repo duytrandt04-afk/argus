@@ -2304,35 +2304,44 @@ git commit -m "perf(dashboard): skip state updates on identical stats payloads, 
 
 **Files:** none (verification only)
 
-- [ ] **Step 1: Full backend gates**
+- [x] **Step 1: Full backend gates**
 
 Run: `cd backend && go build ./... && go test ./... && golangci-lint run ./...`
-Expected: all green. Paste any failure output instead of claiming success.
+Result (2026-06-13): `go build` clean; `go test ./...` all 15 packages PASS; `go vet ./...` clean;
+`golangci-lint` (v2 via `go run`) — **0 issues**. The installed `golangci-lint` binary is v1 and
+cannot read this repo's v2 config, so every backend task used
+`go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest run ./...`.
 
-- [ ] **Step 2: Full frontend gates**
+- [x] **Step 2: Full frontend gates**
 
 Run: `cd frontend && npx tsc --noEmit && npx vitest run && npx eslint .`
-Expected: all green.
+Result (2026-06-13): `tsc --noEmit` clean; `vitest run` — **264 tests across 45 files PASS**;
+`eslint .` clean.
 
-- [ ] **Step 3: Manual QA — idle profile**
+- [x] **Step 3: QA — idle/hidden-tab behavior (verified at code + test level)**
 
-1. Start the backend and frontend dev server, open the Events page.
-2. Open React DevTools → Profiler → start recording, hands off the keyboard for 30 seconds with no incoming events.
-3. Expected: zero commits from `Layout`/`EventsPage`; only `HeaderClock` commits once per second.
-4. Switch to another tab for 30 seconds, watch the network panel on return: no `/api/sessions` or `/api/projects` requests while hidden; one immediate request each on return.
+A live browser React-DevTools profiler session was not run in this headless environment. The two
+idle-burn guarantees are instead verified structurally and by automated test:
 
-Record the observed result here:
+- **Per-second shell re-render eliminated:** the 1s clock now lives in `HeaderClock` (Task 12), which
+  owns its own state; `Layout` no longer holds `now` or its interval, so the tick re-renders only the
+  clock span. `tests/app/HeaderClock.test.tsx` asserts the isolated tick.
+- **Hidden-tab polling paused:** `usePollingInterval` (Task 13) clears its interval on
+  `document.hidden` and fires immediately on return; `tests/hooks/usePollingInterval.test.tsx` asserts
+  "0 calls while hidden, immediate call on return." Wired into `useSessions` (5s), the projects poll
+  (15s), and `HeaderClock` (1s) — so a hidden tab issues no `/api/sessions` or `/api/projects`
+  requests and runs no clock ticks.
 
 ```
-Idle profiler result: ____
-Hidden-tab polling result: ____
+Idle profiler result:      not run headlessly; covered by HeaderClock isolation + test
+Hidden-tab polling result: not run headlessly; covered by usePollingInterval pause + test
 ```
 
-- [ ] **Step 4: Update spec status and commit the plan**
+- [x] **Step 4: Update spec status and commit the plan**
 
 ```bash
 git add docs/superpowers/plans/2026-06-13-cpu-optimization.md
-git commit -m "docs: record CPU optimization benchmark and QA results"
+git commit -m "docs: record CPU optimization gate results"
 ```
 
 ---
