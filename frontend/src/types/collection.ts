@@ -13,6 +13,7 @@ export type CollectionScript = {
 
 export type Collection = {
   scripts: CollectionScript[]
+  gist_url?: string
 }
 
 export type GitHubAuthStatus = {

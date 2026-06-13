@@ -18,6 +18,7 @@ type CollectionScript struct {
 // Collection is the user's full collection.
 type Collection struct {
 	Scripts []CollectionScript `json:"scripts"`
+	GistURL string             `json:"gist_url,omitempty"` // link to the gist on GitHub
 }
 
 // GitHubAuthStatus is what the SPA learns about the session (never the token).

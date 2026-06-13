@@ -57,9 +57,21 @@ export function CollectionTab() {
         <span>
           Signed in as <span className="text-[#ccc]">@{status.login}</span>
         </span>
-        <Button variant="outline" size="sm" disabled={busy} onClick={() => run(logout)}>
-          Logout
-        </Button>
+        <div className="flex items-center gap-2">
+          {collection?.gist_url ? (
+            <a
+              href={collection.gist_url}
+              target="_blank"
+              rel="noreferrer"
+              className="text-[#863bff] underline hover:text-[#a06bff]"
+            >
+              View gist on GitHub
+            </a>
+          ) : null}
+          <Button variant="outline" size="sm" disabled={busy} onClick={() => run(logout)}>
+            Logout
+          </Button>
+        </div>
       </div>
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
       <div className="overflow-hidden rounded-md border border-white/[0.06]">

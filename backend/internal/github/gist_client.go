@@ -88,6 +88,7 @@ type gistIn struct {
 type gistOut struct {
 	ID          string                 `json:"id"`
 	Description string                 `json:"description"`
+	HTMLURL     string                 `json:"html_url"`
 	Files       map[string]gistFileOut `json:"files"`
 }
 
@@ -224,7 +225,7 @@ func (g *GistClient) ReadCollection(ctx context.Context, gistID string) (domain.
 			Body: f.Content,
 		})
 	}
-	return domain.Collection{Scripts: scripts}, nil
+	return domain.Collection{Scripts: scripts, GistURL: out.HTMLURL}, nil
 }
 
 // AddScript writes a script file + updates the manifest. Returns ErrAlreadyInCollection
