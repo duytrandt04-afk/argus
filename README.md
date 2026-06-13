@@ -1,15 +1,9 @@
 # Argus
 
 [![Release](https://img.shields.io/github/v/release/duytrandt04-afk/argus)](https://github.com/duytrandt04-afk/argus/releases/latest)
-[![License](https://img.shields.io/github/license/duytrandt04-afk/argus)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Stars](https://img.shields.io/github/stars/duytrandt04-afk/argus?style=flat)](https://github.com/duytrandt04-afk/argus/stargazers)
 [![Website](https://img.shields.io/badge/website-getargus.org-863bff)](https://getargus.org)
-
-<p align="center">
-  <a href="https://getargus.org">
-    <img src="docs/argus-banner.png" alt="Argus — the watchman whose eyes never all close" width="100%" />
-  </a>
-</p>
 
 > **The hook control center for AI coding agents.** Manage hooks, test them before
 > an agent fires them, ship guardrails — all local. **[getargus.org »](https://getargus.org)**
