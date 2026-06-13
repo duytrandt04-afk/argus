@@ -44,42 +44,29 @@ changelog:
 
 release:
   header: |
-    ## Argus v0.1.0 — First Public Release
+    ## Argus v0.1.2 — CPU optimization
 
-    **Argus** is a local-first monitoring dashboard for AI coding agent activity. Install it in under 10 minutes and get full visibility into your Claude Code and Codex sessions — no cloud dependencies, no data leaving your machine.
+    A performance pass across the whole app. Argus runs locally alongside your coding agents, so this release cuts both per-event ingest spikes and the CPU it burns while just sitting open in a tab. No behavior changes, no schema breaks — same features, less work.
 
-    ### What's included
+    ### Backend
 
-    **Agents supported**
-    - Claude Code — full hook payload normalization, token usage breakdown, tool call rendering
-    - Codex — session tracking, file diff rendering, tool call events
+    - **Single-read hook enrichment** — context lookup reads each edited file once instead of twice (≈45% faster on the ingest path); files over 2 MB are skipped.
+    - **Marshal-once SSE broadcast** — each event is serialized one time per broadcast, not once per connected browser.
+    - **Throttled usage scans** — transcript token-usage is recomputed at most once every 30s per session (always exact on session end) instead of on every hook event, and never on dashboard/session list reads.
+    - **Dashboard stats cache** — aggregate stats are cached for 5s; repeat loads drop from tens of milliseconds to microseconds.
+    - **Index-friendly queries** — time-range filters now use the `created_at` index directly; `created_at` is normalized to UTC at write (migration 014 backfills existing rows).
+    - **Faster project merge** — the projects view collapses nested directories in a single pass instead of a quadratic scan.
 
-    **Event feed**
-    - Real-time event stream via SSE
-    - Filter by agent, event type, session, keyword
-    - Expandable raw payload modal per event
-    - Tool call and diff renderers
+    ### Frontend
 
-    **Sessions**
-    - Session tree with parent/child spawn relationships
-    - Per-session file change tracking
-    - Session duration and status indicators
+    - **Isolated header clock** — the per-second time display no longer re-renders the whole app shell.
+    - **Visibility-aware polling** — sessions, projects, and the clock stop polling when the tab is hidden and refresh instantly on return.
+    - **Cheaper event feed** — cached timestamp formatting and search-highlight regex, append-only filtering for live events, and split session grouping/sorting so toggling sort order doesn't rebuild the tree.
+    - **Dashboard render skips** — identical stats payloads keep their object identity and the charts are memoized, so polling no longer redraws unchanged charts.
 
-    **Dashboard**
-    - Aggregate stats: events, sessions, tokens, tool calls
-    - Usage breakdown by agent and model
-    - Date-range filtering
+    ### Upgrade notes
 
-    **Diagnostics**
-    - Filesystem health check (DB path, transcript dirs)
-    - Hook scripts log viewer
-    - Version and build info endpoint
-
-    **Hooks configuration UI**
-    - Generate and install `hooks.json` for Claude Code, Codex
-    - Preset levels: minimal, standard, full
-    - One-click install / uninstall scripts
-    - Simulate hooks behavior
+    Migration 014 runs automatically on first start and rewrites any legacy `hook_events.created_at` values to UTC. No action required.
 
     ### Install
 
